@@ -41,5 +41,5 @@ Thumbs.db
 *.tmp
 *.temp
 
-.propel/templates
-.windsurf/*
+# .propel/templates
+# .windsurf/*
