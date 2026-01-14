@@ -34,6 +34,16 @@ test.describe('Login Page Visual Tests', () => {
         return
       }
 
+      if (body.includes('"password":"slow"')) {
+        await new Promise((resolve) => setTimeout(resolve, 800))
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ token: 'test-token', expires_in: 900 }),
+        })
+        return
+      }
+
       if (!body.includes('"password":"password"')) {
         await route.fulfill({
           status: 401,
@@ -49,6 +59,21 @@ test.describe('Login Page Visual Tests', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ token: 'test-token', expires_in: 900 }),
+      })
+    })
+
+    await page.route('**/api/v1/auth/logout', async (route) => {
+      const request = route.request()
+
+      if (request.method() !== 'POST') {
+        await route.fallback()
+        return
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'logged_out' }),
       })
     })
 
@@ -91,6 +116,7 @@ test.describe('Login Page Visual Tests', () => {
     // Check form elements exist
     await expect(page.locator('input[type="email"]')).toBeVisible()
     await expect(page.locator('input[type="password"]')).toBeVisible()
+    await expect(page.locator('a:has-text("Forgot Password")')).toBeVisible()
     await expect(page.locator('button:has-text("Log in")')).toBeVisible()
     
     // Check branding elements
@@ -126,6 +152,9 @@ test.describe('Login Page Visual Tests', () => {
     await expect(page.locator('input[type="password"]')).toBeFocused()
     
     await page.keyboard.press('Tab')
+    await expect(page.locator('a:has-text("Forgot Password")')).toBeFocused()
+
+    await page.keyboard.press('Tab')
     await expect(page.locator('button:has-text("Log in")')).toBeFocused()
   })
 
@@ -145,6 +174,22 @@ test.describe('Login Page Visual Tests', () => {
     // Check console message
     await page.waitForTimeout(100)
     expect(messages).toContain('Login successful')
+  })
+
+  test('shows loading state and blocks duplicate submits during slow authentication', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'slow')
+
+    const submitButton = page.locator('button:has-text("Log in")')
+    await submitButton.click()
+
+    await expect(submitButton).toBeDisabled()
+    await expect(submitButton).toHaveAttribute('aria-busy', 'true')
+
+    await submitButton.click({ force: true })
+    await expect(submitButton).toBeDisabled()
   })
 
   test('validation errors appear on submit and do not break layout', async ({ page }) => {
@@ -167,5 +212,40 @@ test.describe('Login Page Visual Tests', () => {
 
     await expect(page.locator('text=Incorrect email or password. Please try again.')).toBeVisible()
     await expect(page).toHaveScreenshot('login-auth-error-mobile.png')
+  })
+
+  test('logout redirects to login and back does not reveal dashboard', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'password')
+    await page.click('button:has-text("Log in")')
+
+    await page.waitForURL('**/dashboard')
+    await expect(page.locator('text=Dashboard')).toBeVisible()
+    await expect(page.locator('button:has-text("Log out")')).toBeVisible()
+
+    await page.click('button:has-text("Log out")')
+    await page.waitForURL('**/login')
+    await expect(page.locator('text=You have been logged out.')).toBeVisible()
+
+    await page.goBack()
+    await page.waitForURL('**/login')
+    await expect(page.locator('text=Dashboard')).not.toBeVisible()
+  })
+
+  test('dashboard is protected when unauthenticated', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    await page.evaluate(() => {
+      try {
+        window.localStorage.removeItem('ci_auth')
+      } catch {
+      }
+    })
+
+    await page.goto('http://localhost:5173/dashboard')
+    await page.waitForURL('**/login')
+    await expect(page.locator('text=Log in')).toBeVisible()
   })
 })

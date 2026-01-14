@@ -42,4 +42,7 @@ Thumbs.db
 *.temp
 
 .propel/templates
+!.propel/templates/
+!.propel/templates/task-template.md
+!.propel/templates/design-reference-template.md
 .windsurf/*
