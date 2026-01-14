@@ -1,4 +1,15 @@
-import React, { useId } from 'react'
+import type { ChangeEvent, InputHTMLAttributes, ReactNode } from 'react'
+import { useId } from 'react'
+
+type TextFieldProps = {
+  id?: string
+  label?: ReactNode
+  value: string
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void
+  helperText?: ReactNode
+  error?: boolean
+  errorText?: ReactNode
+} & Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'value' | 'onChange'>
 
 export default function TextField({
   id,
@@ -14,7 +25,8 @@ export default function TextField({
   helperText,
   error = false,
   errorText,
-}) {
+  ...props
+}: TextFieldProps): JSX.Element {
   const generatedId = useId()
   const inputId = id || name || generatedId
   const helperId = helperText && inputId ? `${inputId}-helper` : undefined
@@ -42,6 +54,7 @@ export default function TextField({
         autoComplete={autoComplete}
         aria-invalid={error || undefined}
         aria-describedby={describedBy}
+        {...props}
       />
       {helperText ? (
         <div className="ui-textfield__helper" id={helperId}>

@@ -172,6 +172,13 @@ v1.MapPost("/auth/login", (LoginRequest request) =>
     .WithName("Login")
     .WithOpenApi();
 
+v1.MapPost("/auth/logout", () =>
+{
+    return Results.Ok(new { status = "logged_out" });
+})
+    .WithName("Logout")
+    .WithOpenApi();
+
 v1.MapGet("/ping", () => Results.Ok(new { status = "OK" }))
     .RequireAuthorization()
     .WithName("PingV1")

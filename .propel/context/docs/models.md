@@ -217,15 +217,25 @@ api -> db : Export finalized record
 erDiagram
     USER {
         uuid id PK
-        string email
+        string email UK
+        string password_hash
+        string name
         string role
         string status
+        int failed_login_attempts
+        datetime locked_until
+        boolean is_deleted
+        datetime deleted_at
         datetime created_at
+        datetime updated_at
     }
 
     SESSION {
         uuid id PK
         uuid user_id FK
+        string user_agent
+        string ip_address
+        boolean is_revoked
         datetime created_at
         datetime expires_at
         datetime last_activity_at
@@ -241,10 +251,15 @@ erDiagram
 
     PATIENT {
         uuid id PK
-        string mrn
+        string mrn UK
         string name
         date dob
+        string address
+        string contact
+        boolean is_deleted
+        datetime deleted_at
         datetime created_at
+        datetime updated_at
     }
 
     DOCUMENT_BATCH {
@@ -264,6 +279,8 @@ erDiagram
         int size_bytes
         string storage_path
         string status
+        boolean is_deleted
+        datetime deleted_at
         datetime uploaded_at
     }
 
@@ -272,6 +289,9 @@ erDiagram
         uuid document_id FK
         string status
         int retry_count
+        string error_message
+        json error_details
+        int processing_time_ms
         datetime started_at
         datetime completed_at
     }
@@ -282,6 +302,9 @@ erDiagram
         int page
         string section
         string coordinates
+        text text_content
+        vector embedding
+        int token_count
         string chunk_hash
     }
 
@@ -293,6 +316,10 @@ erDiagram
         string name
         string value
         string units
+        float confidence_score
+        boolean is_verified
+        uuid verified_by_user_id FK
+        datetime verified_at
         datetime effective_at
     }
 
@@ -310,6 +337,8 @@ erDiagram
         uuid id PK
         uuid patient_id FK
         string field
+        string entity_category
+        json conflicting_values
         string severity
         string status
         datetime detected_at
@@ -334,7 +363,10 @@ erDiagram
         uuid patient_id FK
         uuid extracted_entity_id FK
         string code FK
+        string code_type
+        string source_text
         string status
+        uuid decided_by_user_id FK
         datetime suggested_at
         datetime decided_at
     }
@@ -342,8 +374,13 @@ erDiagram
     AUDIT_LOG_EVENT {
         uuid id PK
         uuid user_id FK
+        uuid session_id FK
         string action_type
         string ip_address
+        string user_agent
+        string resource_type
+        uuid resource_id
+        json metadata
         datetime timestamp
         string integrity_hash
     }
@@ -352,6 +389,9 @@ erDiagram
         uuid id PK
         uuid user_id FK
         uuid patient_id FK
+        text query_text
+        int result_count
+        int response_time_ms
         datetime timestamp
         string query_hash
     }
@@ -360,8 +400,11 @@ erDiagram
     USER ||--o{ PASSWORD_RESET_TOKEN : requests
     USER ||--o{ DOCUMENT_BATCH : uploads
     USER ||--o{ DOCUMENT : uploads
+    USER ||--o{ EXTRACTED_ENTITY : verifies
+    USER ||--o{ CODE_SUGGESTION : decides
     USER ||--o{ AUDIT_LOG_EVENT : triggers
     USER ||--o{ VECTOR_QUERY_LOG : runs
+    SESSION ||--o{ AUDIT_LOG_EVENT : logs
 
     PATIENT ||--o{ DOCUMENT_BATCH : groups
     PATIENT ||--o{ DOCUMENT : contains
