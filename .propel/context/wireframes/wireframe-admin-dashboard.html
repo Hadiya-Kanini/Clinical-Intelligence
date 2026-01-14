@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Clinical Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary-700: #0056b3;
+            --color-success-500: #28a745;
+            --color-warning-500: #ffc107;
+            --color-info-500: #17a2b8;
+            --color-neutral-900: #212529;
+            --color-neutral-700: #495057;
+            --color-neutral-300: #dee2e6;
+            --color-neutral-100: #f8f9fa;
+            --color-neutral-50: #ffffff;
+            --spacing-4: 1rem;
+            --spacing-5: 1.5rem;
+            --spacing-6: 2rem;
+            --radius-medium: 0.5rem;
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--color-neutral-100);
+            color: var(--color-neutral-900);
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar { width: 240px; background: var(--color-neutral-900); position: fixed; height: 100vh; }
+        .main-content { margin-left: 240px; flex: 1; }
+        .header {
+            background: var(--color-neutral-50);
+            border-bottom: 1px solid var(--color-neutral-300);
+            padding: var(--spacing-4) var(--spacing-6);
+        }
+        .header-title { font-size: 1.563rem; font-weight: 700; }
+        .content { padding: var(--spacing-6); }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-5);
+            margin-bottom: var(--spacing-6);
+        }
+        .metric-card {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-5);
+            box-shadow: var(--shadow-medium);
+        }
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--color-neutral-700);
+            margin-bottom: var(--spacing-4);
+        }
+        .metric-value {
+            font-size: 2.441rem;
+            font-weight: 700;
+        }
+        .metric-trend {
+            font-size: 0.875rem;
+            margin-top: var(--spacing-4);
+            color: var(--color-success-500);
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--spacing-5);
+            margin-bottom: var(--spacing-6);
+        }
+        .chart-card {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-5);
+            box-shadow: var(--shadow-medium);
+        }
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-5);
+        }
+        .chart-placeholder {
+            height: 300px;
+            background: var(--color-neutral-100);
+            border-radius: var(--radius-medium);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-neutral-700);
+        }
+        .system-health {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-5);
+            box-shadow: var(--shadow-medium);
+        }
+        .health-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-4);
+            border-bottom: 1px solid var(--color-neutral-300);
+        }
+        .health-item:last-child { border-bottom: none; }
+        .health-label { font-weight: 600; }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        .status-healthy { background: var(--color-success-500); }
+        .status-warning { background: var(--color-warning-500); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar"></aside>
+    
+    <div class="main-content">
+        <header class="header">
+            <h1 class="header-title">Admin Dashboard</h1>
+        </header>
+
+        <main class="content">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Users</div>
+                    <div class="metric-value">47</div>
+                    <div class="metric-trend">↑ 3 new this month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Active Sessions</div>
+                    <div class="metric-value">23</div>
+                    <div class="metric-trend">Currently online</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Documents Processed</div>
+                    <div class="metric-value">8,542</div>
+                    <div class="metric-trend">↑ 12% this month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">System Uptime</div>
+                    <div class="metric-value">99.9%</div>
+                    <div class="metric-trend">Last 30 days</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Document Processing Volume</div>
+                    <div class="chart-placeholder">Line Chart: Processing volume over time</div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">User Roles</div>
+                    <div class="chart-placeholder">Pie Chart: Standard vs Admin users</div>
+                </div>
+            </div>
+
+            <div class="system-health">
+                <h2 class="chart-title">System Health</h2>
+                <div class="health-item">
+                    <div class="health-label">Backend API</div>
+                    <div><span class="status-indicator status-healthy"></span>Healthy</div>
+                </div>
+                <div class="health-item">
+                    <div class="health-label">AI Worker Service</div>
+                    <div><span class="status-indicator status-healthy"></span>Healthy</div>
+                </div>
+                <div class="health-item">
+                    <div class="health-label">RabbitMQ</div>
+                    <div><span class="status-indicator status-healthy"></span>Healthy</div>
+                </div>
+                <div class="health-item">
+                    <div class="health-label">PostgreSQL Database</div>
+                    <div><span class="status-indicator status-healthy"></span>Healthy</div>
+                </div>
+                <div class="health-item">
+                    <div class="health-label">Google Gemini API</div>
+                    <div><span class="status-indicator status-warning"></span>Degraded Performance</div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

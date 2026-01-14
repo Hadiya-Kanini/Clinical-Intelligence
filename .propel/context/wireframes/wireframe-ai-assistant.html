@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Clinical Assistant - Clinical Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary-700: #0056b3;
+            --color-primary-500: #007bff;
+            --color-primary-100: #e6f2ff;
+            --color-neutral-900: #212529;
+            --color-neutral-700: #495057;
+            --color-neutral-500: #6c757d;
+            --color-neutral-300: #dee2e6;
+            --color-neutral-100: #f8f9fa;
+            --color-neutral-50: #ffffff;
+            --spacing-3: 0.75rem;
+            --spacing-4: 1rem;
+            --spacing-5: 1.5rem;
+            --spacing-6: 2rem;
+            --radius-small: 0.25rem;
+            --radius-medium: 0.5rem;
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--color-neutral-100);
+            color: var(--color-neutral-900);
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar { width: 240px; background: var(--color-neutral-900); position: fixed; height: 100vh; }
+        .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+        .header {
+            background: var(--color-neutral-50);
+            border-bottom: 1px solid var(--color-neutral-300);
+            padding: var(--spacing-4) var(--spacing-6);
+        }
+        .header-title { font-size: 1.563rem; font-weight: 700; }
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--color-neutral-50);
+            margin: var(--spacing-6);
+            border-radius: var(--radius-medium);
+            box-shadow: var(--shadow-medium);
+            overflow: hidden;
+        }
+        .suggested-queries {
+            padding: var(--spacing-5);
+            border-bottom: 1px solid var(--color-neutral-300);
+        }
+        .suggested-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-neutral-700);
+            margin-bottom: var(--spacing-3);
+        }
+        .query-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-3);
+        }
+        .query-chip {
+            background: var(--color-primary-100);
+            color: var(--color-primary-700);
+            padding: var(--spacing-2) var(--spacing-4);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            border: 1px solid var(--color-primary-500);
+            cursor: pointer;
+        }
+        .query-chip:hover {
+            background: var(--color-primary-500);
+            color: var(--color-neutral-50);
+        }
+        .messages {
+            flex: 1;
+            padding: var(--spacing-5);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-4);
+        }
+        .message {
+            display: flex;
+            gap: var(--spacing-3);
+            max-width: 80%;
+        }
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .message.user .message-avatar {
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+        }
+        .message.assistant .message-avatar {
+            background: var(--color-neutral-300);
+            color: var(--color-neutral-900);
+        }
+        .message-content {
+            background: var(--color-neutral-100);
+            padding: var(--spacing-4);
+            border-radius: var(--radius-medium);
+        }
+        .message.user .message-content {
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+        }
+        .message-text {
+            line-height: 1.6;
+            margin-bottom: var(--spacing-3);
+        }
+        .message-sources {
+            margin-top: var(--spacing-3);
+            padding-top: var(--spacing-3);
+            border-top: 1px solid var(--color-neutral-300);
+        }
+        .source-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-neutral-700);
+            margin-bottom: var(--spacing-2);
+        }
+        .source-links {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-2);
+        }
+        .source-link {
+            color: var(--color-primary-700);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        .source-link:hover { text-decoration: underline; }
+        .typing-indicator {
+            display: flex;
+            gap: 0.25rem;
+            padding: var(--spacing-3);
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--color-neutral-500);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+        .input-area {
+            padding: var(--spacing-4);
+            border-top: 1px solid var(--color-neutral-300);
+            display: flex;
+            gap: var(--spacing-3);
+        }
+        .input-field {
+            flex: 1;
+            padding: var(--spacing-3);
+            border: 1px solid var(--color-neutral-300);
+            border-radius: var(--radius-small);
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 1rem;
+            resize: none;
+        }
+        .send-btn {
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+            border: none;
+            border-radius: var(--radius-small);
+            padding: var(--spacing-3) var(--spacing-5);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .send-btn:hover { background: #004085; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar"></aside>
+    
+    <div class="main-content">
+        <header class="header">
+            <h1 class="header-title">AI Clinical Assistant</h1>
+        </header>
+
+        <div class="chat-container">
+            <div class="suggested-queries">
+                <div class="suggested-title">Suggested Queries</div>
+                <div class="query-chips">
+                    <button class="query-chip">Summarize medication history</button>
+                    <button class="query-chip">Show lab results from last visit</button>
+                    <button class="query-chip">List all allergies</button>
+                    <button class="query-chip">What procedures were performed?</button>
+                </div>
+            </div>
+
+            <div class="messages">
+                <div class="message assistant">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            Hello! I'm your AI Clinical Assistant. I can help you query patient documents and find specific information. What would you like to know?
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message user">
+                    <div class="message-avatar">SC</div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            Summarize the patient's current medications and dosages
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message assistant">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            Based on the patient's documents, John Michael Johnson (MRN: 12345678) is currently taking the following medications:
+                            <br><br>
+                            <strong>1. Lisinopril 10mg</strong> - Once daily, oral administration. Prescribed for hypertension management.
+                            <br><br>
+                            <strong>2. Metformin 500mg</strong> - Twice daily, oral administration. Prescribed for Type 2 diabetes management.
+                            <br><br>
+                            <strong>3. Atorvastatin 20mg</strong> - Once daily at bedtime, oral administration. Prescribed for hyperlipidemia management.
+                            <br><br>
+                            All medications are current as of the most recent consultation notes dated January 10, 2026.
+                        </div>
+                        <div class="message-sources">
+                            <div class="source-label">Sources:</div>
+                            <div class="source-links">
+                                <a href="#" class="source-link">📄 MRI_Report.pdf, Page 3 - Current Medications</a>
+                                <a href="#" class="source-link">📄 Lab_Results.pdf, Page 1 - Medication List</a>
+                                <a href="#" class="source-link">📄 Consultation_Notes.pdf, Page 2 - Active Prescriptions</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message user">
+                    <div class="message-avatar">SC</div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            Are there any documented drug allergies?
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message assistant">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-content">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <textarea class="input-field" rows="2" placeholder="Ask a question about patient documents..."></textarea>
+                <button class="send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

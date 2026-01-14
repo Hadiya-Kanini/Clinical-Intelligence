@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Clinical Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary-700: #0056b3;
+            --color-primary-500: #007bff;
+            --color-primary-100: #e6f2ff;
+            --color-success-500: #28a745;
+            --color-success-100: #d4edda;
+            --color-warning-500: #ffc107;
+            --color-info-500: #17a2b8;
+            --color-neutral-900: #212529;
+            --color-neutral-700: #495057;
+            --color-neutral-500: #6c757d;
+            --color-neutral-300: #dee2e6;
+            --color-neutral-100: #f8f9fa;
+            --color-neutral-50: #ffffff;
+            --spacing-2: 0.5rem;
+            --spacing-3: 0.75rem;
+            --spacing-4: 1rem;
+            --spacing-5: 1.5rem;
+            --spacing-6: 2rem;
+            --radius-small: 0.25rem;
+            --radius-medium: 0.5rem;
+            --shadow-small: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--color-neutral-100);
+            color: var(--color-neutral-900);
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 240px;
+            background: var(--color-neutral-900);
+            color: var(--color-neutral-100);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+        .sidebar-header {
+            padding: var(--spacing-5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-neutral-50);
+        }
+        .sidebar-nav {
+            flex: 1;
+            padding: var(--spacing-4) 0;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3);
+            padding: var(--spacing-3) var(--spacing-5);
+            color: var(--color-neutral-100);
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-item.active {
+            background: var(--color-primary-700);
+            border-left: 4px solid var(--color-primary-500);
+            color: var(--color-neutral-50);
+        }
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: var(--color-neutral-50);
+            border-bottom: 1px solid var(--color-neutral-300);
+            padding: var(--spacing-4) var(--spacing-6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-small);
+        }
+        .header-title {
+            font-size: 1.563rem;
+            font-weight: 700;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3);
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .content {
+            padding: var(--spacing-6);
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-5);
+            margin-bottom: var(--spacing-6);
+        }
+        .metric-card {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-5);
+            box-shadow: var(--shadow-medium);
+        }
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--color-neutral-700);
+            margin-bottom: var(--spacing-2);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-neutral-900);
+        }
+        .metric-trend {
+            font-size: 0.875rem;
+            margin-top: var(--spacing-2);
+        }
+        .metric-trend.positive { color: var(--color-success-500); }
+        .quick-actions {
+            margin-bottom: var(--spacing-6);
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-4);
+        }
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-4);
+        }
+        .action-card {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-5);
+            box-shadow: var(--shadow-medium);
+            text-decoration: none;
+            color: var(--color-neutral-900);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.15);
+        }
+        .action-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--color-primary-100);
+            border-radius: var(--radius-medium);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-3);
+        }
+        .action-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-2);
+        }
+        .action-description {
+            font-size: 0.875rem;
+            color: var(--color-neutral-700);
+        }
+        .recent-documents {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-5);
+            box-shadow: var(--shadow-medium);
+        }
+        .document-list {
+            list-style: none;
+        }
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-4);
+            border-bottom: 1px solid var(--color-neutral-300);
+        }
+        .document-item:last-child {
+            border-bottom: none;
+        }
+        .document-info {
+            flex: 1;
+        }
+        .document-name {
+            font-weight: 600;
+            margin-bottom: var(--spacing-2);
+        }
+        .document-meta {
+            font-size: 0.875rem;
+            color: var(--color-neutral-700);
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: var(--color-success-100);
+            color: var(--color-success-500);
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-info {
+            background: #d1ecf1;
+            color: var(--color-info-500);
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">Clinical Intel</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="wireframe-document-list.html" class="nav-item">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                </svg>
+                <span>Documents</span>
+            </a>
+            <a href="wireframe-document-upload.html" class="nav-item">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                </svg>
+                <span>Upload</span>
+            </a>
+            <a href="wireframe-ai-assistant.html" class="nav-item">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/>
+                </svg>
+                <span>AI Assistant</span>
+            </a>
+            <a href="wireframe-user-profile.html" class="nav-item">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+                <span>Profile</span>
+            </a>
+        </nav>
+        <div style="padding: var(--spacing-5); border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <a href="wireframe-login.html" class="nav-item">
+                <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>
+                </svg>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="header">
+            <h1 class="header-title">Dashboard</h1>
+            <div class="user-menu">
+                <span style="color: var(--color-neutral-700);">Dr. Sarah Chen</span>
+                <div class="user-avatar">SC</div>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Dashboards Created</div>
+                    <div class="metric-value">127</div>
+                    <div class="metric-trend positive">↑ 12% this month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Documents Processed</div>
+                    <div class="metric-value">1,543</div>
+                    <div class="metric-trend positive">↑ 8% this month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">AI-Human Agreement</div>
+                    <div class="metric-value">98.2%</div>
+                    <div class="metric-trend positive">↑ 0.5% this month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Time-on-Task</div>
+                    <div class="metric-value">2.3m</div>
+                    <div class="metric-trend positive">↓ 65% reduction</div>
+                </div>
+            </div>
+
+            <section class="quick-actions">
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="actions-grid">
+                    <a href="wireframe-document-upload.html" class="action-card">
+                        <div class="action-icon">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="action-title">Upload Documents</div>
+                        <div class="action-description">Upload new patient documents for processing</div>
+                    </a>
+                    <a href="wireframe-document-list.html" class="action-card">
+                        <div class="action-icon">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="action-title">View Documents</div>
+                        <div class="action-description">Browse and manage uploaded documents</div>
+                    </a>
+                    <a href="wireframe-ai-assistant.html" class="action-card">
+                        <div class="action-icon">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="action-title">AI Assistant</div>
+                        <div class="action-description">Query patient documents with natural language</div>
+                    </a>
+                </div>
+            </section>
+
+            <section class="recent-documents">
+                <h2 class="section-title">Recent Documents</h2>
+                <ul class="document-list">
+                    <li class="document-item">
+                        <div class="document-info">
+                            <div class="document-name">Patient_Johnson_MRI_Report.pdf</div>
+                            <div class="document-meta">Uploaded 2 hours ago • MRN: 12345678</div>
+                        </div>
+                        <span class="badge badge-success">Completed</span>
+                    </li>
+                    <li class="document-item">
+                        <div class="document-info">
+                            <div class="document-name">Patient_Smith_Lab_Results.pdf</div>
+                            <div class="document-meta">Uploaded 5 hours ago • MRN: 87654321</div>
+                        </div>
+                        <span class="badge badge-info">Processing</span>
+                    </li>
+                    <li class="document-item">
+                        <div class="document-info">
+                            <div class="document-name">Patient_Williams_Discharge_Summary.docx</div>
+                            <div class="document-meta">Uploaded 1 day ago • MRN: 45678901</div>
+                        </div>
+                        <span class="badge badge-success">Completed</span>
+                    </li>
+                    <li class="document-item">
+                        <div class="document-info">
+                            <div class="document-name">Patient_Davis_Consultation_Notes.pdf</div>
+                            <div class="document-meta">Uploaded 2 days ago • MRN: 23456789</div>
+                        </div>
+                        <span class="badge badge-warning">Pending Review</span>
+                    </li>
+                </ul>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

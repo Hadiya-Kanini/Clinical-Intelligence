@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document List - Clinical Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary-700: #0056b3;
+            --color-success-500: #28a745;
+            --color-success-100: #d4edda;
+            --color-warning-500: #ffc107;
+            --color-warning-100: #fff3cd;
+            --color-info-500: #17a2b8;
+            --color-info-100: #d1ecf1;
+            --color-error-500: #dc3545;
+            --color-error-100: #f8d7da;
+            --color-neutral-900: #212529;
+            --color-neutral-700: #495057;
+            --color-neutral-500: #6c757d;
+            --color-neutral-300: #dee2e6;
+            --color-neutral-100: #f8f9fa;
+            --color-neutral-50: #ffffff;
+            --spacing-3: 0.75rem;
+            --spacing-4: 1rem;
+            --spacing-5: 1.5rem;
+            --spacing-6: 2rem;
+            --radius-small: 0.25rem;
+            --radius-medium: 0.5rem;
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--color-neutral-100);
+            color: var(--color-neutral-900);
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar { width: 240px; background: var(--color-neutral-900); position: fixed; height: 100vh; }
+        .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+        .header {
+            background: var(--color-neutral-50);
+            border-bottom: 1px solid var(--color-neutral-300);
+            padding: var(--spacing-4) var(--spacing-6);
+        }
+        .header-title { font-size: 1.563rem; font-weight: 700; }
+        .content { padding: var(--spacing-6); }
+        .filters {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-4);
+            margin-bottom: var(--spacing-5);
+            display: flex;
+            gap: var(--spacing-4);
+            align-items: center;
+        }
+        .search-input {
+            flex: 1;
+            height: 40px;
+            padding: var(--spacing-3);
+            border: 1px solid var(--color-neutral-300);
+            border-radius: var(--radius-small);
+        }
+        .filter-select {
+            height: 40px;
+            padding: var(--spacing-3);
+            border: 1px solid var(--color-neutral-300);
+            border-radius: var(--radius-small);
+            background: var(--color-neutral-50);
+        }
+        .table-container {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            box-shadow: var(--shadow-medium);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: var(--color-neutral-100);
+        }
+        th {
+            padding: var(--spacing-4);
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-neutral-900);
+            border-bottom: 2px solid var(--color-neutral-300);
+        }
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        th.sortable:hover {
+            background: var(--color-neutral-300);
+        }
+        td {
+            padding: var(--spacing-4);
+            border-bottom: 1px solid var(--color-neutral-300);
+        }
+        tr:hover {
+            background: var(--color-primary-100);
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-success {
+            background: var(--color-success-100);
+            color: #155724;
+        }
+        .badge-warning {
+            background: var(--color-warning-100);
+            color: #856404;
+        }
+        .badge-info {
+            background: var(--color-info-100);
+            color: #0c5460;
+        }
+        .badge-error {
+            background: var(--color-error-100);
+            color: #721c24;
+        }
+        .action-btn {
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+            border: none;
+            border-radius: var(--radius-small);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .action-btn:hover {
+            background: #004085;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-3);
+            padding: var(--spacing-5);
+        }
+        .page-btn {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--color-neutral-300);
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-small);
+            cursor: pointer;
+        }
+        .page-btn.active {
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+            border-color: var(--color-primary-700);
+        }
+        .page-btn:hover:not(.active) {
+            background: var(--color-neutral-100);
+        }
+        .mrn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--color-neutral-700);
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar"></aside>
+    
+    <div class="main-content">
+        <header class="header">
+            <h1 class="header-title">Documents</h1>
+        </header>
+
+        <main class="content">
+            <div class="filters">
+                <input type="search" class="search-input" placeholder="Search documents...">
+                <select class="filter-select">
+                    <option>All Statuses</option>
+                    <option>Pending</option>
+                    <option>Processing</option>
+                    <option>Completed</option>
+                    <option>Failed</option>
+                </select>
+                <select class="filter-select">
+                    <option>All Types</option>
+                    <option>PDF</option>
+                    <option>DOCX</option>
+                </select>
+                <select class="filter-select">
+                    <option>Last 7 Days</option>
+                    <option>Last 30 Days</option>
+                    <option>Last 90 Days</option>
+                    <option>All Time</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sortable">Document Name ↕</th>
+                            <th class="sortable">Patient MRN ↕</th>
+                            <th class="sortable">Upload Date ↕</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Patient_Johnson_MRI_Report.pdf</div>
+                                <div style="font-size: 0.875rem; color: var(--color-neutral-700);">2.4 MB</div>
+                            </td>
+                            <td><span class="mrn">MRN-12345678</span></td>
+                            <td>2026-01-13 10:24 AM</td>
+                            <td><span class="badge badge-success">Completed</span></td>
+                            <td><button class="action-btn">View Patient 360</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Patient_Smith_Lab_Results.pdf</div>
+                                <div style="font-size: 0.875rem; color: var(--color-neutral-700);">1.8 MB</div>
+                            </td>
+                            <td><span class="mrn">MRN-87654321</span></td>
+                            <td>2026-01-13 08:15 AM</td>
+                            <td><span class="badge badge-info">Processing</span></td>
+                            <td><button class="action-btn" disabled style="opacity: 0.5;">Processing...</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Patient_Williams_Discharge_Summary.docx</div>
+                                <div style="font-size: 0.875rem; color: var(--color-neutral-700);">1.2 MB</div>
+                            </td>
+                            <td><span class="mrn">MRN-45678901</span></td>
+                            <td>2026-01-12 03:45 PM</td>
+                            <td><span class="badge badge-success">Completed</span></td>
+                            <td><button class="action-btn">View Patient 360</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Patient_Davis_Consultation_Notes.pdf</div>
+                                <div style="font-size: 0.875rem; color: var(--color-neutral-700);">3.1 MB</div>
+                            </td>
+                            <td><span class="mrn">MRN-23456789</span></td>
+                            <td>2026-01-11 11:20 AM</td>
+                            <td><span class="badge badge-warning">Pending Review</span></td>
+                            <td><button class="action-btn">View Patient 360</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Patient_Martinez_Radiology_Report.pdf</div>
+                                <div style="font-size: 0.875rem; color: var(--color-neutral-700);">4.5 MB</div>
+                            </td>
+                            <td><span class="mrn">MRN-34567890</span></td>
+                            <td>2026-01-11 09:30 AM</td>
+                            <td><span class="badge badge-error">Failed</span></td>
+                            <td><button class="action-btn" style="background: var(--color-error-500);">Retry</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Patient_Brown_Progress_Notes.docx</div>
+                                <div style="font-size: 0.875rem; color: var(--color-neutral-700);">0.9 MB</div>
+                            </td>
+                            <td><span class="mrn">MRN-56789012</span></td>
+                            <td>2026-01-10 02:15 PM</td>
+                            <td><span class="badge badge-success">Completed</span></td>
+                            <td><button class="action-btn">View Patient 360</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Patient_Garcia_EKG_Results.pdf</div>
+                                <div style="font-size: 0.875rem; color: var(--color-neutral-700);">1.5 MB</div>
+                            </td>
+                            <td><span class="mrn">MRN-67890123</span></td>
+                            <td>2026-01-10 10:45 AM</td>
+                            <td><span class="badge badge-success">Completed</span></td>
+                            <td><button class="action-btn">View Patient 360</button></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Patient_Lee_Surgical_Report.pdf</div>
+                                <div style="font-size: 0.875rem; color: var(--color-neutral-700);">5.2 MB</div>
+                            </td>
+                            <td><span class="mrn">MRN-78901234</span></td>
+                            <td>2026-01-09 04:30 PM</td>
+                            <td><span class="badge badge-success">Completed</span></td>
+                            <td><button class="action-btn">View Patient 360</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="pagination">
+                    <button class="page-btn" disabled>← Previous</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">4</button>
+                    <button class="page-btn">5</button>
+                    <button class="page-btn">Next →</button>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

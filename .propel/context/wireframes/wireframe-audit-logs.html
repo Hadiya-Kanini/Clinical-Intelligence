@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Audit Logs - Clinical Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary-700: #0056b3;
+            --color-success-100: #d4edda;
+            --color-error-100: #f8d7da;
+            --color-warning-100: #fff3cd;
+            --color-neutral-900: #212529;
+            --color-neutral-700: #495057;
+            --color-neutral-300: #dee2e6;
+            --color-neutral-100: #f8f9fa;
+            --color-neutral-50: #ffffff;
+            --spacing-3: 0.75rem;
+            --spacing-4: 1rem;
+            --spacing-5: 1.5rem;
+            --spacing-6: 2rem;
+            --radius-small: 0.25rem;
+            --radius-medium: 0.5rem;
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--color-neutral-100);
+            color: var(--color-neutral-900);
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar { width: 240px; background: var(--color-neutral-900); position: fixed; height: 100vh; }
+        .main-content { margin-left: 240px; flex: 1; }
+        .header {
+            background: var(--color-neutral-50);
+            border-bottom: 1px solid var(--color-neutral-300);
+            padding: var(--spacing-4) var(--spacing-6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title { font-size: 1.563rem; font-weight: 700; }
+        .btn-export {
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+            border: none;
+            border-radius: var(--radius-small);
+            padding: var(--spacing-3) var(--spacing-5);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .content { padding: var(--spacing-6); }
+        .filters {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-4);
+            margin-bottom: var(--spacing-5);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-4);
+        }
+        .filter-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-2);
+        }
+        .filter-select, .filter-input {
+            width: 100%;
+            padding: var(--spacing-3);
+            border: 1px solid var(--color-neutral-300);
+            border-radius: var(--radius-small);
+        }
+        .table-container {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            box-shadow: var(--shadow-medium);
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--color-neutral-100); }
+        th {
+            padding: var(--spacing-4);
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--color-neutral-300);
+        }
+        td {
+            padding: var(--spacing-4);
+            border-bottom: 1px solid var(--color-neutral-300);
+            font-size: 0.875rem;
+        }
+        tr:hover { background: #e6f2ff; }
+        .timestamp {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+        .ip-address {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-small);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-success { background: var(--color-success-100); color: #155724; }
+        .badge-error { background: var(--color-error-100); color: #721c24; }
+        .badge-warning { background: var(--color-warning-100); color: #856404; }
+        .view-btn {
+            background: none;
+            border: 1px solid var(--color-primary-700);
+            color: var(--color-primary-700);
+            border-radius: var(--radius-small);
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar"></aside>
+    
+    <div class="main-content">
+        <header class="header">
+            <h1 class="header-title">Security Audit Logs</h1>
+            <button class="btn-export">Export Logs</button>
+        </header>
+
+        <main class="content">
+            <div class="filters">
+                <div class="filter-group">
+                    <label>User</label>
+                    <select class="filter-select">
+                        <option>All Users</option>
+                        <option>Dr. Sarah Chen</option>
+                        <option>Dr. Michael Rodriguez</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Action Type</label>
+                    <select class="filter-select">
+                        <option>All Actions</option>
+                        <option>Login</option>
+                        <option>Logout</option>
+                        <option>Document Upload</option>
+                        <option>Data Export</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Date From</label>
+                    <input type="date" class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label>Date To</label>
+                    <input type="date" class="filter-input">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>IP Address</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="timestamp">2026-01-13 09:15:42</span></td>
+                            <td>Dr. Sarah Chen</td>
+                            <td>LOGIN_SUCCESS</td>
+                            <td><span class="ip-address">192.168.1.105</span></td>
+                            <td><span class="badge badge-success">Success</span></td>
+                            <td><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><span class="timestamp">2026-01-13 08:42:18</span></td>
+                            <td>Dr. Michael Rodriguez</td>
+                            <td>DOCUMENT_UPLOADED</td>
+                            <td><span class="ip-address">192.168.1.112</span></td>
+                            <td><span class="badge badge-success">Success</span></td>
+                            <td><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><span class="timestamp">2026-01-13 08:30:55</span></td>
+                            <td>emily.johnson@hospital.com</td>
+                            <td>LOGIN_FAILED</td>
+                            <td><span class="ip-address">192.168.1.89</span></td>
+                            <td><span class="badge badge-error">Failed</span></td>
+                            <td><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><span class="timestamp">2026-01-13 07:55:33</span></td>
+                            <td>Dr. Sarah Chen</td>
+                            <td>PATIENT_DATA_EXPORTED</td>
+                            <td><span class="ip-address">192.168.1.105</span></td>
+                            <td><span class="badge badge-success">Success</span></td>
+                            <td><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><span class="timestamp">2026-01-13 07:22:10</span></td>
+                            <td>James Martinez</td>
+                            <td>USER_CREATED</td>
+                            <td><span class="ip-address">192.168.1.200</span></td>
+                            <td><span class="badge badge-success">Success</span></td>
+                            <td><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><span class="timestamp">2026-01-12 16:45:22</span></td>
+                            <td>unknown@external.com</td>
+                            <td>RATE_LIMIT_EXCEEDED</td>
+                            <td><span class="ip-address">203.0.113.45</span></td>
+                            <td><span class="badge badge-warning">Blocked</span></td>
+                            <td><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><span class="timestamp">2026-01-12 15:30:08</span></td>
+                            <td>Dr. Michael Rodriguez</td>
+                            <td>CONFLICT_RESOLVED</td>
+                            <td><span class="ip-address">192.168.1.112</span></td>
+                            <td><span class="badge badge-success">Success</span></td>
+                            <td><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><span class="timestamp">2026-01-12 14:18:55</span></td>
+                            <td>Emily Johnson</td>
+                            <td>ICD_CODE_ACCEPTED</td>
+                            <td><span class="ip-address">192.168.1.89</span></td>
+                            <td><span class="badge badge-success">Success</span></td>
+                            <td><button class="view-btn">View</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

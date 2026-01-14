@@ -1,0 +1,45 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# local settings
+*/settings.local.json
+
+# Dependencies
+node_modules/
+bower_components/
+
+# Build outputs
+dist/
+build/
+uploads/
+*.log
+
+# Application logs and coverage artifacts (may contain PHI)
+logs/
+TestResults/
+coverage/
+
+# .NET build artifacts
+bin/
+obj/
+.vs/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+.propel/templates
+.windsurf/*

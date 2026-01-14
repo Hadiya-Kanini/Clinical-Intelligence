@@ -1,0 +1,198 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+a:visited {
+  color: var(--color-clinical-purple);
+}
+
+.ui-textfield {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ui-textfield__label {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  line-height: var(--line-height-label);
+  letter-spacing: var(--letter-spacing-label);
+  color: var(--color-neutral-700);
+}
+
+.ui-textfield__input {
+  height: 40px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-md);
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast),
+    background var(--motion-fast);
+}
+
+.ui-textfield__input::placeholder {
+  color: var(--color-input-placeholder);
+}
+
+.ui-textfield__input:focus-visible {
+  border-color: var(--color-primary-500);
+}
+
+.ui-textfield.is-error .ui-textfield__input {
+  border-color: var(--color-error-main);
+  background: var(--color-error-light);
+}
+
+.ui-textfield__helper {
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-text-muted);
+}
+
+.ui-textfield__error {
+  font-size: var(--font-size-body-small);
+  line-height: var(--line-height-body-small);
+  color: var(--color-error-main);
+}
+
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: var(--font-size-button);
+  font-weight: var(--font-weight-button);
+  line-height: var(--line-height-button);
+  cursor: pointer;
+  transition:
+    background var(--motion-fast),
+    box-shadow var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast),
+    opacity var(--motion-fast);
+}
+
+.ui-button--primary {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-0);
+}
+
+.ui-button--primary:hover:not(:disabled) {
+  background: var(--color-primary-600);
+  box-shadow: var(--elevation-2);
+}
+
+.ui-button--primary:active:not(:disabled) {
+  background: var(--color-primary-700);
+}
+
+.ui-button:disabled {
+  background: var(--color-neutral-300);
+  color: var(--color-disabled-text);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.ui-button__spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-neutral-0);
+  border-right-color: transparent;
+  animation: ui-spin 0.8s linear infinite;
+}
+
+.ui-button:disabled .ui-button__spinner {
+  border-color: var(--color-disabled-text);
+  border-right-color: transparent;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ui-link {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.ui-link:hover {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+.ui-alert {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.ui-alert--error {
+  background: var(--color-error-light);
+  border-left-color: var(--color-error-main);
+  color: var(--color-error-dark);
+}
+
+.ui-alert--info {
+  background: var(--color-info-light);
+  border-left-color: var(--color-info-main);
+  color: var(--color-info-dark);
+}
+
+.ui-alert--success {
+  background: var(--color-success-light);
+  border-left-color: var(--color-success-main);
+  color: var(--color-success-dark);
+}
+
+.ui-alert--warning {
+  background: var(--color-warning-light);
+  border-left-color: var(--color-warning-main);
+  color: var(--color-warning-dark);
+}

@@ -1,0 +1,96 @@
+openapi: 3.0.0
+info:
+  title: "Clinical Intelligence API"
+  version: "1.0.0"
+  description: "API for the Clinical Intelligence platform, facilitating communication between the Web UI, Backend, and AI Worker."
+paths:
+  /health:
+    get:
+      summary: "Health Check"
+      description: "Provides the health status of the API."
+      responses:
+        '200':
+          description: "API is healthy."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Healthy"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/ping:
+    get:
+      summary: "Ping"
+      description: "Simple connectivity check for API v1."
+      responses:
+        '200':
+          description: "API is reachable."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+        '400':
+          $ref: '#/components/responses/UnsupportedApiVersion'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    ApiErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - details
+          properties:
+            code:
+              type: string
+              description: "A stable string identifier for the error."
+            message:
+              type: string
+              description: "A human-readable summary of the error."
+            details:
+              type: array
+              items:
+                type: string
+              description: "An array of specific error details. Empty if not applicable."
+              example: []
+
+  responses:
+    UnsupportedApiVersion:
+      description: "Unsupported API Version"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            error:
+              code: "unsupported_api_version"
+              message: "The requested API version is not supported."
+              details:
+                - "requested_version:v2"
+
+    InternalServerError:
+      description: "Internal Server Error"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            error:
+              code: "internal_server_error"
+              message: "An unexpected error occurred."
+              details: []

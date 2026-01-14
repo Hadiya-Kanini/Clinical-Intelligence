@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EntityExtractionResult",
+  "description": "Schema for entity extraction output produced/validated by the AI worker.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "description": "The version of this entity output schema.",
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "document_id": {
+      "description": "Identifier for the document processed.",
+      "type": "string"
+    },
+    "extracted_entities": {
+      "description": "Extracted entities from the source document.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/ExtractedEntity" }
+    },
+    "additional_entities": {
+      "description": "Optional extension point for additional extracted data not yet standardized.",
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "document_id",
+    "extracted_entities"
+  ],
+  "definitions": {
+    "DocumentLocation": {
+      "type": "object",
+      "properties": {
+        "page": { "type": "integer", "minimum": 1 },
+        "section": { "type": "string" },
+        "coordinates": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          },
+          "required": ["x", "y", "width", "height"]
+        }
+      }
+    },
+    "Conflict": {
+      "type": "object",
+      "properties": {
+        "conflicting_value": { "type": "string" },
+        "source_document": { "type": "string" },
+        "document_location": { "$ref": "#/definitions/DocumentLocation" }
+      },
+      "required": ["conflicting_value"]
+    },
+    "ExtractedEntity": {
+      "type": "object",
+      "properties": {
+        "entity_group_name": { "type": "string" },
+        "entity_name": { "type": "string" },
+        "entity_value": { "type": "string" },
+        "rationale": { "type": "string" },
+        "document_location": { "$ref": "#/definitions/DocumentLocation" },
+        "source_text": { "type": "string" },
+        "conflicts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Conflict" }
+        }
+      },
+      "required": ["entity_group_name", "entity_name", "entity_value"]
+    }
+  }
+}

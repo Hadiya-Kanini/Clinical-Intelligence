@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Upload - Clinical Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary-700: #0056b3;
+            --color-primary-500: #007bff;
+            --color-primary-100: #e6f2ff;
+            --color-success-500: #28a745;
+            --color-error-500: #dc3545;
+            --color-error-100: #f8d7da;
+            --color-neutral-900: #212529;
+            --color-neutral-700: #495057;
+            --color-neutral-500: #6c757d;
+            --color-neutral-300: #dee2e6;
+            --color-neutral-100: #f8f9fa;
+            --color-neutral-50: #ffffff;
+            --spacing-3: 0.75rem;
+            --spacing-4: 1rem;
+            --spacing-5: 1.5rem;
+            --spacing-6: 2rem;
+            --radius-small: 0.25rem;
+            --radius-medium: 0.5rem;
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--color-neutral-100);
+            color: var(--color-neutral-900);
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 240px;
+            background: var(--color-neutral-900);
+            color: var(--color-neutral-100);
+            position: fixed;
+            height: 100vh;
+        }
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: var(--color-neutral-50);
+            border-bottom: 1px solid var(--color-neutral-300);
+            padding: var(--spacing-4) var(--spacing-6);
+        }
+        .header-title {
+            font-size: 1.563rem;
+            font-weight: 700;
+        }
+        .content {
+            padding: var(--spacing-6);
+            max-width: 1200px;
+        }
+        .upload-zone {
+            border: 2px dashed var(--color-neutral-300);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-6);
+            text-align: center;
+            background: var(--color-neutral-50);
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-bottom: var(--spacing-5);
+        }
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--color-primary-500);
+            background: var(--color-primary-100);
+        }
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto var(--spacing-4);
+            color: var(--color-neutral-500);
+        }
+        .upload-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-3);
+        }
+        .upload-subtitle {
+            color: var(--color-neutral-700);
+            margin-bottom: var(--spacing-4);
+        }
+        .upload-requirements {
+            font-size: 0.875rem;
+            color: var(--color-neutral-500);
+        }
+        .file-list {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-5);
+            box-shadow: var(--shadow-medium);
+            margin-bottom: var(--spacing-5);
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-4);
+            padding: var(--spacing-4);
+            border: 1px solid var(--color-neutral-300);
+            border-radius: var(--radius-small);
+            margin-bottom: var(--spacing-3);
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary-100);
+            border-radius: var(--radius-small);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .file-size {
+            font-size: 0.875rem;
+            color: var(--color-neutral-700);
+        }
+        .progress-bar {
+            height: 6px;
+            background: var(--color-neutral-300);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--color-success-500);
+            transition: width 0.3s;
+        }
+        .file-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3);
+        }
+        .status-icon {
+            width: 24px;
+            height: 24px;
+        }
+        .remove-btn {
+            background: none;
+            border: none;
+            color: var(--color-error-500);
+            cursor: pointer;
+            padding: var(--spacing-3);
+            font-size: 1.25rem;
+        }
+        .error-message {
+            color: var(--color-error-500);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .button-primary {
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+            border: none;
+            border-radius: var(--radius-small);
+            padding: var(--spacing-3) var(--spacing-5);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .button-primary:hover {
+            background: #004085;
+        }
+        .button-primary:disabled {
+            background: var(--color-neutral-300);
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar"></aside>
+    
+    <div class="main-content">
+        <header class="header">
+            <h1 class="header-title">Upload Documents</h1>
+        </header>
+
+        <main class="content">
+            <div class="upload-zone" id="uploadZone">
+                <svg class="upload-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                </svg>
+                <div class="upload-title">Drag and drop files here</div>
+                <div class="upload-subtitle">or click to browse your computer</div>
+                <div class="upload-requirements">
+                    Supported formats: PDF, DOCX • Max file size: 50MB • Max 10 files per batch
+                </div>
+                <input type="file" id="fileInput" multiple accept=".pdf,.docx" style="display: none;">
+            </div>
+
+            <div class="file-list" id="fileList" style="display: none;">
+                <h2 style="margin-bottom: var(--spacing-4); font-size: 1.25rem;">Selected Files (3)</h2>
+                
+                <div class="file-item">
+                    <div class="file-icon">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">Patient_Johnson_MRI_Report.pdf</div>
+                        <div class="file-size">2.4 MB</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div class="file-status">
+                        <svg class="status-icon" fill="#28a745" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <button class="remove-btn">×</button>
+                    </div>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-icon">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">Patient_Smith_Lab_Results.pdf</div>
+                        <div class="file-size">1.8 MB</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                    <div class="file-status">
+                        <span style="font-size: 0.875rem; color: var(--color-neutral-700);">65%</span>
+                        <button class="remove-btn">×</button>
+                    </div>
+                </div>
+
+                <div class="file-item" style="border-color: var(--color-error-500); background: var(--color-error-100);">
+                    <div class="file-icon" style="background: var(--color-error-100);">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">Patient_Williams_Scan.jpg</div>
+                        <div class="file-size">5.2 MB</div>
+                        <div class="error-message">Invalid file type. Only PDF and DOCX files are allowed.</div>
+                    </div>
+                    <div class="file-status">
+                        <svg class="status-icon" fill="#dc3545" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <button class="remove-btn">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: var(--spacing-4);">
+                <button class="button-primary" id="uploadBtn" disabled>Upload Documents</button>
+                <button class="button-primary" style="background: var(--color-neutral-300);">Cancel</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.getElementById('fileList').style.display = 'block';
+        document.getElementById('uploadBtn').disabled = false;
+    </script>
+</body>
+</html>

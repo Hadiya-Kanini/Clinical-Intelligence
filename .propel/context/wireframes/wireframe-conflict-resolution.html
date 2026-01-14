@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conflict Resolution - Clinical Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary-700: #0056b3;
+            --color-error-500: #dc3545;
+            --color-error-100: #f8d7da;
+            --color-neutral-900: #212529;
+            --color-neutral-700: #495057;
+            --color-neutral-300: #dee2e6;
+            --color-neutral-100: #f8f9fa;
+            --color-neutral-50: #ffffff;
+            --spacing-3: 0.75rem;
+            --spacing-4: 1rem;
+            --spacing-5: 1.5rem;
+            --spacing-6: 2rem;
+            --radius-small: 0.25rem;
+            --radius-medium: 0.5rem;
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: var(--color-neutral-100);
+            color: var(--color-neutral-900);
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar { width: 240px; background: var(--color-neutral-900); position: fixed; height: 100vh; }
+        .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+        .header {
+            background: var(--color-neutral-50);
+            border-bottom: 1px solid var(--color-neutral-300);
+            padding: var(--spacing-4) var(--spacing-6);
+        }
+        .header-title { font-size: 1.563rem; font-weight: 700; }
+        .breadcrumb {
+            font-size: 0.875rem;
+            color: var(--color-neutral-700);
+            margin-bottom: var(--spacing-3);
+        }
+        .breadcrumb a { color: var(--color-primary-700); text-decoration: none; }
+        .content { padding: var(--spacing-6); max-width: 1200px; }
+        .alert {
+            background: var(--color-error-100);
+            border-left: 4px solid var(--color-error-500);
+            padding: var(--spacing-4);
+            border-radius: var(--radius-small);
+            margin-bottom: var(--spacing-6);
+        }
+        .alert-title {
+            font-weight: 700;
+            margin-bottom: var(--spacing-3);
+            font-size: 1.125rem;
+        }
+        .conflict-card {
+            background: var(--color-neutral-50);
+            border-radius: var(--radius-medium);
+            box-shadow: var(--shadow-medium);
+            margin-bottom: var(--spacing-6);
+            overflow: hidden;
+        }
+        .conflict-header {
+            background: var(--color-neutral-100);
+            padding: var(--spacing-4);
+            border-bottom: 2px solid var(--color-neutral-300);
+        }
+        .conflict-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-3);
+        }
+        .conflict-meta {
+            font-size: 0.875rem;
+            color: var(--color-neutral-700);
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        .option-panel {
+            padding: var(--spacing-5);
+            border-right: 2px solid var(--color-neutral-300);
+        }
+        .option-panel:last-child { border-right: none; }
+        .option-panel.selected {
+            background: #e6f2ff;
+            border: 2px solid var(--color-primary-700);
+        }
+        .option-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-neutral-700);
+            margin-bottom: var(--spacing-3);
+        }
+        .option-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-4);
+        }
+        .source-info {
+            background: var(--color-neutral-100);
+            padding: var(--spacing-3);
+            border-radius: var(--radius-small);
+            margin-bottom: var(--spacing-4);
+        }
+        .source-label {
+            font-size: 0.75rem;
+            color: var(--color-neutral-700);
+            margin-bottom: var(--spacing-2);
+        }
+        .source-link {
+            color: var(--color-primary-700);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        .source-link:hover { text-decoration: underline; }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-3);
+            padding: var(--spacing-3);
+            border: 2px solid var(--color-neutral-300);
+            border-radius: var(--radius-small);
+            cursor: pointer;
+            margin-bottom: var(--spacing-3);
+        }
+        .radio-option:hover {
+            background: var(--color-neutral-100);
+        }
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+        }
+        .manual-entry {
+            margin-top: var(--spacing-4);
+            padding: var(--spacing-4);
+            background: var(--color-neutral-100);
+            border-radius: var(--radius-small);
+        }
+        .manual-entry label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: var(--spacing-2);
+        }
+        .manual-entry input {
+            width: 100%;
+            padding: var(--spacing-3);
+            border: 1px solid var(--color-neutral-300);
+            border-radius: var(--radius-small);
+        }
+        .action-buttons {
+            display: flex;
+            gap: var(--spacing-4);
+            justify-content: center;
+            padding: var(--spacing-5);
+        }
+        .btn-primary {
+            background: var(--color-primary-700);
+            color: var(--color-neutral-50);
+            border: none;
+            border-radius: var(--radius-small);
+            padding: var(--spacing-3) var(--spacing-6);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-primary:hover { background: #004085; }
+        .btn-secondary {
+            background: var(--color-neutral-300);
+            color: var(--color-neutral-900);
+            border: none;
+            border-radius: var(--radius-small);
+            padding: var(--spacing-3) var(--spacing-6);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar"></aside>
+    
+    <div class="main-content">
+        <header class="header">
+            <div class="breadcrumb">
+                <a href="wireframe-user-dashboard.html">Dashboard</a> › 
+                <a href="wireframe-patient-360.html">Patient 360</a> › 
+                Conflict Resolution
+            </div>
+            <h1 class="header-title">Resolve Data Conflicts</h1>
+        </header>
+
+        <main class="content">
+            <div class="alert">
+                <div class="alert-title">⚠ 2 Conflicts Detected</div>
+                <p>Multiple documents contain different values for the same patient data fields. Please review each conflict and select the correct value.</p>
+            </div>
+
+            <div class="conflict-card">
+                <div class="conflict-header">
+                    <div class="conflict-title">Conflict 1 of 2: Date of Birth</div>
+                    <div class="conflict-meta">Patient: John Michael Johnson • MRN: 12345678</div>
+                </div>
+                
+                <div class="comparison-grid">
+                    <div class="option-panel">
+                        <div class="option-label">Option A</div>
+                        <div class="option-value">1965-03-15</div>
+                        
+                        <div class="source-info">
+                            <div class="source-label">Source Document</div>
+                            <a href="#" class="source-link">📄 MRI_Report.pdf, Page 2, Section: Patient Demographics</a>
+                        </div>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="conflict1" value="optionA">
+                            <span>Select this value</span>
+                        </label>
+                    </div>
+                    
+                    <div class="option-panel">
+                        <div class="option-label">Option B</div>
+                        <div class="option-value">1965-03-16</div>
+                        
+                        <div class="source-info">
+                            <div class="source-label">Source Document</div>
+                            <a href="#" class="source-link">📄 Lab_Results.pdf, Page 1, Section: Patient Information</a>
+                        </div>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="conflict1" value="optionB">
+                            <span>Select this value</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="manual-entry">
+                    <label for="manual1">Or enter correct value manually:</label>
+                    <input type="date" id="manual1" placeholder="YYYY-MM-DD">
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn-primary">Resolve Conflict</button>
+                </div>
+            </div>
+
+            <div class="conflict-card">
+                <div class="conflict-header">
+                    <div class="conflict-title">Conflict 2 of 2: Medication Dosage</div>
+                    <div class="conflict-meta">Patient: John Michael Johnson • MRN: 12345678 • Medication: Lisinopril</div>
+                </div>
+                
+                <div class="comparison-grid">
+                    <div class="option-panel selected">
+                        <div class="option-label">Option A</div>
+                        <div class="option-value">10mg once daily</div>
+                        
+                        <div class="source-info">
+                            <div class="source-label">Source Document</div>
+                            <a href="#" class="source-link">📄 MRI_Report.pdf, Page 3, Section: Current Medications</a>
+                        </div>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="conflict2" value="optionA" checked>
+                            <span>Select this value</span>
+                        </label>
+                    </div>
+                    
+                    <div class="option-panel">
+                        <div class="option-label">Option B</div>
+                        <div class="option-value">20mg once daily</div>
+                        
+                        <div class="source-info">
+                            <div class="source-label">Source Document</div>
+                            <a href="#" class="source-link">📄 Consultation_Notes.pdf, Page 2, Section: Medication List</a>
+                        </div>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="conflict2" value="optionB">
+                            <span>Select this value</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="manual-entry">
+                    <label for="manual2">Or enter correct value manually:</label>
+                    <input type="text" id="manual2" placeholder="Enter dosage and frequency">
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn-primary">Resolve Conflict</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: var(--spacing-4); justify-content: center; margin-top: var(--spacing-6);">
+                <button class="btn-primary" style="padding: var(--spacing-4) var(--spacing-6); font-size: 1.125rem;">Resolve All & Return to Patient 360</button>
+                <button class="btn-secondary">Cancel</button>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
