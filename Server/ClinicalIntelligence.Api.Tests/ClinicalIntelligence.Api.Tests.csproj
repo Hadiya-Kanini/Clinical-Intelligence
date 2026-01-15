@@ -14,12 +14,17 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
+<<<<<<< HEAD
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.15" />
+=======
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.8" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.8" />
     <PackageReference Include="Pgvector" Version="0.3.0" />
     <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.2.0" />
     <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+>>>>>>> 3875afb49c79c7619ec8d0938ebd6229c8569b21
   </ItemGroup>
 
   <ItemGroup>
