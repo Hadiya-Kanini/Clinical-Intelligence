@@ -80,7 +80,9 @@ jobs:
       - name: Run API and fetch swagger
         run: |
           dotnet run --project Server/ClinicalIntelligence.Api/ClinicalIntelligence.Api.csproj --urls http://localhost:5000 &
-          sleep 10
+          sleep 15
+          curl -s http://localhost:5000/swagger/v1/swagger.json > generated-swagger.json || echo "API not ready, retrying..."
+          sleep 5
           curl -s http://localhost:5000/swagger/v1/swagger.json > generated-swagger.json
       - name: Compare generated swagger to committed OpenAPI
         run: |
