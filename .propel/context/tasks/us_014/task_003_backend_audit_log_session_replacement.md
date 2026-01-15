@@ -55,9 +55,9 @@ Record an audit trail entry whenever a user login revokes one or more existing a
 - [Security] Ensure metadata does not include sensitive information (no tokens, no passwords).
 
 ## Implementation Checklist
-- [ ] Define the audit `ActionType` constant for session replacement
-- [ ] Capture request IP + user agent for the audit event
-- [ ] Persist `AuditLogEvent` when session replacement occurs
-- [ ] Store minimal metadata (count and/or ids)
-- [ ] Ensure audit write happens transactionally with session updates
+- [x] Define the audit `ActionType` constant for session replacement
+- [x] Capture request IP + user agent for the audit event
+- [x] Persist `AuditLogEvent` when session replacement occurs
+- [x] Store minimal metadata (count and/or ids)
+- [x] Ensure audit write happens transactionally with session updates
 - [ ] Add integration test for audit trail insertion

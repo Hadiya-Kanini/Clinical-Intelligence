@@ -48,7 +48,7 @@ Enhance the login rate limiting rejection response to include a `Retry-After` he
   - Response is JSON and follows the API error envelope
 
 ## Implementation Checklist
-- [ ] Add rate limiter `OnRejected` handler
-- [ ] Populate `Retry-After` header from limiter metadata
-- [ ] Return standardized JSON error using `ApiErrorResults.TooManyRequests`
-- [ ] Validate no sensitive information is present in the error body
+- [x] Add rate limiter `OnRejected` handler
+- [x] Populate `Retry-After` header from limiter metadata
+- [x] Return standardized JSON error using `ApiErrorResults.TooManyRequests`
+- [x] Validate no sensitive information is present in the error body

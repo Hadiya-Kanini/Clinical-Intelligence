@@ -51,8 +51,8 @@ Update the login UI to display a clear unlock timeframe when the backend returns
 - [Automated] Run Playwright login visual tests and confirm locked state renders correctly.
 
 ## Implementation Checklist
-- [ ] Detect `account_locked` error code on login failure
-- [ ] Parse `unlock_at:` and/or `remaining_seconds:` from `error.details`
-- [ ] Render user-friendly unlock timeframe text (UXR-009)
-- [ ] Ensure error message is accessible and non-sensitive
-- [ ] Update Playwright mocked response and verify screenshots
+- [x] Detect `account_locked` error code on login failure
+- [x] Parse `unlock_at:` and/or `remaining_seconds:` from `error.details`
+- [x] Render user-friendly unlock timeframe text (UXR-009)
+- [x] Ensure error message is accessible and non-sensitive
+- [x] Update Playwright mocked response and verify screenshots

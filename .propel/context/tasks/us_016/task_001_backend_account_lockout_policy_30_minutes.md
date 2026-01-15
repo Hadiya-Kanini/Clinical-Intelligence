@@ -50,8 +50,8 @@ Update backend login lockout behavior to enforce a 30-minute lockout window afte
 - [Manual] Simulate lockout expiry (by manipulating `LockedUntil` in DB) and confirm login attempts are allowed again.
 
 ## Implementation Checklist
-- [ ] Change lockout duration constant/logic to 30 minutes
-- [ ] Add expired-lockout handling: reset `FailedLoginAttempts` and clear `LockedUntil`
-- [ ] Persist reset state to DB
-- [ ] Verify correct behavior when rate limiting returns 429 (no account attempt increments)
-- [ ] Validate unlock behavior after lockout window expiry
+- [x] Change lockout duration constant/logic to 30 minutes
+- [x] Add expired-lockout handling: reset `FailedLoginAttempts` and clear `LockedUntil`
+- [x] Persist reset state to DB
+- [x] Verify correct behavior when rate limiting returns 429 (no account attempt increments)
+- [x] Validate unlock behavior after lockout window expiry

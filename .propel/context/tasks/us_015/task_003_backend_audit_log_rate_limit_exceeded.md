@@ -52,8 +52,8 @@ Log rate limit exceedance events for login attempts into the existing `audit_log
 - [Resilience] Simulate DB failure and confirm rate limiting still returns `429` (audit logging falls back to application logs).
 
 ## Implementation Checklist
-- [ ] Define `ActionType` value: `RATE_LIMIT_EXCEEDED`
-- [ ] Capture IP + user agent in audit event
-- [ ] Store minimal non-sensitive metadata
-- [ ] Persist audit event best-effort (no failures affecting 429 response)
-- [ ] Validate audit event creation for rate limit exceedance
+- [x] Define `ActionType` value: `RATE_LIMIT_EXCEEDED`
+- [x] Capture IP + user agent in audit event
+- [x] Store minimal non-sensitive metadata
+- [x] Persist audit event best-effort (no failures affecting 429 response)
+- [x] Validate audit event creation for rate limit exceedance

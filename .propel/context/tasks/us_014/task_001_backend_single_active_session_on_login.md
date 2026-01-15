@@ -60,10 +60,10 @@ Implement backend support for a single active session per user by revoking exist
 - [Automated validation] Add or extend integration tests to cover session replacement flows (task_002 covers request-time enforcement and 401).
 
 ## Implementation Checklist
-- [ ] Identify “active session” predicate in DB (revoked + expiry)
-- [ ] Revoke any existing active sessions for the user at login
-- [ ] Create a new `Session` record at login with user agent + IP
-- [ ] Wrap revoke + create in a transaction to avoid race conditions
-- [ ] Add a session identifier claim to the issued JWT
-- [ ] Confirm cookie issuance remains aligned to US_011 security settings
-- [ ] Validate behavior for quick device switching (new login wins)
+- [x] Identify "active session" predicate in DB (revoked + expiry)
+- [x] Revoke any existing active sessions for the user at login
+- [x] Create a new `Session` record at login with user agent + IP
+- [x] Wrap revoke + create in a transaction to avoid race conditions
+- [x] Add a session identifier claim to the issued JWT
+- [x] Confirm cookie issuance remains aligned to US_011 security settings
+- [x] Validate behavior for quick device switching (new login wins)

@@ -50,8 +50,8 @@ Persist an audit trail entry when an account lockout is triggered due to failed 
 - [Security] Ensure metadata does not include passwords or tokens.
 
 ## Implementation Checklist
-- [ ] Define `ActionType` value: `ACCOUNT_LOCKED`
-- [ ] Detect lockout transition (avoid logging on every locked retry)
-- [ ] Capture request IP + user agent
-- [ ] Store minimal metadata including `unlock_at`
-- [ ] Persist event best-effort without impacting response flow
+- [x] Define `ActionType` value: `ACCOUNT_LOCKED`
+- [x] Detect lockout transition (avoid logging on every locked retry)
+- [x] Capture request IP + user agent
+- [x] Store minimal metadata including `unlock_at`
+- [x] Persist event best-effort without impacting response flow

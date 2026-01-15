@@ -49,9 +49,9 @@ Improve UX for the “session invalidated” scenario by redirecting the user to
 - [Regression] Existing logout confirmation message still works.
 
 ## Implementation Checklist
-- [ ] Add axios response interceptor for `401` with session invalidated payload
-- [ ] Clear legacy localStorage keys before redirect
-- [ ] Redirect to `/login` with navigation state flag
-- [ ] Update `LoginPage` to show a session invalidated message
-- [ ] Ensure message is accessible and non-sensitive
-- [ ] Verify message clears on new login attempt
+- [x] Add axios response interceptor for `401` with session invalidated payload
+- [x] Clear legacy localStorage keys before redirect
+- [x] Redirect to `/login` with navigation state flag
+- [x] Update `LoginPage` to show a session invalidated message
+- [x] Ensure message is accessible and non-sensitive
+- [x] Verify message clears on new login attempt

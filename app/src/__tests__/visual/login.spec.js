@@ -13,11 +13,18 @@ test.describe('Login Page Visual Tests', () => {
       const body = (request.postData() || '').toLowerCase()
 
       if (body.includes('"password":"locked"')) {
+        // Mock unlock time 30 minutes from now (US_016)
+        const unlockAt = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+        const remainingSeconds = 30 * 60
         await route.fulfill({
           status: 403,
           contentType: 'application/json',
           body: JSON.stringify({
-            error: { code: 'account_locked', message: 'Account temporarily locked.', details: [] },
+            error: {
+              code: 'account_locked',
+              message: 'Account temporarily locked. Please try again later.',
+              details: [`unlock_at:${unlockAt}`, `remaining_seconds:${remainingSeconds}`],
+            },
           }),
         })
         return
