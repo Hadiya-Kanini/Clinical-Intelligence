@@ -60,10 +60,10 @@ Enforce server-side session revocation at request time by validating the session
 - [Regression] Existing cookie auth tests remain green.
 
 ## Implementation Checklist
-- [ ] Extract session id claim during JWT validation
-- [ ] Query DB for session record and validate not revoked + not expired
-- [ ] Ensure auth failure maps to `401 Unauthorized`
-- [ ] Ensure response body includes a `session invalidated` message
+- [x] Extract session id claim during JWT validation
+- [x] Query DB for session record and validate not revoked + not expired
+- [x] Ensure auth failure maps to `401 Unauthorized`
+- [x] Ensure response body includes a `session invalidated` message
 - [ ] Add integration tests for “login twice invalidates previous session”
 - [ ] Add regression test for valid session still returns 200
-- [ ] Validate behavior for near-simultaneous logins (document expected outcome)
+- [x] Validate behavior for near-simultaneous logins (document expected outcome)

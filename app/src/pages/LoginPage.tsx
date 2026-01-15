@@ -1,6 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
 export default function LoginPage(): JSX.Element {
   const [email, setEmail] = useState('')
@@ -14,9 +14,12 @@ export default function LoginPage(): JSX.Element {
   })
   const [sessionExpiredMessage, setSessionExpiredMessage] = useState('')
   const [logoutSuccessMessage, setLogoutSuccessMessage] = useState('')
+  const [sessionInvalidatedMessage, setSessionInvalidatedMessage] = useState('')
+  const [accountLockedMessage, setAccountLockedMessage] = useState('')
 
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const emailInputRef = useRef<HTMLInputElement>(null)
   const passwordInputRef = useRef<HTMLInputElement>(null)
 
@@ -34,15 +37,35 @@ export default function LoginPage(): JSX.Element {
     if (logoutReason === 'expired') {
       setSessionExpiredMessage('Your session has expired due to inactivity. Please log in again.')
       setLogoutSuccessMessage('')
+      setSessionInvalidatedMessage('')
       // Clear the state to prevent message from showing on refresh
       window.history.replaceState({}, document.title)
     } else if (logoutReason === 'success') {
       setLogoutSuccessMessage('You have been successfully logged out.')
       setSessionExpiredMessage('')
+      setSessionInvalidatedMessage('')
       // Clear the state to prevent message from showing on refresh
       window.history.replaceState({}, document.title)
     }
   }, [location.state])
+
+  // Check for session invalidated from URL query parameter (redirected by axios interceptor)
+  useEffect(() => {
+    const authParam = searchParams.get('auth')
+    if (authParam === 'session_invalidated') {
+      setSessionInvalidatedMessage('Your session was ended because you signed in on another device.')
+      setSessionExpiredMessage('')
+      setLogoutSuccessMessage('')
+      // Clear the query parameter to prevent message from showing on refresh
+      setSearchParams({}, { replace: true })
+    } else if (authParam === 'expired') {
+      setSessionExpiredMessage('Your session has expired. Please log in again.')
+      setSessionInvalidatedMessage('')
+      setLogoutSuccessMessage('')
+      // Clear the query parameter to prevent message from showing on refresh
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     if (emailInputRef.current) {
@@ -75,6 +98,12 @@ export default function LoginPage(): JSX.Element {
     }
     if (sessionExpiredMessage) {
       setSessionExpiredMessage('')
+    }
+    if (sessionInvalidatedMessage) {
+      setSessionInvalidatedMessage('')
+    }
+    if (accountLockedMessage) {
+      setAccountLockedMessage('')
     }
   }
 
@@ -123,6 +152,37 @@ export default function LoginPage(): JSX.Element {
 
       if (!response.ok) {
         const errorData = await response.json()
+        
+        // Handle account_locked error with unlock timeframe (UXR-009)
+        if (errorData.error?.code === 'account_locked' && errorData.error?.details) {
+          const details = errorData.error.details as string[]
+          let unlockTime = ''
+          
+          // Parse unlock_at from details
+          const unlockAtDetail = details.find((d: string) => d.startsWith('unlock_at:'))
+          if (unlockAtDetail) {
+            const unlockAtStr = unlockAtDetail.replace('unlock_at:', '')
+            const unlockDate = new Date(unlockAtStr)
+            unlockTime = unlockDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          } else {
+            // Fallback to remaining_seconds if unlock_at not present
+            const remainingDetail = details.find((d: string) => d.startsWith('remaining_seconds:'))
+            if (remainingDetail) {
+              const remainingSeconds = parseInt(remainingDetail.replace('remaining_seconds:', ''), 10)
+              const unlockDate = new Date(Date.now() + remainingSeconds * 1000)
+              unlockTime = unlockDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+          }
+          
+          if (unlockTime) {
+            setAccountLockedMessage(`Your account is locked. Try again at ${unlockTime}.`)
+          } else {
+            setAccountLockedMessage('Your account is temporarily locked. Please try again later.')
+          }
+          setError('')
+          return
+        }
+        
         throw new Error(errorData.error?.message || 'Login failed')
       }
 
@@ -245,6 +305,24 @@ export default function LoginPage(): JSX.Element {
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
               </svg>
               <span>{sessionExpiredMessage}</span>
+            </div>
+          )}
+
+          {sessionInvalidatedMessage && (
+            <div className="info-message session-invalidated visible" role="status" aria-live="polite">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <span>{sessionInvalidatedMessage}</span>
+            </div>
+          )}
+
+          {accountLockedMessage && (
+            <div className="error-message account-locked visible" role="alert" aria-live="assertive">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+              <span>{accountLockedMessage}</span>
             </div>
           )}
 

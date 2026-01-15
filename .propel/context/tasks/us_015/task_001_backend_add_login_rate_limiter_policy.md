@@ -54,9 +54,9 @@ Implement backend login rate limiting for `POST /api/v1/auth/login` at **5 attem
 - [Manual] Wait for the configured window and confirm login attempts succeed again.
 
 ## Implementation Checklist
-- [ ] Add `RateLimitingOptions` config model with sensible defaults
-- [ ] Register `AddRateLimiter` services with an IP-partitioned limiter for login
-- [ ] Add `UseRateLimiter` middleware
-- [ ] Apply policy only to `POST /api/v1/auth/login`
-- [ ] Validate limiter resets after the configured window
-- [ ] Document known NAT/shared IP tradeoff
+- [x] Add `RateLimitingOptions` config model with sensible defaults
+- [x] Register `AddRateLimiter` services with an IP-partitioned limiter for login
+- [x] Add `UseRateLimiter` middleware
+- [x] Apply policy only to `POST /api/v1/auth/login`
+- [x] Validate limiter resets after the configured window
+- [x] Document known NAT/shared IP tradeoff

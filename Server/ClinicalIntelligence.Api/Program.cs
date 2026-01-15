@@ -21,6 +21,7 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Threading.RateLimiting;
 using DotNetEnv;
 using Npgsql;
 
@@ -154,6 +155,90 @@ builder.Services.AddCors(options =>
 // Register token revocation store for session-based revocation checks
 builder.Services.AddScoped<ITokenRevocationStore, DbTokenRevocationStore>();
 
+// Configure rate limiting for login endpoint (US_015)
+var rateLimitingOptions = builder.Configuration.GetSection(RateLimitingOptions.SectionName).Get<RateLimitingOptions>() ?? new RateLimitingOptions();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(RateLimitingOptions.LoginPolicyName, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = rateLimitingOptions.LoginPermitLimit,
+                Window = rateLimitingOptions.LoginWindow,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var retryAfterSeconds = rateLimitingOptions.LoginWindowSeconds;
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            retryAfterSeconds = (int)Math.Ceiling(retryAfter.TotalSeconds);
+        }
+
+        context.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
+
+        // Write standardized JSON error response
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+
+        var errorResponse = new
+        {
+            error = new
+            {
+                code = "rate_limited",
+                message = "Too many login attempts. Please try again later.",
+                details = Array.Empty<string>()
+            }
+        };
+
+        await context.HttpContext.Response.WriteAsJsonAsync(errorResponse, cancellationToken);
+
+        // Best-effort audit logging for rate limit exceeded
+        try
+        {
+            var dbContext = context.HttpContext.RequestServices.GetService<ApplicationDbContext>();
+            var logger = context.HttpContext.RequestServices.GetService<ILogger<Program>>();
+
+            if (dbContext != null)
+            {
+                var auditEvent = new AuditLogEvent
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = null,
+                    SessionId = null,
+                    ActionType = "RATE_LIMIT_EXCEEDED",
+                    IpAddress = context.HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    UserAgent = context.HttpContext.Request.Headers.UserAgent.ToString(),
+                    ResourceType = "Auth",
+                    Timestamp = DateTime.UtcNow,
+                    Metadata = JsonSerializer.Serialize(new
+                    {
+                        endpoint = context.HttpContext.Request.Path.Value,
+                        permitLimit = rateLimitingOptions.LoginPermitLimit,
+                        windowSeconds = rateLimitingOptions.LoginWindowSeconds,
+                        retryAfterSeconds = retryAfterSeconds
+                    })
+                };
+                dbContext.AuditLogEvents.Add(auditEvent);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log to application logs if DB audit fails - do not affect 429 response
+            var logger = context.HttpContext.RequestServices.GetService<ILogger<Program>>();
+            logger?.LogWarning(ex, "Failed to persist RATE_LIMIT_EXCEEDED audit event for IP {IpAddress}",
+                context.HttpContext.Connection.RemoteIpAddress?.ToString());
+        }
+    };
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -174,6 +259,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFrontend");
+
+// Rate limiter middleware - must be early to protect endpoints
+app.UseRateLimiter();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ApiExceptionMiddleware>();
@@ -331,10 +419,22 @@ v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, Appl
     // Check if account is locked
     if (user.LockedUntil.HasValue && user.LockedUntil.Value > DateTime.UtcNow)
     {
+        var unlockAt = user.LockedUntil.Value;
+        var remainingSeconds = (int)Math.Ceiling((unlockAt - DateTime.UtcNow).TotalSeconds);
         return ApiErrorResults.Forbidden(
             code: "account_locked",
-            message: "Account temporarily locked. Please try again later."
+            message: "Account temporarily locked. Please try again later.",
+            details: new[] { $"unlock_at:{unlockAt:O}", $"remaining_seconds:{remainingSeconds}" }
         );
+    }
+
+    // Auto-unlock: If lockout has expired, reset counters
+    if (user.LockedUntil.HasValue && user.LockedUntil.Value <= DateTime.UtcNow)
+    {
+        user.FailedLoginAttempts = 0;
+        user.LockedUntil = null;
+        user.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
     }
 
     // Verify password using bcrypt
@@ -355,13 +455,47 @@ v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, Appl
         user.FailedLoginAttempts++;
         user.UpdatedAt = DateTime.UtcNow;
 
-        // Lock account after 5 failed attempts for 15 minutes
-        if (user.FailedLoginAttempts >= 5)
+        // Lock account after 5 failed attempts for 30 minutes (US_016)
+        var isNewlyLocked = false;
+        if (user.FailedLoginAttempts >= 5 && !user.LockedUntil.HasValue)
         {
-            user.LockedUntil = DateTime.UtcNow.AddMinutes(15);
+            user.LockedUntil = DateTime.UtcNow.AddMinutes(30);
+            isNewlyLocked = true;
         }
 
         await dbContext.SaveChangesAsync();
+
+        // Log ACCOUNT_LOCKED audit event when lockout is triggered (US_016 TASK_003)
+        if (isNewlyLocked)
+        {
+            try
+            {
+                var lockoutAuditEvent = new AuditLogEvent
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    SessionId = null,
+                    ActionType = "ACCOUNT_LOCKED",
+                    IpAddress = context.Connection.RemoteIpAddress?.ToString(),
+                    UserAgent = context.Request.Headers.UserAgent.ToString(),
+                    ResourceType = "Auth",
+                    Timestamp = DateTime.UtcNow,
+                    Metadata = JsonSerializer.Serialize(new
+                    {
+                        unlock_at = user.LockedUntil?.ToString("O"),
+                        failed_attempts = user.FailedLoginAttempts,
+                        threshold = 5
+                    })
+                };
+                dbContext.AuditLogEvents.Add(lockoutAuditEvent);
+                await dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                var logger = context.RequestServices.GetService<ILogger<Program>>();
+                logger?.LogWarning(ex, "Failed to persist ACCOUNT_LOCKED audit event for user {UserId}", user.Id);
+            }
+        }
 
         return ApiErrorResults.Unauthorized(
             code: "invalid_credentials",
@@ -374,46 +508,93 @@ v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, Appl
     user.LockedUntil = null;
     user.UpdatedAt = DateTime.UtcNow;
 
-    // Create server-side session record
-    var session = new Session
+    // Use transaction to ensure atomicity of session revocation and creation
+    await using var transaction = await dbContext.Database.BeginTransactionAsync();
+    try
     {
-        Id = Guid.NewGuid(),
-        UserId = user.Id,
-        CreatedAt = DateTime.UtcNow,
-        ExpiresAt = DateTime.UtcNow.AddMinutes(secrets.JwtExpirationMinutes),
-        LastActivityAt = DateTime.UtcNow,
-        UserAgent = context.Request.Headers.UserAgent.ToString(),
-        IpAddress = context.Connection.RemoteIpAddress?.ToString(),
-        IsRevoked = false
-    };
-    dbContext.Sessions.Add(session);
-    await dbContext.SaveChangesAsync();
+        // Revoke all existing active sessions for this user (single active session enforcement)
+        var activeSessions = await dbContext.Sessions
+            .Where(s => s.UserId == user.Id && !s.IsRevoked && s.ExpiresAt > DateTime.UtcNow)
+            .ToListAsync();
 
-    // Generate JWT with role claims and session ID
-    var token = GenerateJwtToken(user, session.Id, secrets);
-
-    // Set JWT in HttpOnly cookie
-    var cookieOptions = new CookieOptions
-    {
-        HttpOnly = true,
-        Secure = !app.Environment.IsDevelopment(), // Secure in production, allow HTTP in development
-        SameSite = SameSiteMode.Lax, // Lax for same-site navigation, Strict would block cross-origin redirects
-        Path = "/",
-        MaxAge = TimeSpan.FromMinutes(secrets.JwtExpirationMinutes)
-    };
-    context.Response.Cookies.Append(AccessTokenCookieName, token, cookieOptions);
-
-    return Results.Ok(new 
-    { 
-        expires_in = secrets.JwtExpirationMinutes * 60,
-        user = new 
+        var revokedSessionIds = new List<Guid>();
+        foreach (var activeSession in activeSessions)
         {
-            id = user.Id.ToString(),
-            email = user.Email,
-            role = user.Role.ToLowerInvariant()
+            activeSession.IsRevoked = true;
+            revokedSessionIds.Add(activeSession.Id);
         }
-    });
+
+        // Create server-side session record
+        var session = new Session
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(secrets.JwtExpirationMinutes),
+            LastActivityAt = DateTime.UtcNow,
+            UserAgent = context.Request.Headers.UserAgent.ToString(),
+            IpAddress = context.Connection.RemoteIpAddress?.ToString(),
+            IsRevoked = false
+        };
+        dbContext.Sessions.Add(session);
+
+        // Log audit event if sessions were replaced
+        if (revokedSessionIds.Count > 0)
+        {
+            var auditEvent = new AuditLogEvent
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                SessionId = session.Id,
+                ActionType = "SESSION_REPLACED",
+                IpAddress = context.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = context.Request.Headers.UserAgent.ToString(),
+                ResourceType = "Session",
+                Timestamp = DateTime.UtcNow,
+                Metadata = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    revokedSessionCount = revokedSessionIds.Count,
+                    revokedSessionIds = revokedSessionIds
+                })
+            };
+            dbContext.AuditLogEvents.Add(auditEvent);
+        }
+
+        await dbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        // Generate JWT with role claims and session ID
+        var token = GenerateJwtToken(user, session.Id, secrets);
+
+        // Set JWT in HttpOnly cookie
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !app.Environment.IsDevelopment(), // Secure in production, allow HTTP in development
+            SameSite = SameSiteMode.Lax, // Lax for same-site navigation, Strict would block cross-origin redirects
+            Path = "/",
+            MaxAge = TimeSpan.FromMinutes(secrets.JwtExpirationMinutes)
+        };
+        context.Response.Cookies.Append(AccessTokenCookieName, token, cookieOptions);
+
+        return Results.Ok(new 
+        { 
+            expires_in = secrets.JwtExpirationMinutes * 60,
+            user = new 
+            {
+                id = user.Id.ToString(),
+                email = user.Email,
+                role = user.Role.ToLowerInvariant()
+            }
+        });
+    }
+    catch (Exception)
+    {
+        await transaction.RollbackAsync();
+        throw;
+    }
 })
+    .RequireRateLimiting(RateLimitingOptions.LoginPolicyName)
     .WithName("Login")
     .WithOpenApi();
 

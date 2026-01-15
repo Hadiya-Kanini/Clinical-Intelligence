@@ -51,9 +51,9 @@ Add automated test coverage for login rate limiting behavior, including `429`, `
 - [Automated] Run test suite and confirm rate limit tests are deterministic and do not require waiting 60 seconds.
 
 ## Implementation Checklist
-- [ ] Add integration test: 6 login attempts => 429 on attempt 6
-- [ ] Assert `Retry-After` header exists for 429
-- [ ] Add deterministic test window override mechanism for tests
-- [ ] Add test: after window expires, login is allowed again
-- [ ] Add test: audit log event exists with `ActionType = RATE_LIMIT_EXCEEDED` (when DB is available)
-- [ ] Confirm existing authentication tests are not broken by limiter
+- [x] Add integration test: 6 login attempts => 429 on attempt 6
+- [x] Assert `Retry-After` header exists for 429
+- [x] Add deterministic test window override mechanism for tests
+- [x] Add test: after window expires, login is allowed again
+- [x] Add test: audit log event exists with `ActionType = RATE_LIMIT_EXCEEDED` (when DB is available)
+- [x] Confirm existing authentication tests are not broken by limiter

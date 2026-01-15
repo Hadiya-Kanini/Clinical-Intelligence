@@ -61,13 +61,13 @@ public class SessionTrackingMiddleware
             return;
         }
 
-        // Check if session is revoked
+        // Check if session is revoked (e.g., due to login from another device)
         if (session.IsRevoked)
         {
             _logger.LogInformation("Revoked session access attempt: {SessionId}", sessionId);
             await ApiErrorResults.Unauthorized(
-                code: "session_expired",
-                message: "Session has been revoked. Please log in again."
+                code: "session_invalidated",
+                message: "Your session was invalidated because you signed in on another device."
             ).ExecuteAsync(context);
             return;
         }

@@ -50,8 +50,8 @@ Update the backend locked-account login response to return a clear error and inc
 - [Manual] Confirm that after expiry, this locked response no longer occurs.
 
 ## Implementation Checklist
-- [ ] Define the response detail format (`unlock_at:` and/or `remaining_seconds:`)
-- [ ] Update locked-account branch to populate details consistently
-- [ ] Ensure error message remains generic and safe
-- [ ] Confirm `details` are present even when empty in other cases (schema consistency)
-- [ ] Validate UI can parse the remaining time data
+- [x] Define the response detail format (`unlock_at:` and/or `remaining_seconds:`)
+- [x] Update locked-account branch to populate details consistently
+- [x] Ensure error message remains generic and safe
+- [x] Confirm `details` are present even when empty in other cases (schema consistency)
+- [x] Validate UI can parse the remaining time data

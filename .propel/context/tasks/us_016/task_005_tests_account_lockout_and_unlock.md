@@ -52,8 +52,8 @@ Add automated backend test coverage for account lockout, remaining-time response
 - [Automated] Run test suite and confirm lockout tests are deterministic and do not sleep 30 minutes.
 
 ## Implementation Checklist
-- [ ] Add test for 5 failed attempts leading to lockout
-- [ ] Add test asserting `account_locked` response includes remaining time details
-- [ ] Add test that simulates lock expiry by setting `LockedUntil` in the past
-- [ ] Add test asserting audit log event `ACCOUNT_LOCKED` is written
-- [ ] Confirm tests coexist with IP rate limiting (skip/adjust if limiter blocks test)
+- [x] Add test for 5 failed attempts leading to lockout
+- [x] Add test asserting `account_locked` response includes remaining time details
+- [x] Add test that simulates lock expiry by setting `LockedUntil` in the past
+- [x] Add test asserting audit log event `ACCOUNT_LOCKED` is written
+- [x] Confirm tests coexist with IP rate limiting (skip/adjust if limiter blocks test)
