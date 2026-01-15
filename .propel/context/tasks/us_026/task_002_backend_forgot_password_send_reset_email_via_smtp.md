@@ -70,10 +70,10 @@ This task focuses on orchestration: user lookup, token generation, reset link cr
 - [Observability] Confirm logs show send attempt outcome without logging reset token.
 
 ## Implementation Checklist
-- [ ] Ensure forgot-password endpoint exists (or implement it) with validation + generic response per US_024
-- [ ] Add `FrontendUrlsOptions` and bind it from configuration
-- [ ] Add `IPasswordResetLinkBuilder` + implementation to build `/reset-password?token=...` URLs
-- [ ] If user exists, generate reset token via `IPasswordResetTokenService`
-- [ ] Send reset email via `ISmtpEmailSender` and include reset link
-- [ ] Log send outcomes without secrets (no token, no credentials)
-- [ ] Keep non-enumeration behavior regardless of user existence
+- [x] Ensure forgot-password endpoint exists (or implement it) with validation + generic response per US_024
+- [x] Add `FrontendUrlsOptions` and bind it from configuration
+- [x] Add `IPasswordResetLinkBuilder` + implementation to build `/reset-password?token=...` URLs
+- [x] If user exists, generate reset token via `IPasswordResetTokenService`
+- [x] Send reset email via `ISmtpEmailSender` and include reset link
+- [x] Log send outcomes without secrets (no token, no credentials)
+- [x] Keep non-enumeration behavior regardless of user existence

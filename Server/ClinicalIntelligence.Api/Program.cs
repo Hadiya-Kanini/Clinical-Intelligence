@@ -6,6 +6,7 @@ using ClinicalIntelligence.Api.Contracts;
 using ClinicalIntelligence.Api.Contracts.Auth;
 using ClinicalIntelligence.Api.Services;
 using ClinicalIntelligence.Api.Services.Auth;
+using ClinicalIntelligence.Api.Services.Email;
 using ClinicalIntelligence.Api.Health;
 using ClinicalIntelligence.Api.Diagnostics;
 using ClinicalIntelligence.Api.Domain.Models;
@@ -59,6 +60,9 @@ var connectionString = secrets.ResolveNormalizedConnectionString(builder.Environ
 
 // Validate JWT configuration
 secrets.ValidateJwtConfiguration();
+
+// Validate bcrypt configuration
+secrets.ValidateBcryptConfiguration();
 
 // Determine if we're using PostgreSQL for conditional service registration
 var isPostgreSql = SecretsOptions.IsPostgreSqlConnectionString(connectionString);
@@ -140,16 +144,36 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Add CORS policy for frontend with credentials support
+// Configure CORS policy with configuration-driven allowed origins (US_023)
+var corsOptions = builder.Configuration.GetSection(CorsOptions.SectionName).Get<CorsOptions>() ?? new CorsOptions();
+
+// Also check environment variable directly for CORS_ALLOWED_ORIGINS
+var corsOriginsFromEnv = Environment.GetEnvironmentVariable(CorsOptions.AllowedOriginsEnvVar);
+if (!string.IsNullOrWhiteSpace(corsOriginsFromEnv) && string.IsNullOrWhiteSpace(corsOptions.AllowedOrigins))
+{
+    corsOptions.AllowedOrigins = corsOriginsFromEnv;
+}
+
+// Validate CORS configuration (fail fast in non-development if no origins configured)
+corsOptions.Validate(builder.Environment.IsDevelopment());
+
+// Determine allowed origins: use configured origins or fall back to development defaults
+var allowedOrigins = corsOptions.GetParsedOrigins();
+if (allowedOrigins.Length == 0 && builder.Environment.IsDevelopment())
+{
+    allowedOrigins = CorsOptions.GetDefaultDevelopmentOrigins();
+    Console.WriteLine($"CORS: Using default development origins: {string.Join(", ", allowedOrigins)}");
+}
+else
+{
+    Console.WriteLine($"CORS: Configured allowed origins: {string.Join(", ", allowedOrigins)}");
+}
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy(CorsOptions.FrontendPolicyName, policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "https://localhost:5173",
-                "https://localhost:3000")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -159,10 +183,33 @@ builder.Services.AddCors(options =>
 // Register token revocation store for session-based revocation checks
 builder.Services.AddScoped<ITokenRevocationStore, DbTokenRevocationStore>();
 
+// Register bcrypt password hasher with configured work factor
+builder.Services.AddSingleton<IBcryptPasswordHasher>(sp =>
+    new BcryptPasswordHasher(secrets.BcryptWorkFactor, sp.GetService<ILogger<BcryptPasswordHasher>>()));
+
 // Register email service
 var smtpConfigured = secrets.ValidateSmtpConfiguration();
 builder.Services.AddSingleton(secrets);
 builder.Services.AddSingleton<IEmailService, SmtpEmailService>();
+
+// Register SMTP email sender (US_026 TASK_001)
+var smtpOptions = SmtpOptions.FromConfiguration(builder.Configuration);
+builder.Services.AddSingleton(smtpOptions);
+builder.Services.AddSingleton<ISmtpEmailSender, SmtpEmailSender>();
+
+// Register frontend URL options and password reset link builder (US_026 TASK_002)
+var frontendUrlsOptions = FrontendUrlsOptions.FromConfiguration(builder.Configuration);
+builder.Services.AddSingleton(frontendUrlsOptions);
+builder.Services.AddSingleton<IPasswordResetLinkBuilder, PasswordResetLinkBuilder>();
+
+// Register forgot-password timing normalization options and service (US_027 TASK_001)
+var forgotPasswordTimingOptions = ForgotPasswordResponseTimingOptions.FromConfiguration(builder.Configuration);
+forgotPasswordTimingOptions.Validate();
+builder.Services.AddSingleton(forgotPasswordTimingOptions);
+builder.Services.AddSingleton<IResponseTimingNormalizer, ResponseTimingNormalizer>();
+
+// Register password reset token service (US_025)
+builder.Services.AddScoped<IPasswordResetTokenService, PasswordResetTokenService>();
 if (smtpConfigured)
 {
     Console.WriteLine("SMTP email service configured and enabled.");
@@ -275,7 +322,7 @@ if (app.Environment.IsDevelopment())
     dbContext.Database.Migrate();
 }
 
-app.UseCors("AllowFrontend");
+app.UseCors(CorsOptions.FrontendPolicyName);
 
 // Rate limiter middleware - must be early to protect endpoints
 app.UseRateLimiter();
@@ -289,6 +336,9 @@ app.UseAuthorization();
 
 // Session tracking middleware - validates server-side session and enforces inactivity timeout
 app.UseMiddleware<SessionTrackingMiddleware>();
+
+// CSRF protection middleware - validates CSRF token for state-changing requests
+app.UseMiddleware<CsrfProtectionMiddleware>();
 
 app.Use(async (context, next) =>
 {
@@ -403,7 +453,7 @@ app.MapGet("/health/db/pool", async (HttpContext context) =>
 var v1 = app.MapGroup("/api/v1");
 
 // Authentication endpoint - database-backed authentication
-v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, ApplicationDbContext dbContext) =>
+v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, ApplicationDbContext dbContext, IBcryptPasswordHasher passwordHasher) =>
 {
     // Validate required fields
     var password = request.Password;
@@ -484,17 +534,8 @@ v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, Appl
         await dbContext.SaveChangesAsync();
     }
 
-    // Verify password using bcrypt
-    bool passwordValid;
-    try
-    {
-        passwordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
-    }
-    catch
-    {
-        // If hash is invalid or verification fails, treat as invalid credentials
-        passwordValid = false;
-    }
+    // Verify password using centralized bcrypt hasher (timing-safe)
+    var passwordValid = passwordHasher.Verify(password, user.PasswordHash);
 
     if (!passwordValid)
     {
@@ -571,6 +612,10 @@ v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, Appl
             revokedSessionIds.Add(activeSession.Id);
         }
 
+        // Generate CSRF token for this session
+        var csrfToken = CsrfProtectionMiddleware.GenerateToken();
+        var csrfTokenHash = CsrfProtectionMiddleware.ComputeTokenHash(csrfToken);
+
         // Create server-side session record
         var session = new Session
         {
@@ -581,7 +626,8 @@ v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, Appl
             LastActivityAt = DateTime.UtcNow,
             UserAgent = context.Request.Headers.UserAgent.ToString(),
             IpAddress = context.Connection.RemoteIpAddress?.ToString(),
-            IsRevoked = false
+            IsRevoked = false,
+            CsrfTokenHash = csrfTokenHash
         };
         dbContext.Sessions.Add(session);
 
@@ -700,95 +746,172 @@ v1.MapGet("/auth/me", async (HttpContext context, ApplicationDbContext dbContext
     .WithName("GetCurrentUser")
     .WithOpenApi();
 
+v1.MapGet("/auth/csrf", async (HttpContext context, ApplicationDbContext dbContext) =>
+{
+    // Extract session ID from JWT claims
+    var sessionIdClaim = context.User.FindFirst("sid")?.Value;
+    
+    if (string.IsNullOrEmpty(sessionIdClaim) || !Guid.TryParse(sessionIdClaim, out var sessionId))
+    {
+        return ApiErrorResults.Unauthorized("invalid_session", "Invalid or missing session.");
+    }
+
+    // Load session to get or generate CSRF token
+    var session = await dbContext.Sessions.FirstOrDefaultAsync(s => s.Id == sessionId);
+    
+    if (session == null || session.IsRevoked)
+    {
+        return ApiErrorResults.Unauthorized("session_expired", "Session not found or expired.");
+    }
+
+    // Generate new CSRF token if not exists (for existing sessions without CSRF token)
+    string csrfToken;
+    if (string.IsNullOrEmpty(session.CsrfTokenHash))
+    {
+        csrfToken = CsrfProtectionMiddleware.GenerateToken();
+        session.CsrfTokenHash = CsrfProtectionMiddleware.ComputeTokenHash(csrfToken);
+        await dbContext.SaveChangesAsync();
+    }
+    else
+    {
+        // For security, we generate a new token that hashes to the same value
+        // This is not possible with SHA-256, so we regenerate and update
+        csrfToken = CsrfProtectionMiddleware.GenerateToken();
+        session.CsrfTokenHash = CsrfProtectionMiddleware.ComputeTokenHash(csrfToken);
+        await dbContext.SaveChangesAsync();
+    }
+
+    return Results.Ok(new CsrfTokenResponse
+    {
+        Token = csrfToken,
+        ExpiresAt = session.ExpiresAt
+    });
+})
+    .RequireAuthorization()
+    .WithName("GetCsrfToken")
+    .WithOpenApi(operation => new(operation)
+    {
+        Summary = "Retrieve CSRF token for state-changing requests",
+        Description = "Returns a CSRF token that must be included in the X-CSRF-TOKEN header for POST, PUT, PATCH, and DELETE requests."
+    });
+
 v1.MapGet("/ping", () => Results.Ok(new { status = "OK" }))
     .RequireAuthorization()
     .WithName("PingV1")
     .WithOpenApi();
 
-// Password Reset Flow - Forgot Password (Task 003)
-v1.MapPost("/auth/forgot-password", async (HttpContext context, ForgotPasswordRequest request, ApplicationDbContext dbContext, IEmailService emailService, SecretsOptions secretsOptions) =>
+// Password Reset Flow - Forgot Password (Task 003, US_025 + US_026 + US_027)
+v1.MapPost("/auth/forgot-password", async (HttpContext context, ForgotPasswordRequest request, ApplicationDbContext dbContext, IEmailService emailService, ISmtpEmailSender smtpEmailSender, IPasswordResetTokenService tokenService, IPasswordResetLinkBuilder linkBuilder, IResponseTimingNormalizer timingNormalizer, ILogger<Program> logger) =>
 {
     // Validate email format using RFC 5322 compliant validator
     var emailValidation = EmailValidation.ValidateWithDetails(request.Email);
     if (!emailValidation.IsValid)
     {
+        // Do NOT apply timing normalization to invalid input (400 responses)
         var errorMessage = emailValidation.ErrorDetail == "email:required" 
             ? "Email is required." 
             : "Email format is invalid.";
         return ApiErrorResults.BadRequest("invalid_input", errorMessage, new[] { emailValidation.ErrorDetail! });
     }
 
+    // Start timing for syntactically valid requests (US_027 - timing normalization)
+    var timingContext = timingNormalizer.StartTiming();
+
     var email = emailValidation.NormalizedEmail;
 
-    // Query user by email (ignore soft-deleted users)
-    var user = await dbContext.Users
-        .IgnoreQueryFilters()
-        .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted && u.Status == "Active");
+    // Always return success to prevent user enumeration (US_027)
+    var successResponse = new { message = "If the email exists, a reset link has been sent." };
 
-    // Always return success to prevent user enumeration
-    var successMessage = "If the email exists, a reset link has been sent.";
-
-    if (user == null)
+    try
     {
-        // Return same response to prevent enumeration
-        return Results.Ok(new { message = successMessage });
-    }
+        // Query user by email (ignore soft-deleted users)
+        var user = await dbContext.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted && u.Status == "Active", context.RequestAborted);
 
-    // Rate limiting: Check tokens created in last hour for this user
-    var oneHourAgo = DateTime.UtcNow.AddHours(-1);
-    var recentTokenCount = await dbContext.PasswordResetTokens
-        .CountAsync(t => t.UserId == user.Id && t.ExpiresAt > oneHourAgo);
-
-    if (recentTokenCount >= 3)
-    {
-        context.Response.Headers["Retry-After"] = "3600";
-        return Results.Json(new
+        if (user == null)
         {
-            error = new
+            // Log attempt without revealing user existence (US_026 - safe logging)
+            logger.LogInformation("Password reset requested for non-existent or inactive account");
+            // Apply timing normalization before returning (US_027)
+            await timingNormalizer.NormalizeAsync(timingContext, context.RequestAborted);
+            return Results.Ok(successResponse);
+        }
+
+        // Rate limiting: Check tokens created in last hour for this user
+        var oneHourAgo = DateTime.UtcNow.AddHours(-1);
+        var recentTokenCount = await dbContext.PasswordResetTokens
+            .CountAsync(t => t.UserId == user.Id && t.ExpiresAt > oneHourAgo, context.RequestAborted);
+
+        if (recentTokenCount >= 3)
+        {
+            // Apply timing normalization even for rate-limited responses (US_027)
+            await timingNormalizer.NormalizeAsync(timingContext, context.RequestAborted);
+            context.Response.Headers["Retry-After"] = "3600";
+            return Results.Json(new
             {
-                code = "rate_limited",
-                message = "Too many password reset requests. Please try again later.",
-                details = Array.Empty<string>()
+                error = new
+                {
+                    code = "rate_limited",
+                    message = "Too many password reset requests. Please try again later.",
+                    details = Array.Empty<string>()
+                }
+            }, statusCode: StatusCodes.Status429TooManyRequests);
+        }
+
+        // Generate new token using the service (invalidates previous tokens automatically)
+        var tokenResult = await tokenService.GenerateTokenAsync(user.Id, context.RequestAborted);
+
+        // Build reset URL using link builder (US_026 TASK_002)
+        var resetUrl = linkBuilder.BuildResetUrl(tokenResult.PlainToken);
+
+        // Send email via SMTP (US_026 TASK_002) - fire and forget but log outcome
+        // Email sending is async and does not affect response timing
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                // Use the legacy email service which has the HTML template
+                var sent = await emailService.SendPasswordResetEmailAsync(user.Email, tokenResult.PlainToken, user.Name, resetUrl);
+                if (sent)
+                {
+                    logger.LogInformation("Password reset email sent successfully for user {UserId}", user.Id);
+                }
+                else
+                {
+                    logger.LogWarning("Password reset email could not be sent for user {UserId}", user.Id);
+                }
             }
-        }, statusCode: StatusCodes.Status429TooManyRequests);
+            catch (Exception ex)
+            {
+                // Log failure without exposing token or credentials (US_026 requirement)
+                logger.LogError(ex, "Failed to send password reset email for user {UserId}. Error: {ErrorType}", user.Id, ex.GetType().Name);
+            }
+        });
+
+        // Apply timing normalization before returning (US_027)
+        await timingNormalizer.NormalizeAsync(timingContext, context.RequestAborted);
+        return Results.Ok(successResponse);
     }
-
-    // Invalidate existing unused tokens for this user
-    var existingTokens = await dbContext.PasswordResetTokens
-        .Where(t => t.UserId == user.Id && t.UsedAt == null && t.ExpiresAt > DateTime.UtcNow)
-        .ToListAsync();
-
-    foreach (var existingToken in existingTokens)
+    catch (OperationCanceledException)
     {
-        existingToken.ExpiresAt = DateTime.UtcNow;
+        // Request was cancelled - rethrow to let framework handle it
+        throw;
     }
-
-    // Generate new token
-    var plainToken = Guid.NewGuid().ToString();
-    var tokenHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(plainToken))).ToLowerInvariant();
-
-    var resetToken = new PasswordResetToken
+    catch (Exception ex)
     {
-        Id = Guid.NewGuid(),
-        UserId = user.Id,
-        TokenHash = tokenHash,
-        ExpiresAt = DateTime.UtcNow.AddHours(1)
-    };
-
-    dbContext.PasswordResetTokens.Add(resetToken);
-    await dbContext.SaveChangesAsync();
-
-    // Construct reset URL and send email
-    var resetUrl = $"{secretsOptions.FrontendUrl}/reset-password?token={plainToken}";
-    _ = emailService.SendPasswordResetEmailAsync(user.Email, plainToken, user.Name, resetUrl);
-
-    return Results.Ok(new { message = successMessage });
+        // Log error but return generic success response to prevent enumeration (US_027)
+        logger.LogError(ex, "Error processing forgot-password request. Error: {ErrorType}", ex.GetType().Name);
+        // Apply timing normalization even on errors (US_027)
+        await timingNormalizer.NormalizeAsync(timingContext, context.RequestAborted);
+        return Results.Ok(successResponse);
+    }
 })
     .WithName("ForgotPassword")
     .WithOpenApi();
 
 // Password Reset Flow - Reset Password (Task 004)
-v1.MapPost("/auth/reset-password", async (HttpContext context, ResetPasswordRequest request, ApplicationDbContext dbContext, IEmailService emailService) =>
+v1.MapPost("/auth/reset-password", async (HttpContext context, ResetPasswordRequest request, ApplicationDbContext dbContext, IEmailService emailService, IBcryptPasswordHasher passwordHasher) =>
 {
     var token = request.Token?.Trim();
     var newPassword = request.NewPassword;
@@ -854,8 +977,8 @@ v1.MapPost("/auth/reset-password", async (HttpContext context, ResetPasswordRequ
         return ApiErrorResults.Unauthorized("invalid_token", "Invalid or expired reset link.");
     }
 
-    // Hash new password with BCrypt (12 rounds)
-    var passwordHash = BCrypt.Net.BCrypt.HashPassword(newPassword, workFactor: 12);
+    // Hash new password using centralized bcrypt hasher with configured work factor
+    var passwordHash = passwordHasher.HashPassword(newPassword);
 
     // Update user
     user.PasswordHash = passwordHash;

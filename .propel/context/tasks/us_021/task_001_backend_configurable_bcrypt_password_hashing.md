@@ -37,7 +37,11 @@ Introduce a centralized, reusable bcrypt password hashing/verification service w
   - Validate that increased work factor does not break login under rate limiting / lockout conditions.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- Created `IBcryptPasswordHasher` interface and `BcryptPasswordHasher` implementation in `Services/Auth/`
+- Added `BcryptWorkFactor` property to `SecretsOptions` with `ValidateBcryptConfiguration()` method
+- Updated `Program.cs` to register `IBcryptPasswordHasher` and use it in login/reset-password endpoints
+- Updated migration to use configurable work factor from `BCRYPT_WORK_FACTOR` environment variable
+- Added `BCRYPT_WORK_FACTOR=12` to `.env.example` with documentation
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -61,10 +65,10 @@ Introduce a centralized, reusable bcrypt password hashing/verification service w
 - [Manual] Verify login succeeds for existing seeded admin and fails for invalid passwords with consistent error messaging.
 
 ## Implementation Checklist
-- [ ] Implement `BcryptPasswordHasher` with `HashPassword` and `Verify` helpers
-- [ ] Add `BcryptWorkFactor` configuration to `SecretsOptions` with validation enforcing minimum 12
-- [ ] Update `/api/v1/auth/login` to use centralized verifier and keep error messages non-sensitive
-- [ ] Update static admin seed migration to hash with configured work factor (>=12)
-- [ ] Ensure no plaintext password values are logged (review any log statements touched)
-- [ ] Update `.env.example` to include the bcrypt work factor configuration
-- [ ] Sanity check performance expectations for work factor 12 under load (document decision in code behavior, not documentation)
+- [x] Implement `BcryptPasswordHasher` with `HashPassword` and `Verify` helpers
+- [x] Add `BcryptWorkFactor` configuration to `SecretsOptions` with validation enforcing minimum 12
+- [x] Update `/api/v1/auth/login` to use centralized verifier and keep error messages non-sensitive
+- [x] Update static admin seed migration to hash with configured work factor (>=12)
+- [x] Ensure no plaintext password values are logged (review any log statements touched)
+- [x] Update `.env.example` to include the bcrypt work factor configuration
+- [x] Sanity check performance expectations for work factor 12 under load (document decision in code behavior, not documentation)

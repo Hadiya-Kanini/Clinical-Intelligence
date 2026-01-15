@@ -46,7 +46,9 @@ Add automated integration test coverage for the API CORS policy to verify that o
   - Avoid asserting exact status codes for OPTIONS if the hosting pipeline returns `200` vs `204`; focus on presence/absence of CORS headers.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- TASK_001 completed: CorsOptions.cs created with configuration-driven origins
+- Program.cs updated to use config-driven CORS with startup validation
+- Existing integration test patterns (CsrfProtectionTests, LoginRateLimitingTests) used as reference
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -67,9 +69,9 @@ Add automated integration test coverage for the API CORS policy to verify that o
 - [Manual] Confirm a browser client can call the API with cookies from the configured frontend origin.
 
 ## Implementation Checklist
-- [ ] Add new integration test file for CORS policy enforcement
-- [ ] Add test for allowed origin (GET) returning correct `Access-Control-Allow-Origin`
-- [ ] Add test for allowed origin (GET) returning `Access-Control-Allow-Credentials: true`
-- [ ] Add test for allowed origin preflight OPTIONS returning appropriate allow headers
-- [ ] Add test for disallowed origin returning no CORS allow headers
-- [ ] Ensure tests are environment-configurable and do not require DB connectivity
+- [x] Add new integration test file for CORS policy enforcement
+- [x] Add test for allowed origin (GET) returning correct `Access-Control-Allow-Origin`
+- [x] Add test for allowed origin (GET) returning `Access-Control-Allow-Credentials: true`
+- [x] Add test for allowed origin preflight OPTIONS returning appropriate allow headers
+- [x] Add test for disallowed origin returning no CORS allow headers
+- [x] Ensure tests are environment-configurable and do not require DB connectivity

@@ -12,7 +12,12 @@ export default function Alert({ children, variant = 'error', role }: AlertProps)
   const computedRole = role || (variant === 'error' ? 'alert' : 'status')
 
   return (
-    <div className={`ui-alert ui-alert--${variant}`} role={computedRole}>
+    <div
+      className={`ui-alert ui-alert--${variant}`}
+      role={computedRole}
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+      aria-atomic="true"
+    >
       <div>{children}</div>
     </div>
   )

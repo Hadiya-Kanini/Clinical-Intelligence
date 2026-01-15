@@ -376,6 +376,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
             entity.Property(e => e.UserAgent).HasMaxLength(500);
             entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.Property(e => e.CsrfTokenHash).HasMaxLength(64);
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 

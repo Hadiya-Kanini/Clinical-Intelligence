@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ClinicalIntelligence.Api.Data;
@@ -20,10 +21,31 @@ public sealed class TestWebApplicationFactory<TProgram> : WebApplicationFactory<
     public TestWebApplicationFactory()
     {
         _testDatabasePath = Path.Combine(Path.GetTempPath(), _testDatabaseName);
+        
+        // Set environment variables for test configuration
+        Environment.SetEnvironmentVariable("CORS_ALLOWED_ORIGINS", "http://localhost:3000");
+        Environment.SetEnvironmentVariable("JWT_KEY", "TestSecretKeyForJwtTokenGeneration12345678901234567890");
+        Environment.SetEnvironmentVariable("JWT_ISSUER", "TestIssuer");
+        Environment.SetEnvironmentVariable("JWT_AUDIENCE", "TestAudience");
+        Environment.SetEnvironmentVariable("JWT_EXPIRATION_MINUTES", "60");
+        Environment.SetEnvironmentVariable("BCRYPT_WORK_FACTOR", "4");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins"] = "http://localhost:3000",
+                ["Jwt:Key"] = "TestSecretKeyForJwtTokenGeneration12345678901234567890",
+                ["Jwt:Issuer"] = "TestIssuer",
+                ["Jwt:Audience"] = "TestAudience",
+                ["Jwt:ExpirationMinutes"] = "60",
+                ["Bcrypt:WorkFactor"] = "4"
+            });
+        });
+
         builder.ConfigureServices(services =>
         {
             // Remove the existing DbContext
@@ -55,6 +77,8 @@ public sealed class TestWebApplicationFactory<TProgram> : WebApplicationFactory<
             SeedTestData(db);
         });
 
+        // Use Testing environment to skip automatic migrations in Program.cs
+        // (Development environment triggers db.Database.Migrate() which fails with SQLite)
         builder.UseEnvironment("Testing");
     }
 

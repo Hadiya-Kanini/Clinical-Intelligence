@@ -39,7 +39,9 @@ Implement a strict, configuration-driven CORS policy for the API that allows onl
   - Confirm authentication/authorization behavior is not affected.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- CORS configuration was hardcoded in Program.cs with localhost origins
+- Existing configuration pattern (RateLimitingOptions) used as reference for CorsOptions design
+- Environment variables already supported via builder.Configuration.AddEnvironmentVariables()
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -63,9 +65,9 @@ Implement a strict, configuration-driven CORS policy for the API that allows onl
 - [Manual] Send an `OPTIONS` preflight request with `Origin` and `Access-Control-Request-Method` headers and verify CORS preflight headers are returned for approved origin.
 
 ## Implementation Checklist
-- [ ] Add strongly-typed CORS configuration model (`CorsOptions`) and decide how origin(s) are provided via env/config
-- [ ] Replace hardcoded origins in `Program.cs` with configured origin(s)
-- [ ] Ensure credentials support remains enabled (`AllowCredentials()`)
-- [ ] Implement startup validation to avoid empty/unsafe configuration in non-development environments
-- [ ] Verify middleware ordering and preflight behavior remains correct
-- [ ] Update `.env.example` to document required CORS origin configuration
+- [x] Add strongly-typed CORS configuration model (`CorsOptions`) and decide how origin(s) are provided via env/config
+- [x] Replace hardcoded origins in `Program.cs` with configured origin(s)
+- [x] Ensure credentials support remains enabled (`AllowCredentials()`)
+- [x] Implement startup validation to avoid empty/unsafe configuration in non-development environments
+- [x] Verify middleware ordering and preflight behavior remains correct
+- [x] Update `.env.example` to document required CORS origin configuration
