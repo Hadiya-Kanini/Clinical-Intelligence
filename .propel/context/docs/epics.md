@@ -5,6 +5,7 @@
 | Epic ID | Epic Title | Mapped Requirement IDs |
 |---------|------------|------------------------|
 | EP-TECH | Project Scaffolding & Baseline Architecture | TR-001, TR-015, TR-016, NFR-010, DR-012 |
+| EP-DB-001 | Database Infrastructure & Schema Initialization | DR-001, DR-002, DR-003, DR-011, DR-012, NFR-015, TR-014 |
 | EP-001 | Login Experience & Error Handling | FR-001a, FR-001c, FR-001d, FR-114, FR-114a, FR-114b, FR-114c, FR-114d, UXR-001, UXR-002, UXR-004, UXR-008 |
 | EP-002 | Core Authentication, Sessions & Logout | FR-001, FR-001b, FR-002, FR-003, FR-003a, FR-003b, FR-008, FR-009, FR-009a, UC-001, TR-002 |
 | EP-003 | Rate Limiting & Account Lockout Controls | FR-004, FR-006, FR-007, UXR-009, UXR-010, TR-003 |
@@ -54,6 +55,26 @@
 - Establish standardized error response format aligned to TR-016
 - Define maintainability guardrails aligned to NFR-010
 - Ensure secure configuration management aligned to DR-012
+
+### EP-DB-001: Database Infrastructure & Schema Initialization
+**Priority**: Critical (Blocking)  
+**Business Value**: Establishes the foundational data layer required for all application features; enables secure, performant, and compliant data storage for PHI.  
+**Description**: Set up PostgreSQL database with pgvector extension, initialize Entity Framework Core Migrations, create baseline schema for 16 tables from ERD, implement indexing strategy, configure connection pooling, seed static admin account, and establish backup/restore procedures.
+
+**Schema Evolution Note**: The ERD in models.md serves as the baseline schema for Phase 1. Developers may add/modify entities and fields during implementation as needed via EF Core Migrations. All schema changes must be documented in migration comments and models.md must be updated post-implementation to reflect the actual schema.
+
+**Key Deliverables**:
+- PostgreSQL 15+ installation with pgvector extension
+- Entity Framework Core Migrations framework initialization
+- Baseline migration creating 16 tables: USER, SESSION, PASSWORD_RESET_TOKEN, PATIENT, DOCUMENT_BATCH, DOCUMENT, PROCESSING_JOB, DOCUMENT_CHUNK, EXTRACTED_ENTITY, ENTITY_CITATION, CONFLICT, CONFLICT_RESOLUTION, BILLING_CODE_CATALOG_ITEM, CODE_SUGGESTION, AUDIT_LOG_EVENT, VECTOR_QUERY_LOG
+- Foreign key constraints and referential integrity enforcement
+- Database indexing strategy (DR-011): indexes on user.email, document.patient_id, document.upload_date, processing_job.status, extracted_entity.patient_id, audit_log.timestamp, pgvector HNSW index
+- Connection pooling configuration (min 10, max 100 connections)
+- Static admin account seed data from environment variables
+- Database backup/restore procedures with 30-day retention
+- Connection string encryption in configuration files
+- Row-level security setup for document_chunks table
+- Migration strategy documentation for schema evolution
 
 ### EP-001: Login Experience & Error Handling
 **Priority**: High  

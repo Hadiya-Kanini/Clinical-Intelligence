@@ -3,17 +3,22 @@ using ClinicalIntelligence.Api.Results;
 using ClinicalIntelligence.Api.Data;
 using ClinicalIntelligence.Api.Configuration;
 using ClinicalIntelligence.Api.Contracts;
+using ClinicalIntelligence.Api.Health;
+using ClinicalIntelligence.Api.Diagnostics;
+using ClinicalIntelligence.Api.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text.Json;
 using DotNetEnv;
 using Npgsql;
 
@@ -43,12 +48,35 @@ if (builder.Environment.IsDevelopment())
 }
 
 var secrets = SecretsOptions.FromConfiguration(builder.Configuration);
-var connectionString = secrets.ResolveDatabaseConnectionString(builder.Environment);
+var connectionString = secrets.ResolveNormalizedConnectionString(builder.Environment);
 
 // Validate JWT configuration
 secrets.ValidateJwtConfiguration();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+// Determine if we're using PostgreSQL for conditional service registration
+var isPostgreSql = SecretsOptions.IsPostgreSqlConnectionString(connectionString);
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => 
+    options.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseVector()));
+
+builder.Services.AddHealthChecks()
+    .AddDatabaseHealthCheck(
+        connectionString: connectionString,
+        latencyThresholdMs: 100,
+        name: "database",
+        tags: new[] { "db", "postgres" });
+
+// Register database warm-up service and pool metrics collector for PostgreSQL only
+if (isPostgreSql)
+{
+    builder.Services.AddHostedService(sp =>
+        new DatabaseWarmupHostedService(
+            connectionString,
+            SecretsOptions.DefaultMinPoolSize,
+            sp.GetRequiredService<ILogger<DatabaseWarmupHostedService>>()));
+
+    builder.Services.AddSingleton(new DbPoolMetricsCollector(connectionString));
+}
 
 // Add JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -124,13 +152,93 @@ app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }))
     .WithName("HealthCheck")
     .WithOpenApi();
 
+app.MapGet("/health/db", async (HttpContext context) =>
+{
+    var healthCheckService = context.RequestServices.GetRequiredService<HealthCheckService>();
+    var report = await healthCheckService.CheckHealthAsync(
+        predicate: check => check.Tags.Contains("db"),
+        context.RequestAborted);
+
+    var response = new
+    {
+        status = report.Status.ToString(),
+        checks = report.Entries.Select(e => new
+        {
+            name = e.Key,
+            status = e.Value.Status.ToString(),
+            description = e.Value.Description,
+            latency_ms = e.Value.Data.TryGetValue("latency_ms", out var latency) ? latency : null,
+            threshold_ms = e.Value.Data.TryGetValue("threshold_ms", out var threshold) ? threshold : null
+        })
+    };
+
+    var statusCode = report.Status switch
+    {
+        HealthStatus.Healthy => StatusCodes.Status200OK,
+        HealthStatus.Degraded => StatusCodes.Status200OK,
+        _ => StatusCodes.Status503ServiceUnavailable
+    };
+
+    context.Response.StatusCode = statusCode;
+    context.Response.ContentType = "application/json";
+    await context.Response.WriteAsJsonAsync(response);
+})
+    .WithName("DatabaseHealthCheck")
+    .WithOpenApi();
+
+app.MapGet("/health/db/pool", async (HttpContext context) =>
+{
+    var metricsCollector = context.RequestServices.GetService<DbPoolMetricsCollector>();
+
+    if (metricsCollector == null)
+    {
+        return Results.Json(new
+        {
+            available = false,
+            message = "Pool metrics not available. PostgreSQL connection pooling may not be configured."
+        }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    var snapshot = await metricsCollector.CaptureSnapshotAsync(context.RequestAborted);
+
+    if (!snapshot.IsAvailable)
+    {
+        return Results.Json(new
+        {
+            available = false,
+            message = snapshot.ErrorMessage,
+            config = new
+            {
+                min_pool_size = snapshot.MinPoolSize,
+                max_pool_size = snapshot.MaxPoolSize
+            }
+        }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    return Results.Json(new
+    {
+        available = true,
+        active_connections = snapshot.ActiveConnections,
+        idle_connections = snapshot.IdleConnections,
+        total_connections = snapshot.TotalConnections,
+        config = new
+        {
+            min_pool_size = snapshot.MinPoolSize,
+            max_pool_size = snapshot.MaxPoolSize
+        },
+        timestamp = snapshot.Timestamp
+    });
+})
+    .WithName("DatabasePoolMetrics")
+    .WithOpenApi();
+
 var v1 = app.MapGroup("/api/v1");
 
-// Authentication endpoint (development only)
-v1.MapPost("/auth/login", (LoginRequest request) =>
+// Authentication endpoint - database-backed authentication
+v1.MapPost("/auth/login", async (LoginRequest request, ApplicationDbContext dbContext) =>
 {
-    // Simple authentication for development - replace with proper user management
-    var email = request.Email?.Trim();
+    // Validate input
+    var email = request.Email?.Trim().ToLowerInvariant();
     var password = request.Password;
 
     if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
@@ -142,23 +250,14 @@ v1.MapPost("/auth/login", (LoginRequest request) =>
         );
     }
 
-    if (password == "locked")
-    {
-        return ApiErrorResults.Forbidden(
-            code: "account_locked",
-            message: "Account temporarily locked. Please try again later."
-        );
-    }
+    // Query user by email (ignore query filters to check IsDeleted explicitly)
+    var user = await dbContext.Users
+        .IgnoreQueryFilters()
+        .FirstOrDefaultAsync(u => u.Email == email);
 
-    if (password == "ratelimited")
-    {
-        return ApiErrorResults.TooManyRequests(
-            code: "rate_limited",
-            message: "Too many login attempts. Please try again later."
-        );
-    }
-
-    if (password != "password")
+    // Check if user exists, is not deleted, and is active
+    // Use consistent error message to avoid leaking user existence
+    if (user == null || user.IsDeleted || user.Status != "Active")
     {
         return ApiErrorResults.Unauthorized(
             code: "invalid_credentials",
@@ -166,8 +265,66 @@ v1.MapPost("/auth/login", (LoginRequest request) =>
         );
     }
 
-    var token = GenerateJwtToken(email, secrets);
-    return Results.Ok(new { token = token, expires_in = secrets.JwtExpirationMinutes * 60 });
+    // Check if account is locked
+    if (user.LockedUntil.HasValue && user.LockedUntil.Value > DateTime.UtcNow)
+    {
+        return ApiErrorResults.Forbidden(
+            code: "account_locked",
+            message: "Account temporarily locked. Please try again later."
+        );
+    }
+
+    // Verify password using bcrypt
+    bool passwordValid;
+    try
+    {
+        passwordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+    }
+    catch
+    {
+        // If hash is invalid or verification fails, treat as invalid credentials
+        passwordValid = false;
+    }
+
+    if (!passwordValid)
+    {
+        // Increment failed login attempts
+        user.FailedLoginAttempts++;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        // Lock account after 5 failed attempts for 15 minutes
+        if (user.FailedLoginAttempts >= 5)
+        {
+            user.LockedUntil = DateTime.UtcNow.AddMinutes(15);
+        }
+
+        await dbContext.SaveChangesAsync();
+
+        return ApiErrorResults.Unauthorized(
+            code: "invalid_credentials",
+            message: "Invalid email or password."
+        );
+    }
+
+    // Reset failed login attempts on successful login
+    user.FailedLoginAttempts = 0;
+    user.LockedUntil = null;
+    user.UpdatedAt = DateTime.UtcNow;
+    await dbContext.SaveChangesAsync();
+
+    // Generate JWT with role claims
+    var token = GenerateJwtToken(user, secrets);
+    return Results.Ok(new 
+    { 
+        token = token, 
+        expires_in = secrets.JwtExpirationMinutes * 60,
+        user = new 
+        {
+            id = user.Id.ToString(),
+            email = user.Email,
+            role = user.Role.ToLowerInvariant()
+        }
+    });
 })
     .WithName("Login")
     .WithOpenApi();
@@ -179,6 +336,33 @@ v1.MapPost("/auth/logout", () =>
     .WithName("Logout")
     .WithOpenApi();
 
+v1.MapGet("/auth/me", async (HttpContext context, ApplicationDbContext dbContext) =>
+{
+    var userId = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+    
+    if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+    {
+        return ApiErrorResults.Unauthorized("invalid_token", "Invalid or missing token.");
+    }
+
+    var user = await dbContext.Users.FindAsync(userGuid);
+    
+    if (user == null)
+    {
+        return ApiErrorResults.Unauthorized("user_not_found", "User not found.");
+    }
+
+    return Results.Ok(new
+    {
+        id = user.Id.ToString(),
+        email = user.Email,
+        role = user.Role.ToLowerInvariant()
+    });
+})
+    .RequireAuthorization()
+    .WithName("GetCurrentUser")
+    .WithOpenApi();
+
 v1.MapGet("/ping", () => Results.Ok(new { status = "OK" }))
     .RequireAuthorization()
     .WithName("PingV1")
@@ -186,17 +370,20 @@ v1.MapGet("/ping", () => Results.Ok(new { status = "OK" }))
 
 app.Run();
 
-static string GenerateJwtToken(string username, SecretsOptions secrets)
+static string GenerateJwtToken(User user, SecretsOptions secrets)
 {
     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secrets.JwtKey!));
     var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
     var claims = new[]
     {
-        new Claim(JwtRegisteredClaimNames.Sub, username),
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-        new Claim("username", username)
+        new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        new Claim(ClaimTypes.Role, user.Role),
+        new Claim("role", user.Role),
+        new Claim("name", user.Name)
     };
 
     var token = new JwtSecurityToken(
