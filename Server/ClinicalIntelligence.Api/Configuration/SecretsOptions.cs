@@ -11,6 +11,31 @@ namespace ClinicalIntelligence.Api.Configuration;
 public sealed class SecretsOptions
 {
     /// <summary>
+    /// Default minimum pool size for PostgreSQL connections.
+    /// </summary>
+    public const int DefaultMinPoolSize = 10;
+
+    /// <summary>
+    /// Default maximum pool size for PostgreSQL connections.
+    /// </summary>
+    public const int DefaultMaxPoolSize = 100;
+
+    /// <summary>
+    /// Default connection idle lifetime in seconds (5 minutes).
+    /// </summary>
+    public const int DefaultConnectionIdleLifetimeSeconds = 300;
+
+    /// <summary>
+    /// Default connection pruning interval in seconds.
+    /// </summary>
+    public const int DefaultConnectionPruningIntervalSeconds = 10;
+
+    /// <summary>
+    /// Default pool wait timeout in seconds for pool exhaustion.
+    /// </summary>
+    public const int DefaultPoolWaitTimeoutSeconds = 30;
+
+    /// <summary>
     /// Gets the database connection string.
     /// </summary>
     public string? DatabaseConnectionString { get; init; }
@@ -99,6 +124,82 @@ public sealed class SecretsOptions
         throw new InvalidOperationException(
             "Missing required configuration value for database connection string. Provide 'ConnectionStrings:DefaultConnection' or 'DATABASE_CONNECTION_STRING'."
         );
+    }
+
+    /// <summary>
+    /// Resolves and normalizes the database connection string with pooling parameters for PostgreSQL.
+    /// SQLite connection strings are returned unchanged.
+    /// </summary>
+    /// <param name="environment">The hosting environment.</param>
+    /// <param name="poolWaitTimeoutSeconds">Optional pool wait timeout override (default: 30 seconds).</param>
+    /// <returns>A normalized database connection string with pooling parameters for PostgreSQL, or unchanged for SQLite.</returns>
+    public string ResolveNormalizedConnectionString(
+        IHostEnvironment environment,
+        int? poolWaitTimeoutSeconds = null)
+    {
+        var connectionString = ResolveDatabaseConnectionString(environment);
+        return NormalizeConnectionString(connectionString, poolWaitTimeoutSeconds);
+    }
+
+    /// <summary>
+    /// Normalizes a connection string by applying Npgsql pooling parameters for PostgreSQL.
+    /// SQLite connection strings are returned unchanged.
+    /// </summary>
+    /// <param name="connectionString">The connection string to normalize.</param>
+    /// <param name="poolWaitTimeoutSeconds">Optional pool wait timeout override (default: 30 seconds).</param>
+    /// <returns>A normalized connection string with pooling parameters for PostgreSQL, or unchanged for SQLite.</returns>
+    public static string NormalizeConnectionString(
+        string connectionString,
+        int? poolWaitTimeoutSeconds = null)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return connectionString;
+        }
+
+        // Check if it's a PostgreSQL connection string
+        if (IsPostgreSqlConnectionString(connectionString))
+        {
+            return ApplyNpgsqlPoolingDefaults(connectionString, poolWaitTimeoutSeconds ?? DefaultPoolWaitTimeoutSeconds);
+        }
+
+        // SQLite or other connection strings are returned unchanged
+        return connectionString;
+    }
+
+    /// <summary>
+    /// Determines if a connection string is for PostgreSQL.
+    /// </summary>
+    public static bool IsPostgreSqlConnectionString(string connectionString)
+    {
+        try
+        {
+            _ = new NpgsqlConnectionStringBuilder(connectionString);
+            // If it parses successfully and has a Host, it's PostgreSQL
+            var builder = new NpgsqlConnectionStringBuilder(connectionString);
+            return !string.IsNullOrEmpty(builder.Host);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Applies Npgsql pooling defaults to a PostgreSQL connection string.
+    /// </summary>
+    private static string ApplyNpgsqlPoolingDefaults(string connectionString, int poolWaitTimeoutSeconds)
+    {
+        var builder = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            MinPoolSize = DefaultMinPoolSize,
+            MaxPoolSize = DefaultMaxPoolSize,
+            ConnectionIdleLifetime = DefaultConnectionIdleLifetimeSeconds,
+            ConnectionPruningInterval = DefaultConnectionPruningIntervalSeconds,
+            Timeout = poolWaitTimeoutSeconds
+        };
+
+        return builder.ConnectionString;
     }
 
     /// <summary>
