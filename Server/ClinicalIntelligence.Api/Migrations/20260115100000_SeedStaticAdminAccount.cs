@@ -17,7 +17,8 @@ namespace ClinicalIntelligence.Api.Migrations
     /// </summary>
     public partial class SeedStaticAdminAccount : Migration
     {
-        private const int BcryptWorkFactor = 12;
+        private const int MinimumBcryptWorkFactor = 12;
+        private const int MaximumBcryptWorkFactor = 31;
 
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -59,8 +60,11 @@ namespace ClinicalIntelligence.Api.Migrations
             // Validate password complexity per FR-009c using centralized policy
             PasswordPolicy.ValidateOrThrow(adminPassword, "ADMIN_PASSWORD");
 
-            // Hash password using bcrypt with 12 rounds
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword, BcryptWorkFactor);
+            // Get configurable bcrypt work factor from environment (default 12, minimum 12)
+            var workFactor = GetConfiguredWorkFactor();
+
+            // Hash password using bcrypt with configured work factor (>=12)
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword, workFactor);
 
             // Generate a stable GUID for the static admin
             var adminId = Guid.NewGuid();
@@ -115,5 +119,38 @@ namespace ClinicalIntelligence.Api.Migrations
                 table: "users");
         }
 
+        /// <summary>
+        /// Gets the bcrypt work factor from environment configuration.
+        /// Enforces minimum of 12 per OWASP recommendations.
+        /// </summary>
+        private static int GetConfiguredWorkFactor()
+        {
+            var workFactorStr = Environment.GetEnvironmentVariable("BCRYPT_WORK_FACTOR");
+
+            if (string.IsNullOrWhiteSpace(workFactorStr))
+            {
+                return MinimumBcryptWorkFactor;
+            }
+
+            if (!int.TryParse(workFactorStr, out var workFactor))
+            {
+                throw new InvalidOperationException(
+                    $"BCRYPT_WORK_FACTOR must be a valid integer. Current value: '{workFactorStr}'");
+            }
+
+            if (workFactor < MinimumBcryptWorkFactor)
+            {
+                throw new InvalidOperationException(
+                    $"BCRYPT_WORK_FACTOR must be at least {MinimumBcryptWorkFactor} for secure password hashing. Current value: {workFactor}");
+            }
+
+            if (workFactor > MaximumBcryptWorkFactor)
+            {
+                throw new InvalidOperationException(
+                    $"BCRYPT_WORK_FACTOR must not exceed {MaximumBcryptWorkFactor}. Current value: {workFactor}");
+            }
+
+            return workFactor;
+        }
     }
 }

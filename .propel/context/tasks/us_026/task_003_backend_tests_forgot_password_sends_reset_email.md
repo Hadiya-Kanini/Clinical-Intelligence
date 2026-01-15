@@ -62,9 +62,9 @@ Add automated backend test coverage validating that the forgot-password flow tri
   - failure path does not change response contract
 
 ## Implementation Checklist
-- [ ] Add test host override to inject mocked `ISmtpEmailSender`
-- [ ] Ensure test user exists and call forgot-password endpoint
-- [ ] Assert email sender was called and includes reset link to `/reset-password?token=...`
-- [ ] Add negative test: non-existing email returns 200 but does not call email sender
-- [ ] Add failure test: email sender throws but endpoint still returns generic 200
-- [ ] Ensure tests do not log/assert on any plain token value
+- [x] Add test host override to inject mocked `ISmtpEmailSender`
+- [x] Ensure test user exists and call forgot-password endpoint
+- [x] Assert email sender was called and includes reset link to `/reset-password?token=...`
+- [x] Add negative test: non-existing email returns 200 but does not call email sender
+- [x] Add failure test: email sender throws but endpoint still returns generic 200
+- [x] Ensure tests do not log/assert on any plain token value

@@ -58,12 +58,12 @@ Wire the existing Forgot Password page (SCR-002) to a backend request so submiss
 - [Manual] If backend returns 429, confirm retry guidance is shown.
 
 ## Implementation Checklist
-- [ ] Implement submit handler that calls backend `POST /api/v1/auth/forgot-password`
-- [ ] Add loading state and disable/guard duplicate submits
-- [ ] Keep generic success message (no user enumeration)
-- [ ] Add safe error UI for network/server failures
-- [ ] Ensure back-to-login link remains present and preserves email
-- [ ] Ensure success/error messaging is accessible (ARIA live region)
+- [x] Implement submit handler that calls backend `POST /api/v1/auth/forgot-password`
+- [x] Add loading state and disable/guard duplicate submits
+- [x] Keep generic success message (no user enumeration)
+- [x] Add safe error UI for network/server failures
+- [x] Ensure back-to-login link remains present and preserves email
+- [x] Ensure success/error messaging is accessible (ARIA live region)
 
 ---
 
@@ -101,6 +101,6 @@ Wire the existing Forgot Password page (SCR-002) to a backend request so submiss
 - **Focus States**: Visible focus for interactive elements
 
 ### Design Review Checklist
-- [ ] Confirm SCR-002 states match figma_spec.md definitions
-- [ ] Confirm layout remains consistent with login card styling
-- [ ] Confirm focus styling and message announcements meet accessibility requirements
+- [x] Confirm SCR-002 states match figma_spec.md definitions
+- [x] Confirm layout remains consistent with login card styling
+- [x] Confirm focus styling and message announcements meet accessibility requirements

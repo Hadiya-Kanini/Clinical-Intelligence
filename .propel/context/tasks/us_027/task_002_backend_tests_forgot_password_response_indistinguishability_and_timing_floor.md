@@ -38,7 +38,11 @@ The goal is to validate the security contract while keeping tests deterministic 
   - Keep the test scope small (single request or very small sample) to limit overall suite runtime.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- Integration test class `ForgotPasswordNonEnumerationAndTimingTests.cs` created with 8 tests
+- Tests verify response indistinguishability between existing and non-existing emails
+- Tests verify minimum response time floor is enforced for syntactically valid requests
+- Tests verify invalid input (400) is NOT subject to timing normalization
+- All 8 tests passing
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -60,9 +64,9 @@ The goal is to validate the security contract while keeping tests deterministic 
   - forgot-password request duration meets the configured minimum delay
 
 ## Implementation Checklist
-- [ ] Create integration test file `ForgotPasswordNonEnumerationAndTimingTests.cs`
-- [ ] Add test: existing vs non-existing email return identical 200 + identical payload
-- [ ] Add test: invalid input continues to return 400 (sanity check; optional if covered elsewhere)
-- [ ] Add timing-floor test using configuration override (e.g., 200ms minimum)
-- [ ] Keep assertions tolerant enough to avoid flakiness but strict enough to catch regressions
-- [ ] Ensure tests do not log/assert on any plain reset token values
+- [x] Create integration test file `ForgotPasswordNonEnumerationAndTimingTests.cs`
+- [x] Add test: existing vs non-existing email return identical 200 + identical payload
+- [x] Add test: invalid input continues to return 400 (sanity check; optional if covered elsewhere)
+- [x] Add timing-floor test using configuration override (e.g., 200ms minimum)
+- [x] Keep assertions tolerant enough to avoid flakiness but strict enough to catch regressions
+- [x] Ensure tests do not log/assert on any plain reset token values

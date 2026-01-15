@@ -55,9 +55,9 @@ Implement the backend capability to generate cryptographically secure password r
   - Only `TokenHash` is stored (plain token is not present in DB).
 
 ## Implementation Checklist
-- [ ] Add `IPasswordResetTokenService` interface under `Services/Auth`
-- [ ] Implement `PasswordResetTokenService` using cryptographically secure randomness
-- [ ] Implement token hashing and ensure only the hash is persisted
-- [ ] Set token expiry to 1 hour from creation (UTC)
-- [ ] Ensure the plain token is returned to caller but not logged or stored
-- [ ] Register the service in DI (`Program.cs`)
+- [x] Add `IPasswordResetTokenService` interface under `Services/Auth`
+- [x] Implement `PasswordResetTokenService` using cryptographically secure randomness
+- [x] Implement token hashing and ensure only the hash is persisted
+- [x] Set token expiry to 1 hour from creation (UTC)
+- [x] Ensure the plain token is returned to caller but not logged or stored
+- [x] Register the service in DI (`Program.cs`)

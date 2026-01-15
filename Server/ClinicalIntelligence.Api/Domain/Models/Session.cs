@@ -45,6 +45,13 @@ public sealed class Session
     /// </summary>
     public DateTime? LastActivityAt { get; set; }
 
+    /// <summary>
+    /// SHA-256 hash of the CSRF token for this session.
+    /// Token is generated on login and validated on state-changing requests.
+    /// </summary>
+    [MaxLength(64)]
+    public string? CsrfTokenHash { get; set; }
+
     // Navigation property
     public User User { get; set; } = null!;
     public ICollection<AuditLogEvent> AuditLogEvents { get; set; } = new List<AuditLogEvent>();

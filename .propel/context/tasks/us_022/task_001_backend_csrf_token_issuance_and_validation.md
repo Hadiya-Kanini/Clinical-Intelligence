@@ -40,7 +40,11 @@ Implement server-side CSRF protection for cookie-authenticated sessions by gener
   - Document required header for state-changing endpoints in Swagger (at least for `/api/v1/auth/logout` currently).
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- Session model updated with CsrfTokenHash field
+- CSRF middleware created for state-changing request validation
+- CSRF token endpoint implemented at GET /api/v1/auth/csrf
+- EF Core migration added for CsrfTokenHash column
+- Login endpoint generates CSRF token on session creation
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -66,10 +70,10 @@ Implement server-side CSRF protection for cookie-authenticated sessions by gener
 - [Manual] Open two tabs in same session; confirm both can use the same CSRF token successfully.
 
 ## Implementation Checklist
-- [ ] Define CSRF token format, header name, and expiration strategy
-- [ ] Persist per-session CSRF token server-side (hash) and update schema via migration
-- [ ] Implement `GET /api/v1/auth/csrf` token retrieval endpoint
-- [ ] Implement CSRF enforcement middleware for state-changing requests
-- [ ] Ensure invalid/missing token returns standardized 403 response
-- [ ] Update Swagger/OpenAPI to document CSRF header requirement
-- [ ] Validate multi-tab and token-expiry behaviors
+- [x] Define CSRF token format, header name, and expiration strategy
+- [x] Persist per-session CSRF token server-side (hash) and update schema via migration
+- [x] Implement `GET /api/v1/auth/csrf` token retrieval endpoint
+- [x] Implement CSRF enforcement middleware for state-changing requests
+- [x] Ensure invalid/missing token returns standardized 403 response
+- [x] Update Swagger/OpenAPI to document CSRF header requirement
+- [x] Validate multi-tab and token-expiry behaviors

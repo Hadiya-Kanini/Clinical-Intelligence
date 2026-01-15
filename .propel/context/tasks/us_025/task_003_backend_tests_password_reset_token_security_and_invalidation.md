@@ -53,9 +53,9 @@ Add automated test coverage validating that password reset token generation and 
 - [Automated] Run test suite and confirm the new tests are deterministic and skippable when the database is unavailable.
 
 ## Implementation Checklist
-- [ ] Add integration test: forgot-password creates a reset token record for existing user
-- [ ] Assert token expiry is ~1 hour from creation (UTC, with tolerance)
-- [ ] Assert DB contains only `TokenHash` and never a plain token
-- [ ] Add integration test: second request invalidates prior token(s)
-- [ ] Add integration test: existing vs non-existing emails are indistinguishable (no enumeration)
-- [ ] Ensure tests follow existing skip pattern when DB is unavailable
+- [x] Add integration test: forgot-password creates a reset token record for existing user
+- [x] Assert token expiry is ~1 hour from creation (UTC, with tolerance)
+- [x] Assert DB contains only `TokenHash` and never a plain token
+- [x] Add integration test: second request invalidates prior token(s)
+- [x] Add integration test: existing vs non-existing emails are indistinguishable (no enumeration)
+- [x] Ensure tests follow existing skip pattern when DB is unavailable

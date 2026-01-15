@@ -204,6 +204,40 @@ public class StaticAdminSeedMigrationTests : IDisposable
         Assert.False(BCrypt.Net.BCrypt.Verify("WrongPassword", hash));
     }
 
+    #region Configurable Work Factor Tests
+
+    [Fact]
+    public void BcryptHash_VerifiesCorrectly_WithConfiguredWorkFactor()
+    {
+        // Arrange - Simulate configured work factor
+        var password = "ValidP@ss123";
+        var workFactor = 13; // Higher than minimum
+        var hash = BCrypt.Net.BCrypt.HashPassword(password, workFactor);
+
+        // Act & Assert
+        Assert.True(BCrypt.Net.BCrypt.Verify(password, hash));
+        Assert.False(BCrypt.Net.BCrypt.Verify("WrongPassword", hash));
+    }
+
+    [Theory]
+    [InlineData(12)]
+    [InlineData(13)]
+    [InlineData(14)]
+    public void BcryptHash_WorkFactorAboveMinimum_ProducesValidHash(int workFactor)
+    {
+        // Arrange
+        var password = "ValidP@ss123";
+
+        // Act
+        var hash = BCrypt.Net.BCrypt.HashPassword(password, workFactor);
+
+        // Assert
+        Assert.True(BCrypt.Net.BCrypt.Verify(password, hash));
+        Assert.StartsWith("$2", hash);
+    }
+
+    #endregion
+
     [SkippableFact]
     public async Task SeededAdmin_HasCorrectProperties_WhenMigrationsApplied()
     {

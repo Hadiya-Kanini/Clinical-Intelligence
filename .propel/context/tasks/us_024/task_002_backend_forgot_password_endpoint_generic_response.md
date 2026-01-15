@@ -57,9 +57,9 @@ This intentionally does NOT implement full token generation / email sending; tho
 - [Security] POST non-existing vs existing email and confirm responses are indistinguishable.
 
 ## Implementation Checklist
-- [ ] Create `ForgotPasswordRequest` contract DTO
-- [ ] Add `POST /api/v1/auth/forgot-password` minimal API endpoint
-- [ ] Validate required email and email format
-- [ ] Return generic 200 response for syntactically valid emails (no enumeration)
-- [ ] Ensure endpoint is anonymous (no auth required)
-- [ ] Confirm standardized error response shape on validation failure
+- [x] Create `ForgotPasswordRequest` contract DTO
+- [x] Add `POST /api/v1/auth/forgot-password` minimal API endpoint
+- [x] Validate required email and email format
+- [x] Return generic 200 response for syntactically valid emails (no enumeration)
+- [x] Ensure endpoint is anonymous (no auth required)
+- [x] Confirm standardized error response shape on validation failure

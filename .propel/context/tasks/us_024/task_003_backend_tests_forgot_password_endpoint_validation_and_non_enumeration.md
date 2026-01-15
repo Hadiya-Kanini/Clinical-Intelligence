@@ -50,9 +50,9 @@ Add automated backend test coverage for the forgot-password endpoint behavior, f
 - [Automated] Run test suite and confirm forgot-password tests are deterministic.
 
 ## Implementation Checklist
-- [ ] Add test: missing email returns 400
-- [ ] Add test: invalid email format returns 400
-- [ ] Add test: existing email returns 200
-- [ ] Add test: non-existing email returns 200
-- [ ] Assert 200 responses are indistinguishable (no user enumeration)
-- [ ] Assert response contract shape is stable for frontend integration
+- [x] Add test: missing email returns 400
+- [x] Add test: invalid email format returns 400
+- [x] Add test: existing email returns 200
+- [x] Add test: non-existing email returns 200
+- [x] Assert 200 responses are indistinguishable (no user enumeration)
+- [x] Assert response contract shape is stable for frontend integration

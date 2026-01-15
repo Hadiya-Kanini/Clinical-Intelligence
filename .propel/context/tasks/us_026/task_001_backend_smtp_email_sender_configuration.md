@@ -66,9 +66,9 @@ This task focuses on the reusable SMTP sender infrastructure (configuration + DI
 - [Observability] Confirm logs contain success/failure status without exposing credentials or tokens.
 
 ## Implementation Checklist
-- [ ] Add `SmtpOptions` configuration model and bind it from configuration
-- [ ] Create `ISmtpEmailSender` abstraction (DIP)
-- [ ] Implement `SmtpEmailSender` with TLS 1.2+ enforcement
-- [ ] Add structured logging for send attempts and outcomes (no secrets)
-- [ ] Register SMTP sender and options in `Program.cs`
-- [ ] Validate locally with a sandbox SMTP server (manual)
+- [x] Add `SmtpOptions` configuration model and bind it from configuration
+- [x] Create `ISmtpEmailSender` abstraction (DIP)
+- [x] Implement `SmtpEmailSender` with TLS 1.2+ enforcement
+- [x] Add structured logging for send attempts and outcomes (no secrets)
+- [x] Register SMTP sender and options in `Program.cs`
+- [x] Validate locally with a sandbox SMTP server (manual)

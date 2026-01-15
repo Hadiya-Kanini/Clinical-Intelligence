@@ -30,7 +30,9 @@ Add automated test coverage to verify CSRF token issuance and enforcement across
   - Simulate expiration by manipulating persisted CSRF token metadata in DB (if stored there) and assert `403`.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- CsrfProtectionTests.cs created with comprehensive test coverage
+- Tests cover: token issuance, 403 on missing/invalid token, per-session isolation, cross-session token rejection
+- Tests follow existing integration test patterns (WebApplicationFactory, PostgreSQL availability check)
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -51,8 +53,8 @@ Add automated test coverage to verify CSRF token issuance and enforcement across
 - [Automated] Confirm tests pass with PostgreSQL available and are skipped gracefully if DB is unavailable (consistent with existing integration tests).
 
 ## Implementation Checklist
-- [ ] Add test that unauthenticated CSRF token endpoint requires authorization (if applicable)
-- [ ] Add test asserting state-changing request without CSRF header returns 403
-- [ ] Add test asserting state-changing request with valid CSRF header returns 200
-- [ ] Add per-session isolation test (token cannot be reused across sessions)
-- [ ] Add expiry-path test for invalid/expired token
+- [x] Add test that unauthenticated CSRF token endpoint requires authorization (if applicable)
+- [x] Add test asserting state-changing request without CSRF header returns 403
+- [x] Add test asserting state-changing request with valid CSRF header returns 200
+- [x] Add per-session isolation test (token cannot be reused across sessions)
+- [x] Add expiry-path test for invalid/expired token

@@ -46,7 +46,10 @@ This task is specifically about **non-enumeration and timing**. Token generation
   - Do not log reset tokens or sensitive values.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- Timing normalization service implemented with configurable minimum delay (default 500ms)
+- Generic response returned for all syntactically valid requests regardless of user existence
+- SMTP/email failures do not change the response (logged only)
+- Invalid input (400) responses are NOT subject to timing normalization
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -72,10 +75,10 @@ This task is specifically about **non-enumeration and timing**. Token generation
 - [Observability] Confirm logs capture operational failures without any secrets.
 
 ## Implementation Checklist
-- [ ] Add `ForgotPasswordResponseTimingOptions` and bind from configuration
-- [ ] Add `IResponseTimingNormalizer` + `ResponseTimingNormalizer`
-- [ ] Register options + service in DI
-- [ ] Update forgot-password endpoint to return a stable generic 200 response for syntactically valid input regardless of user existence
-- [ ] Ensure SMTP/email failures do not change the response (log only)
-- [ ] Apply timing normalization for syntactically valid requests (do not apply to invalid input)
-- [ ] Verify no sensitive information is logged (no tokens, no existence indicators)
+- [x] Add `ForgotPasswordResponseTimingOptions` and bind from configuration
+- [x] Add `IResponseTimingNormalizer` + `ResponseTimingNormalizer`
+- [x] Register options + service in DI
+- [x] Update forgot-password endpoint to return a stable generic 200 response for syntactically valid input regardless of user existence
+- [x] Ensure SMTP/email failures do not change the response (log only)
+- [x] Apply timing normalization for syntactically valid requests (do not apply to invalid input)
+- [x] Verify no sensitive information is logged (no tokens, no existence indicators)

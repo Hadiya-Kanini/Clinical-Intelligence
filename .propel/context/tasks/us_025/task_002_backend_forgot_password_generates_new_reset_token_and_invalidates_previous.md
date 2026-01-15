@@ -53,9 +53,9 @@ Integrate password reset token generation into the forgot-password backend flow 
 - [Security] POST existing vs non-existing emails and confirm responses are indistinguishable.
 
 ## Implementation Checklist
-- [ ] Update forgot-password endpoint to look up user by email
-- [ ] If user exists, invalidate previous reset tokens for that user
-- [ ] If user exists, generate + persist a new token via `IPasswordResetTokenService`
-- [ ] Ensure no token is generated for non-existing email
-- [ ] Keep response generic and unchanged for valid emails (no user enumeration)
-- [ ] Ensure invalidation logic is atomic enough to prevent multiple active tokens
+- [x] Update forgot-password endpoint to look up user by email
+- [x] If user exists, invalidate previous reset tokens for that user
+- [x] If user exists, generate + persist a new token via `IPasswordResetTokenService`
+- [x] Ensure no token is generated for non-existing email
+- [x] Keep response generic and unchanged for valid emails (no user enumeration)
+- [x] Ensure invalidation logic is atomic enough to prevent multiple active tokens

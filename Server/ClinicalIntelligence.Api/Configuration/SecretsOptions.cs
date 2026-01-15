@@ -66,6 +66,12 @@ public sealed class SecretsOptions
     /// </summary>
     public string DevelopmentDatabaseName { get; init; } = "clinicalintelligence.db";
 
+    /// <summary>
+    /// Gets the bcrypt work factor for password hashing.
+    /// Default is 12 per OWASP Password Storage Cheat Sheet recommendations.
+    /// </summary>
+    public int BcryptWorkFactor { get; init; } = 12;
+
     #region SMTP Configuration
 
     /// <summary>
@@ -133,7 +139,8 @@ public sealed class SecretsOptions
             SmtpFromEmail = configuration["SMTP_FROM_EMAIL"],
             SmtpFromName = configuration["SMTP_FROM_NAME"] ?? "Clinical Intelligence",
             SmtpEnableSsl = !string.Equals(configuration["SMTP_ENABLE_SSL"], "false", StringComparison.OrdinalIgnoreCase),
-            FrontendUrl = configuration["FRONTEND_URL"] ?? "http://localhost:5173"
+            FrontendUrl = configuration["FRONTEND_URL"] ?? "http://localhost:5173",
+            BcryptWorkFactor = int.TryParse(configuration["BCRYPT_WORK_FACTOR"], out var bcryptWorkFactor) ? bcryptWorkFactor : 12
         };
     }
 
@@ -274,6 +281,28 @@ public sealed class SecretsOptions
             throw new InvalidOperationException(
                 "JWT_KEY must be at least 32 characters long for secure token signing."
             );
+        }
+    }
+
+    /// <summary>
+    /// Validates the bcrypt work factor configuration.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when bcrypt work factor is below minimum (12) or above maximum (31).</exception>
+    public void ValidateBcryptConfiguration()
+    {
+        const int MinimumWorkFactor = 12;
+        const int MaximumWorkFactor = 31;
+
+        if (BcryptWorkFactor < MinimumWorkFactor)
+        {
+            throw new InvalidOperationException(
+                $"BCRYPT_WORK_FACTOR must be at least {MinimumWorkFactor} for secure password hashing. Current value: {BcryptWorkFactor}");
+        }
+
+        if (BcryptWorkFactor > MaximumWorkFactor)
+        {
+            throw new InvalidOperationException(
+                $"BCRYPT_WORK_FACTOR must not exceed {MaximumWorkFactor}. Current value: {BcryptWorkFactor}");
         }
     }
 

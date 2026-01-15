@@ -181,6 +181,130 @@ public sealed class ForgotPasswordEndpointTests : IClassFixture<TestWebApplicati
             Assert.True(previousToken.ExpiresAt <= DateTime.UtcNow, "Previous tokens should be invalidated");
         }
     }
+
+    [Fact]
+    public async Task ForgotPassword_ExistingAndNonExistingEmails_ReturnIdenticalResponses()
+    {
+        // Arrange
+        var existingEmail = "test@example.com";
+        var nonExistingEmail = "nonexistent-unique-12345@example.com";
+
+        // Act
+        var existingResponse = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new ForgotPasswordRequest { Email = existingEmail });
+        var nonExistingResponse = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new ForgotPasswordRequest { Email = nonExistingEmail });
+
+        // Assert - both should return 200
+        Assert.Equal(HttpStatusCode.OK, existingResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, nonExistingResponse.StatusCode);
+
+        // Parse response bodies
+        var existingContent = await existingResponse.Content.ReadAsStringAsync();
+        var nonExistingContent = await nonExistingResponse.Content.ReadAsStringAsync();
+
+        using var existingDoc = JsonDocument.Parse(existingContent);
+        using var nonExistingDoc = JsonDocument.Parse(nonExistingContent);
+
+        // Assert - both responses should have the same structure and message
+        Assert.True(existingDoc.RootElement.TryGetProperty("message", out var existingMessage));
+        Assert.True(nonExistingDoc.RootElement.TryGetProperty("message", out var nonExistingMessage));
+
+        // Assert - messages should be identical (no enumeration leak)
+        Assert.Equal(existingMessage.GetString(), nonExistingMessage.GetString());
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ResponseDoesNotLeakUserExistence()
+    {
+        // Arrange
+        var existingEmail = "test@example.com";
+        var nonExistingEmail = "nonexistent-unique-67890@example.com";
+
+        // Act
+        var existingResponse = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new ForgotPasswordRequest { Email = existingEmail });
+        var nonExistingResponse = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new ForgotPasswordRequest { Email = nonExistingEmail });
+
+        // Assert - response content should not contain any indication of user existence
+        var existingContent = await existingResponse.Content.ReadAsStringAsync();
+        var nonExistingContent = await nonExistingResponse.Content.ReadAsStringAsync();
+
+        // Should not contain "found", "not found", "exists", "does not exist"
+        Assert.DoesNotContain("found", existingContent.ToLower());
+        Assert.DoesNotContain("exists", existingContent.ToLower());
+        Assert.DoesNotContain("found", nonExistingContent.ToLower());
+        Assert.DoesNotContain("exists", nonExistingContent.ToLower());
+
+        // Should not contain the actual email addresses in response
+        Assert.DoesNotContain(existingEmail, existingContent);
+        Assert.DoesNotContain(nonExistingEmail, nonExistingContent);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ValidationErrorResponse_HasStandardizedShape()
+    {
+        // Arrange
+        var request = new ForgotPasswordRequest { Email = "invalid-email" };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var content = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(content);
+        var root = doc.RootElement;
+
+        // Verify standardized error response shape
+        Assert.True(root.TryGetProperty("error", out var errorElement));
+        Assert.True(errorElement.TryGetProperty("code", out var codeElement));
+        Assert.True(errorElement.TryGetProperty("message", out var messageElement));
+        Assert.True(errorElement.TryGetProperty("details", out var detailsElement));
+
+        Assert.False(string.IsNullOrEmpty(codeElement.GetString()));
+        Assert.False(string.IsNullOrEmpty(messageElement.GetString()));
+        Assert.Equal(JsonValueKind.Array, detailsElement.ValueKind);
+    }
+
+    [Theory]
+    [InlineData("notanemail")]
+    [InlineData("missing@")]
+    [InlineData("@nodomain.com")]
+    public async Task ForgotPassword_VariousInvalidEmailFormats_Returns400(string invalidEmail)
+    {
+        // Arrange
+        var request = new ForgotPasswordRequest { Email = invalidEmail };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var errorResponse = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
+        Assert.Equal("invalid_input", errorResponse.GetProperty("error").GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task ForgotPassword_MissingEmailField_Returns400WithRequiredError()
+    {
+        // Arrange - send empty object
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", new { });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var content = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(content);
+        var root = doc.RootElement;
+
+        Assert.True(root.TryGetProperty("error", out var errorElement));
+        Assert.True(errorElement.TryGetProperty("code", out var codeElement));
+        Assert.Equal("invalid_input", codeElement.GetString());
+
+        Assert.True(errorElement.TryGetProperty("details", out var detailsElement));
+        var details = detailsElement.EnumerateArray().Select(d => d.GetString()).ToList();
+        Assert.Contains("email:required", details);
+    }
 }
 
 /// <summary>

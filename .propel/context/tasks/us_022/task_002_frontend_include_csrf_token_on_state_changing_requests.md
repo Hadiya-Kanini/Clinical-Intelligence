@@ -32,7 +32,10 @@ Update the frontend request layer so state-changing requests automatically inclu
   - Reduce direct `fetch` calls in feature pages that bypass `apiClient.ts` where they make state-changing calls.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- apiClient.ts updated with CSRF token retrieval and caching
+- X-CSRF-TOKEN header automatically injected for POST/PUT/PATCH/DELETE requests
+- One-time retry logic implemented for CSRF-related 403 errors
+- clearCsrfToken export added for manual token invalidation
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -55,8 +58,8 @@ Update the frontend request layer so state-changing requests automatically inclu
 - [Manual] Temporarily force an invalid CSRF token and confirm the client refreshes token and retries once.
 
 ## Implementation Checklist
-- [ ] Add CSRF token retrieval helper (calls `GET /api/v1/auth/csrf` with credentials)
-- [ ] Cache CSRF token in request layer and inject `X-CSRF-TOKEN` for POST/PUT/PATCH/DELETE
-- [ ] Implement one-time retry on CSRF-related 403 responses
-- [ ] Confirm logout flow still clears legacy localStorage keys and navigates correctly
-- [ ] Confirm any direct state-changing `fetch` calls are migrated to use `apiClient.ts`
+- [x] Add CSRF token retrieval helper (calls `GET /api/v1/auth/csrf` with credentials)
+- [x] Cache CSRF token in request layer and inject `X-CSRF-TOKEN` for POST/PUT/PATCH/DELETE
+- [x] Implement one-time retry on CSRF-related 403 responses
+- [x] Confirm logout flow still clears legacy localStorage keys and navigates correctly
+- [x] Confirm any direct state-changing `fetch` calls are migrated to use `apiClient.ts`

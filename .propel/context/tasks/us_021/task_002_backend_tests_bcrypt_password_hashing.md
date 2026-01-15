@@ -32,7 +32,10 @@ Add automated test coverage to ensure bcrypt hashing is always performed with a 
   - Update any tests that directly call `BCrypt.HashPassword(password, 12)` to use the configured work factor or centralized helper.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- Created `BcryptPasswordHasherTests.cs` with 30+ unit tests covering hash/verify, work factor validation, and security
+- Extended `SecretsOptionsTests.cs` with 9 new tests for bcrypt work factor configuration and validation
+- Extended `StaticAdminSeedMigrationTests.cs` with 4 new tests for configurable work factor behavior
+- All existing `SeededAdminAuthenticationTests` continue to pass with centralized verifier
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -54,8 +57,8 @@ Add automated test coverage to ensure bcrypt hashing is always performed with a 
 - [Automated] Run `ClinicalIntelligence.Api.Tests` suite; ensure new tests cover: work factor >=12, config parsing, hash/verify correctness.
 
 ## Implementation Checklist
-- [ ] Add `BcryptPasswordHasherTests` to cover hash/verify and minimum work factor constraints
-- [ ] Extend `SecretsOptionsTests` for `BCRYPT_WORK_FACTOR` parsing and validation behavior
-- [ ] Update `StaticAdminSeedMigrationTests` assertions to reflect configurable work factor (>=12)
-- [ ] Update `SeededAdminAuthenticationTests` if needed to align with centralized verifier
-- [ ] Ensure tests do not output plaintext passwords in failure messages
+- [x] Add `BcryptPasswordHasherTests` to cover hash/verify and minimum work factor constraints
+- [x] Extend `SecretsOptionsTests` for `BCRYPT_WORK_FACTOR` parsing and validation behavior
+- [x] Update `StaticAdminSeedMigrationTests` assertions to reflect configurable work factor (>=12)
+- [x] Update `SeededAdminAuthenticationTests` if needed to align with centralized verifier
+- [x] Ensure tests do not output plaintext passwords in failure messages

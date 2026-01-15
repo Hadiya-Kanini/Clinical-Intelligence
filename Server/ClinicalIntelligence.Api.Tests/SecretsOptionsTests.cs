@@ -188,6 +188,109 @@ public sealed class SecretsOptionsTests
         Assert.Equal(60, options.JwtExpirationMinutes);
     }
 
+    #region Bcrypt Work Factor Tests
+
+    [Fact]
+    public void FromConfiguration_BcryptWorkFactorPresent_BindsValue()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["BCRYPT_WORK_FACTOR"] = "14"
+            })
+            .Build();
+
+        var options = SecretsOptions.FromConfiguration(configuration);
+
+        Assert.Equal(14, options.BcryptWorkFactor);
+    }
+
+    [Fact]
+    public void FromConfiguration_BcryptWorkFactorMissing_DefaultsTo12()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>())
+            .Build();
+
+        var options = SecretsOptions.FromConfiguration(configuration);
+
+        Assert.Equal(12, options.BcryptWorkFactor);
+    }
+
+    [Fact]
+    public void FromConfiguration_BcryptWorkFactorInvalid_DefaultsTo12()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["BCRYPT_WORK_FACTOR"] = "not-a-number"
+            })
+            .Build();
+
+        var options = SecretsOptions.FromConfiguration(configuration);
+
+        Assert.Equal(12, options.BcryptWorkFactor);
+    }
+
+    [Fact]
+    public void ValidateBcryptConfiguration_WorkFactorBelowMinimum_ThrowsInvalidOperationException()
+    {
+        var options = new SecretsOptions
+        {
+            BcryptWorkFactor = 11
+        };
+
+        var ex = Assert.Throws<InvalidOperationException>(() => options.ValidateBcryptConfiguration());
+
+        Assert.Contains("BCRYPT_WORK_FACTOR must be at least 12", ex.Message);
+        Assert.Contains("Current value: 11", ex.Message);
+    }
+
+    [Fact]
+    public void ValidateBcryptConfiguration_WorkFactorAboveMaximum_ThrowsInvalidOperationException()
+    {
+        var options = new SecretsOptions
+        {
+            BcryptWorkFactor = 32
+        };
+
+        var ex = Assert.Throws<InvalidOperationException>(() => options.ValidateBcryptConfiguration());
+
+        Assert.Contains("BCRYPT_WORK_FACTOR must not exceed 31", ex.Message);
+        Assert.Contains("Current value: 32", ex.Message);
+    }
+
+    [Theory]
+    [InlineData(12)]
+    [InlineData(13)]
+    [InlineData(14)]
+    [InlineData(15)]
+    [InlineData(31)]
+    public void ValidateBcryptConfiguration_ValidWorkFactor_DoesNotThrow(int workFactor)
+    {
+        var options = new SecretsOptions
+        {
+            BcryptWorkFactor = workFactor
+        };
+
+        var exception = Record.Exception(() => options.ValidateBcryptConfiguration());
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void ValidateBcryptConfiguration_DefaultWorkFactor_DoesNotThrow()
+    {
+        var options = new SecretsOptions();
+
+        var exception = Record.Exception(() => options.ValidateBcryptConfiguration());
+
+        Assert.Null(exception);
+        Assert.Equal(12, options.BcryptWorkFactor);
+    }
+
+    #endregion
+
     private sealed class TestHostEnvironment : IHostEnvironment
     {
         public string EnvironmentName { get; set; } = string.Empty;
