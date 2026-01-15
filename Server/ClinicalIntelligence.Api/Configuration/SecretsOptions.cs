@@ -57,8 +57,9 @@ public sealed class SecretsOptions
     
     /// <summary>
     /// Gets the JWT token expiration time in minutes.
+    /// Default is 15 minutes per US_011 security requirements.
     /// </summary>
-    public int JwtExpirationMinutes { get; init; } = 60;
+    public int JwtExpirationMinutes { get; init; } = 15;
     
     /// <summary>
     /// Gets the development database file name.

@@ -62,9 +62,9 @@ Estimated Effort: 6 hours
   - Confirm missing/malformed/expired token leads to 401 (AC-4).
 
 ## Implementation Checklist
-- [ ] Update seeded admin login test to assert `Set-Cookie` and capture cookie value
-- [ ] Add a test that calls `/api/v1/auth/me` using only the cookie and asserts 200
-- [ ] Add a test that calls a protected endpoint without cookie and asserts 401
-- [ ] Add a test for malformed/tampered cookie value returning 401
-- [ ] Validate token expiry duration is 15 minutes (or configuration equivalent)
-- [ ] Build and run backend test suite
+- [x] Update seeded admin login test to assert `Set-Cookie` and capture cookie value
+- [x] Add a test that calls `/api/v1/auth/me` using only the cookie and asserts 200
+- [x] Add a test that calls a protected endpoint without cookie and asserts 401
+- [x] Add a test for malformed/tampered cookie value returning 401
+- [x] Validate token expiry duration is 15 minutes (or configuration equivalent)
+- [x] Build and run backend test suite
