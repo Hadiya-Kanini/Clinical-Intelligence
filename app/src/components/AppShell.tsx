@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { isAdmin } from '../routes'
+import { useInactivityTimeout } from '../hooks/useInactivityTimeout'
 import Button from './ui/Button'
 import Modal from './ui/Modal'
 
@@ -24,7 +25,28 @@ export default function AppShell({ children }: AppShellProps): JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false)
+  const [sessionExpiredOpen, setSessionExpiredOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  // Handle session expiration from inactivity timeout
+  const handleInactivityTimeout = useCallback(() => {
+    // Clear local auth indicators
+    try {
+      localStorage.removeItem('ci_auth')
+      localStorage.removeItem('ci_token')
+      localStorage.removeItem('ci_user_role')
+    } catch {
+      // Ignore localStorage errors
+    }
+    // Show session expired modal instead of immediate redirect
+    setSessionExpiredOpen(true)
+  }, [])
+
+  // Use inactivity timeout hook
+  useInactivityTimeout({
+    onTimeout: handleInactivityTimeout,
+    enabled: true,
+  })
 
   const title = useMemo(() => getTitle(location.pathname), [location.pathname])
 
@@ -145,6 +167,34 @@ export default function AppShell({ children }: AppShellProps): JSX.Element {
         }
       >
         Are you sure you want to log out?
+      </Modal>
+
+      <Modal
+        open={sessionExpiredOpen}
+        title="Session Expired"
+        onClose={() => {
+          setSessionExpiredOpen(false)
+          navigate('/login', { replace: true, state: { logout: 'expired', from: location } })
+        }}
+        footer={
+          <Button
+            variant="primary"
+            onClick={() => {
+              setSessionExpiredOpen(false)
+              navigate('/login', { replace: true, state: { logout: 'expired', from: location } })
+            }}
+          >
+            Log in again
+          </Button>
+        }
+        aria-describedby="session-expired-description"
+      >
+        <p id="session-expired-description">
+          Your session has expired due to inactivity. Please log in again to continue.
+        </p>
+        <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+          Note: Any unsaved work may need to be re-entered after logging in.
+        </p>
       </Modal>
     </div>
   )

@@ -59,9 +59,9 @@ Ensure that once a JWT/session is invalidated (revoked) during logout, any subse
 - [Regression test] Validate normal authenticated requests continue to work.
 
 ## Implementation Checklist
-- [ ] Create `ITokenRevocationStore` contract and DB-backed implementation
-- [ ] Add revocation check during `OnTokenValidated` (or equivalent) in `Program.cs`
-- [ ] Ensure auth failure maps to `401 Unauthorized` response
-- [ ] Add test: logout -> call protected endpoint with same token -> assert `401`
-- [ ] Add test: non-revoked token -> call protected endpoint -> assert `200`
-- [ ] Confirm behavior for expired session/token remains `401` and is distinguishable only by status code (no sensitive detail)
+- [x] Create `ITokenRevocationStore` contract and DB-backed implementation
+- [x] Add revocation check during `OnTokenValidated` (or equivalent) in `Program.cs`
+- [x] Ensure auth failure maps to `401 Unauthorized` response
+- [x] Add test: logout -> call protected endpoint with same token -> assert `401`
+- [x] Add test: non-revoked token -> call protected endpoint -> assert `200`
+- [x] Confirm behavior for expired session/token remains `401` and is distinguishable only by status code (no sensitive detail)

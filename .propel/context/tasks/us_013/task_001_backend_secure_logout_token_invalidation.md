@@ -67,10 +67,10 @@ Implement a secure logout flow on the Backend API that performs server-side inva
 - [Security validation] Ensure logout endpoint is authorized and does not leak details.
 
 ## Implementation Checklist
-- [ ] Identify the server-side revocation model (revoked-token store vs session-based revocation)
-- [ ] Implement persistence for revocation (entity + DbContext + migration)
-- [ ] Update `POST /api/v1/auth/logout` to require auth and persist revocation
-- [ ] Clear auth cookie in logout response (HttpOnly, Secure, SameSite settings aligned to US_011)
-- [ ] Add/extend tests validating revocation persistence and cookie clearing
-- [ ] Ensure revocation records have bounded lifetime (aligned to token expiry)
-- [ ] Verify behavior when session already expired (idempotent logout)
+- [x] Identify the server-side revocation model (revoked-token store vs session-based revocation)
+- [x] Implement persistence for revocation (entity + DbContext + migration)
+- [x] Update `POST /api/v1/auth/logout` to require auth and persist revocation
+- [x] Clear auth cookie in logout response (HttpOnly, Secure, SameSite settings aligned to US_011)
+- [x] Add/extend tests validating revocation persistence and cookie clearing
+- [x] Ensure revocation records have bounded lifetime (aligned to token expiry)
+- [x] Verify behavior when session already expired (idempotent logout)

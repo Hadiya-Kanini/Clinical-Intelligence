@@ -48,11 +48,11 @@ Add frontend automated tests validating the session timeout UX and session-expir
 - []
 
 ## Implementation Checklist
-- [ ] Make inactivity timeout configurable for tests (without changing production default).
-- [ ] Add Playwright test for session-expired redirect.
-- [ ] Assert login page shows session-expired messaging.
-- [ ] Ensure tests are deterministic (no flakiness due to timing).
-- [ ] Document any required test env var(s) in Playwright config.
+- [x] Make inactivity timeout configurable for tests (without changing production default).
+- [x] Add Playwright test for session-expired redirect.
+- [x] Assert login page shows session-expired messaging.
+- [x] Ensure tests are deterministic (no flakiness due to timing).
+- [x] Document any required test env var(s) in Playwright config.
 
 ## Design Reference
 

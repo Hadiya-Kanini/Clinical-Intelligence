@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import axios from 'axios'
+import { api } from '../../lib/apiClient'
 
 interface User {
   id: string
@@ -25,63 +25,54 @@ const initialState: AuthState = {
 export const loginAsync = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
-    try {
-      const response = await axios.post('/api/v1/auth/login', credentials, {
-        withCredentials: true
-      })
-      const { user } = response.data
-      
-      // Clear any legacy localStorage keys
-      localStorage.removeItem('ci_auth')
-      localStorage.removeItem('ci_token')
-      localStorage.removeItem('ci_user_role')
-      
-      return { user }
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error?.message || 'Login failed'
-      return rejectWithValue(errorMessage)
+    const result = await api.post<{ user: User }>('/api/v1/auth/login', credentials)
+    
+    if (!result.success) {
+      return rejectWithValue(result.error.message || 'Login failed')
     }
+    
+    // Clear any legacy localStorage keys
+    localStorage.removeItem('ci_auth')
+    localStorage.removeItem('ci_token')
+    localStorage.removeItem('ci_user_role')
+    
+    return { user: result.data.user }
   }
 )
 
 export const logoutAsync = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
-    try {
-      await axios.post('/api/v1/auth/logout', {}, {
-        withCredentials: true
-      })
-      
-      // Clear any legacy localStorage keys
-      localStorage.removeItem('ci_auth')
-      localStorage.removeItem('ci_token')
-      localStorage.removeItem('ci_user_role')
-      
-      return null
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error?.message || 'Logout failed'
-      return rejectWithValue(errorMessage)
+    const result = await api.post('/api/v1/auth/logout')
+    
+    // Clear any legacy localStorage keys regardless of result
+    localStorage.removeItem('ci_auth')
+    localStorage.removeItem('ci_token')
+    localStorage.removeItem('ci_user_role')
+    
+    if (!result.success) {
+      return rejectWithValue(result.error.message || 'Logout failed')
     }
+    
+    return null
   }
 )
 
 export const checkAuthAsync = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
-    try {
-      // Cookie-based auth: no token check needed, cookie is sent automatically
-      const response = await axios.get('/api/v1/auth/me', {
-        withCredentials: true
-      })
-      
-      return response.data
-    } catch (error: any) {
+    // Cookie-based auth: no token check needed, cookie is sent automatically
+    const result = await api.get<User>('/api/v1/auth/me')
+    
+    if (!result.success) {
       // Clear any legacy localStorage keys on auth failure
       localStorage.removeItem('ci_auth')
       localStorage.removeItem('ci_token')
       localStorage.removeItem('ci_user_role')
       return rejectWithValue('Invalid session')
     }
+    
+    return result.data
   }
 )
 

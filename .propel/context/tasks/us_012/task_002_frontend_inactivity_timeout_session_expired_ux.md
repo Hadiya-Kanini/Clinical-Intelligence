@@ -58,14 +58,14 @@ Implement client-side inactivity tracking UX for authenticated users. Provide a 
 - []
 
 ## Implementation Checklist
-- [ ] Add `useInactivityTimeout` hook with cleanup-safe event listeners.
-- [ ] Define idle timeout constant/config (default 15 minutes) and ensure it is test-configurable.
-- [ ] Integrate hook in `AppShell` (authenticated layout) so it applies to all protected screens.
-- [ ] Ensure clearing `ci_auth` triggers existing cross-tab logout behavior (`storage` listener).
-- [ ] Redirect to `/login` with `{ state: { logout: 'expired', from: location } }` (or equivalent).
-- [ ] Show “Session expired” message in `LoginPage` when applicable.
-- [ ] Verify timeout behavior does not depend on the client clock beyond relative timers.
-- [ ] Confirm UX approach for unsaved work is represented (modal + re-login path, minimal preservation via redirect target).
+- [x] Add `useInactivityTimeout` hook with cleanup-safe event listeners.
+- [x] Define idle timeout constant/config (default 15 minutes) and ensure it is test-configurable.
+- [x] Integrate hook in `AppShell` (authenticated layout) so it applies to all protected screens.
+- [x] Ensure clearing `ci_auth` triggers existing cross-tab logout behavior (`storage` listener).
+- [x] Redirect to `/login` with `{ state: { logout: 'expired', from: location } }` (or equivalent).
+- [x] Show “Session expired” message in `LoginPage` when applicable.
+- [x] Verify timeout behavior does not depend on the client clock beyond relative timers.
+- [x] Confirm UX approach for unsaved work is represented (modal + re-login path, minimal preservation via redirect target).
 
 ## Design Reference
 
