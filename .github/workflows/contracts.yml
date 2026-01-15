@@ -63,6 +63,8 @@ jobs:
               exit 1
             fi
           fi
+      - name: Install PyYAML
+        run: pip install PyYAML
       - name: Validate contracts
         run: python scripts/validate_contracts.py
 
