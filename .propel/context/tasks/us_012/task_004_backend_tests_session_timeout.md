@@ -49,9 +49,9 @@ Add automated backend tests to validate server-side session tracking behavior, i
 - []
 
 ## Implementation Checklist
-- [ ] Add an integration test: login creates a session record.
-- [ ] Add an integration test: authenticated request updates `LastActivityAt`.
-- [ ] Add an integration test: session inactivity beyond threshold returns 401 with session-expired code.
-- [ ] Add an integration test: logout revokes session and blocks subsequent requests.
-- [ ] Ensure tests are skippable when PostgreSQL is not configured.
-- [ ] Ensure tests do not log secrets or tokens.
+- [x] Add an integration test: login creates a session record.
+- [x] Add an integration test: authenticated request updates `LastActivityAt`.
+- [x] Add an integration test: session inactivity beyond threshold returns 401 with session-expired code.
+- [x] Add an integration test: logout revokes session and blocks subsequent requests.
+- [x] Ensure tests are skippable when PostgreSQL is not configured.
+- [x] Ensure tests do not log secrets or tokens.

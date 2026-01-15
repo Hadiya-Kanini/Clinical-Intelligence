@@ -1,0 +1,115 @@
+using ClinicalIntelligence.Api.Data;
+using ClinicalIntelligence.Api.Results;
+using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+
+namespace ClinicalIntelligence.Api.Middleware;
+
+/// <summary>
+/// Middleware that enforces server-side session validity and inactivity timeout.
+/// Runs after authentication to validate session state and update LastActivityAt.
+/// </summary>
+public class SessionTrackingMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<SessionTrackingMiddleware> _logger;
+
+    /// <summary>
+    /// Session inactivity timeout in minutes. Default is 15 minutes per US_012 requirements.
+    /// </summary>
+    private const int SessionInactivityTimeoutMinutes = 15;
+
+    public SessionTrackingMiddleware(RequestDelegate next, ILogger<SessionTrackingMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context, ApplicationDbContext dbContext)
+    {
+        // Skip session tracking for unauthenticated requests
+        if (context.User.Identity?.IsAuthenticated != true)
+        {
+            await _next(context);
+            return;
+        }
+
+        // Extract session ID from JWT claims
+        var sessionIdClaim = context.User.FindFirst("sid")?.Value;
+        
+        if (string.IsNullOrEmpty(sessionIdClaim) || !Guid.TryParse(sessionIdClaim, out var sessionId))
+        {
+            _logger.LogWarning("Authenticated request missing valid session ID claim");
+            await ApiErrorResults.Unauthorized(
+                code: "session_expired",
+                message: "Session is invalid or expired. Please log in again."
+            ).ExecuteAsync(context);
+            return;
+        }
+
+        // Load session from database
+        var session = await dbContext.Sessions
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session == null)
+        {
+            _logger.LogWarning("Session not found: {SessionId}", sessionId);
+            await ApiErrorResults.Unauthorized(
+                code: "session_expired",
+                message: "Session not found. Please log in again."
+            ).ExecuteAsync(context);
+            return;
+        }
+
+        // Check if session is revoked
+        if (session.IsRevoked)
+        {
+            _logger.LogInformation("Revoked session access attempt: {SessionId}", sessionId);
+            await ApiErrorResults.Unauthorized(
+                code: "session_expired",
+                message: "Session has been revoked. Please log in again."
+            ).ExecuteAsync(context);
+            return;
+        }
+
+        // Check if session has expired (absolute expiration)
+        if (session.ExpiresAt <= DateTime.UtcNow)
+        {
+            _logger.LogInformation("Expired session access attempt: {SessionId}", sessionId);
+            await ApiErrorResults.Unauthorized(
+                code: "session_expired",
+                message: "Session has expired. Please log in again."
+            ).ExecuteAsync(context);
+            return;
+        }
+
+        // Check inactivity timeout (15 minutes since last activity)
+        var lastActivity = session.LastActivityAt ?? session.CreatedAt;
+        var inactivityThreshold = DateTime.UtcNow.AddMinutes(-SessionInactivityTimeoutMinutes);
+
+        if (lastActivity < inactivityThreshold)
+        {
+            _logger.LogInformation(
+                "Session inactivity timeout: {SessionId}, LastActivity: {LastActivity}, Threshold: {Threshold}",
+                sessionId, lastActivity, inactivityThreshold);
+            await ApiErrorResults.Unauthorized(
+                code: "session_expired",
+                message: "Session expired due to inactivity. Please log in again."
+            ).ExecuteAsync(context);
+            return;
+        }
+
+        // Update LastActivityAt for valid session (sliding window)
+        session.LastActivityAt = DateTime.UtcNow;
+        
+        // Optionally slide ExpiresAt forward to maintain inactivity timeout window
+        session.ExpiresAt = DateTime.UtcNow.AddMinutes(SessionInactivityTimeoutMinutes);
+        
+        await dbContext.SaveChangesAsync();
+
+        // Store session ID in HttpContext for downstream use (e.g., logout)
+        context.Items["SessionId"] = sessionId;
+
+        await _next(context);
+    }
+}

@@ -48,7 +48,7 @@ Implement a logout confirmation message after redirecting the user to the login 
 - [Multi-tab test] Open 2 tabs, logout from one, ensure other tab redirects and also shows message.
 
 ## Implementation Checklist
-- [ ] Add a logout success UI state to `LoginPage`
-- [ ] Render an accessible confirmation message when `location.state.logout === 'success'`
-- [ ] Ensure the message clears appropriately on new login attempts
-- [ ] Validate behavior for direct visits to `/login` (no message shown)
+- [x] Add a logout success UI state to `LoginPage`
+- [x] Render an accessible confirmation message when `location.state.logout === 'success'`
+- [x] Ensure the message clears appropriately on new login attempts
+- [x] Validate behavior for direct visits to `/login` (no message shown)

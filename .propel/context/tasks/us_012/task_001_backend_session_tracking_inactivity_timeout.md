@@ -53,11 +53,11 @@ Implement server-side session tracking and inactivity timeout enforcement in the
 - []
 
 ## Implementation Checklist
-- [ ] Add session creation logic to `/api/v1/auth/login` and persist `Session` with `LastActivityAt = UtcNow`.
-- [ ] Add `sid` claim to JWT and validate it is present for authenticated requests.
-- [ ] Implement `SessionTrackingMiddleware` to load session by `sid` and enforce inactivity timeout.
-- [ ] Ensure middleware updates `LastActivityAt` for successful authenticated requests.
-- [ ] Revoke session on `/api/v1/auth/logout`.
-- [ ] Ensure middleware returns a consistent 401 error payload/code when session is expired/revoked.
-- [ ] Confirm behavior does not depend on client clock; all comparisons use server `UtcNow`.
-- [ ] Add logging hooks (non-PHI) for session expiration/revocation decisions.
+- [x] Add session creation logic to `/api/v1/auth/login` and persist `Session` with `LastActivityAt = UtcNow`.
+- [x] Add `sid` claim to JWT and validate it is present for authenticated requests.
+- [x] Implement `SessionTrackingMiddleware` to load session by `sid` and enforce inactivity timeout.
+- [x] Ensure middleware updates `LastActivityAt` for successful authenticated requests.
+- [x] Revoke session on `/api/v1/auth/logout`.
+- [x] Ensure middleware returns a consistent 401 error payload/code when session is expired/revoked.
+- [x] Confirm behavior does not depend on client clock; all comparisons use server `UtcNow`.
+- [x] Add logging hooks (non-PHI) for session expiration/revocation decisions.

@@ -3,6 +3,8 @@ using ClinicalIntelligence.Api.Results;
 using ClinicalIntelligence.Api.Data;
 using ClinicalIntelligence.Api.Configuration;
 using ClinicalIntelligence.Api.Contracts;
+using ClinicalIntelligence.Api.Contracts.Auth;
+using ClinicalIntelligence.Api.Services.Auth;
 using ClinicalIntelligence.Api.Health;
 using ClinicalIntelligence.Api.Diagnostics;
 using ClinicalIntelligence.Api.Domain.Models;
@@ -108,6 +110,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 }
                 // Fallback: Authorization header is handled automatically by the middleware
                 return Task.CompletedTask;
+            },
+            OnTokenValidated = async context =>
+            {
+                // Check if session has been revoked (logout enforcement)
+                var sessionIdClaim = context.Principal?.FindFirst("sid")?.Value;
+                
+                if (string.IsNullOrEmpty(sessionIdClaim) || !Guid.TryParse(sessionIdClaim, out var sessionId))
+                {
+                    context.Fail("Invalid session identifier.");
+                    return;
+                }
+
+                var revocationStore = context.HttpContext.RequestServices.GetRequiredService<ITokenRevocationStore>();
+                var isRevoked = await revocationStore.IsSessionRevokedAsync(sessionId, context.HttpContext.RequestAborted);
+
+                if (isRevoked)
+                {
+                    context.Fail("Session has been revoked.");
+                }
             }
         };
     });
@@ -129,6 +150,9 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
+
+// Register token revocation store for session-based revocation checks
+builder.Services.AddScoped<ITokenRevocationStore, DbTokenRevocationStore>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -157,6 +181,9 @@ app.UseMiddleware<RequestValidationMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Session tracking middleware - validates server-side session and enforces inactivity timeout
+app.UseMiddleware<SessionTrackingMiddleware>();
 
 app.Use(async (context, next) =>
 {
@@ -346,10 +373,24 @@ v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, Appl
     user.FailedLoginAttempts = 0;
     user.LockedUntil = null;
     user.UpdatedAt = DateTime.UtcNow;
+
+    // Create server-side session record
+    var session = new Session
+    {
+        Id = Guid.NewGuid(),
+        UserId = user.Id,
+        CreatedAt = DateTime.UtcNow,
+        ExpiresAt = DateTime.UtcNow.AddMinutes(secrets.JwtExpirationMinutes),
+        LastActivityAt = DateTime.UtcNow,
+        UserAgent = context.Request.Headers.UserAgent.ToString(),
+        IpAddress = context.Connection.RemoteIpAddress?.ToString(),
+        IsRevoked = false
+    };
+    dbContext.Sessions.Add(session);
     await dbContext.SaveChangesAsync();
 
-    // Generate JWT with role claims
-    var token = GenerateJwtToken(user, secrets);
+    // Generate JWT with role claims and session ID
+    var token = GenerateJwtToken(user, session.Id, secrets);
 
     // Set JWT in HttpOnly cookie
     var cookieOptions = new CookieOptions
@@ -376,20 +417,31 @@ v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, Appl
     .WithName("Login")
     .WithOpenApi();
 
-v1.MapPost("/auth/logout", (HttpContext context) =>
+v1.MapPost("/auth/logout", async (HttpContext context, ITokenRevocationStore revocationStore) =>
 {
-    // Clear the JWT cookie with matching options
+    // Extract session ID from JWT claims (set by authentication middleware)
+    var sessionIdClaim = context.User.FindFirst("sid")?.Value;
+    
+    if (!string.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
+    {
+        // Revoke the session using the revocation store
+        await revocationStore.RevokeSessionAsync(sessionId, context.RequestAborted);
+    }
+
+    // Clear the JWT cookie with matching options (HttpOnly, Secure, SameSite aligned to login)
     var cookieOptions = new CookieOptions
     {
         HttpOnly = true,
         Secure = !app.Environment.IsDevelopment(),
         SameSite = SameSiteMode.Lax,
-        Path = "/"
+        Path = "/",
+        Expires = DateTimeOffset.UtcNow.AddDays(-1) // Explicitly expire the cookie
     };
     context.Response.Cookies.Delete(AccessTokenCookieName, cookieOptions);
 
     return Results.Ok(new { status = "logged_out" });
 })
+    .RequireAuthorization()
     .WithName("Logout")
     .WithOpenApi();
 
@@ -427,7 +479,7 @@ v1.MapGet("/ping", () => Results.Ok(new { status = "OK" }))
 
 app.Run();
 
-static string GenerateJwtToken(User user, SecretsOptions secrets)
+static string GenerateJwtToken(User user, Guid sessionId, SecretsOptions secrets)
 {
     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secrets.JwtKey!));
     var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -440,7 +492,8 @@ static string GenerateJwtToken(User user, SecretsOptions secrets)
         new Claim(JwtRegisteredClaimNames.Email, user.Email),
         new Claim(ClaimTypes.Role, user.Role),
         new Claim("role", user.Role),
-        new Claim("name", user.Name)
+        new Claim("name", user.Name),
+        new Claim("sid", sessionId.ToString())
     };
 
     var token = new JwtSecurityToken(

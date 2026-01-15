@@ -12,6 +12,8 @@ export default function LoginPage(): JSX.Element {
     email: '',
     password: '',
   })
+  const [sessionExpiredMessage, setSessionExpiredMessage] = useState('')
+  const [logoutSuccessMessage, setLogoutSuccessMessage] = useState('')
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -25,6 +27,22 @@ export default function LoginPage(): JSX.Element {
       navigate(from, { replace: true })
     }
   }, [navigate, location])
+
+  // Check for logout redirect state (success or expired)
+  useEffect(() => {
+    const logoutReason = location.state?.logout
+    if (logoutReason === 'expired') {
+      setSessionExpiredMessage('Your session has expired due to inactivity. Please log in again.')
+      setLogoutSuccessMessage('')
+      // Clear the state to prevent message from showing on refresh
+      window.history.replaceState({}, document.title)
+    } else if (logoutReason === 'success') {
+      setLogoutSuccessMessage('You have been successfully logged out.')
+      setSessionExpiredMessage('')
+      // Clear the state to prevent message from showing on refresh
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state])
 
   useEffect(() => {
     if (emailInputRef.current) {
@@ -49,6 +67,14 @@ export default function LoginPage(): JSX.Element {
     // Clear global error when user starts typing
     if (error) {
       setError('')
+    }
+    
+    // Clear logout/session messages when user starts typing
+    if (logoutSuccessMessage) {
+      setLogoutSuccessMessage('')
+    }
+    if (sessionExpiredMessage) {
+      setSessionExpiredMessage('')
     }
   }
 
@@ -203,6 +229,24 @@ export default function LoginPage(): JSX.Element {
               </div>
             )}
           </div>
+
+          {logoutSuccessMessage && (
+            <div className="info-message logout-success visible" role="status" aria-live="polite">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              <span>{logoutSuccessMessage}</span>
+            </div>
+          )}
+
+          {sessionExpiredMessage && (
+            <div className="info-message session-expired visible" role="status" aria-live="polite">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <span>{sessionExpiredMessage}</span>
+            </div>
+          )}
 
           {error && (
             <div className="error-message visible" role="alert">

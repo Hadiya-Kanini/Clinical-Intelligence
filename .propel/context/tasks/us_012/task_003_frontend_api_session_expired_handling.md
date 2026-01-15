@@ -60,10 +60,10 @@ This ensures the app responds correctly when the backend expires a session due t
 - []
 
 ## Implementation Checklist
-- [ ] Implement `apiClient` with token header injection.
-- [ ] Standardize parsing of backend error response shape.
-- [ ] Detect session-expired condition and clear local auth keys.
-- [ ] Ensure forced logout triggers `AppShell` storage listener and navigates to `/login`.
-- [ ] Update Redux auth thunks to avoid duplicated auth logic.
-- [ ] Verify requests continue to work when no token is present (public endpoints).
-- [ ] Confirm no sensitive tokens are logged to console.
+- [x] Implement `apiClient` with token header injection.
+- [x] Standardize parsing of backend error response shape.
+- [x] Detect session-expired condition and clear local auth keys.
+- [x] Ensure forced logout triggers `AppShell` storage listener and navigates to `/login`.
+- [x] Update Redux auth thunks to avoid duplicated auth logic.
+- [x] Verify requests continue to work when no token is present (public endpoints).
+- [x] Confirm no sensitive tokens are logged to console.
