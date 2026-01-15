@@ -65,9 +65,9 @@ This task focuses on ensuring the token cannot be reused (even with concurrent r
 - [Reliability] Simulate DB failure during reset and confirm token is not consumed without a successful password update.
 
 ## Implementation Checklist
-- [ ] Wrap reset-password persistence operations in an explicit transaction
-- [ ] Implement atomic token consumption (conditional update where `UsedAt == null` and token is valid)
-- [ ] Ensure password update and token invalidation commit together (rollback on failure)
-- [ ] Preserve existing error codes/response shapes consumed by the frontend
-- [ ] Ensure secrets are not logged (no token, no password)
-- [ ] Validate the flow under concurrent reset attempts using the same token
+- [x] Wrap reset-password persistence operations in an explicit transaction
+- [x] Implement atomic token consumption (conditional update where `UsedAt == null` and token is valid)
+- [x] Ensure password update and token invalidation commit together (rollback on failure)
+- [x] Preserve existing error codes/response shapes consumed by the frontend
+- [x] Ensure secrets are not logged (no token, no password)
+- [x] Validate the flow under concurrent reset attempts using the same token

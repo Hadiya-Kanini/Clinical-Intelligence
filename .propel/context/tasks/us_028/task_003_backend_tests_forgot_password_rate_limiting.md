@@ -61,9 +61,9 @@ Tests should follow the existing pattern used for login rate limiting in `LoginR
 - [Automated] Run API test suite and confirm new tests are deterministic (short window override) and do not require sleeping for long durations.
 
 ## Implementation Checklist
-- [ ] Add `ForgotPasswordRateLimitingTests` following the structure of `LoginRateLimitingTests`
-- [ ] Override forgot-password limiter settings for short deterministic test window
-- [ ] Assert 429 occurs after 3 requests within the window
-- [ ] Assert `Retry-After` header exists and parses
-- [ ] Assert JSON error response shape and code
-- [ ] Assert `RATE_LIMIT_EXCEEDED` audit record is created (when DB is available)
+- [x] Add `ForgotPasswordRateLimitingTests` following the structure of `LoginRateLimitingTests`
+- [x] Override forgot-password limiter settings for short deterministic test window
+- [x] Assert 429 occurs after 3 requests within the window
+- [x] Assert `Retry-After` header exists and parses
+- [x] Assert JSON error response shape and code
+- [x] Assert `RATE_LIMIT_EXCEEDED` audit record is created (when DB is available)

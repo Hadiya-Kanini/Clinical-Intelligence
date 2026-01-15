@@ -56,8 +56,8 @@ Add backend integration test coverage for the reset-password token validation en
 - [Automated] Run backend test suite and confirm new tests pass consistently.
 
 ## Implementation Checklist
-- [ ] Add tests for `GET /api/v1/auth/reset-password/validate` missing/invalid/expired/used/valid scenarios
-- [ ] Add tests for `POST /api/v1/auth/reset-password` success and error scenarios
-- [ ] Assert used tokens cannot be reused
-- [ ] Assert password hash changes and remains verifiable using bcrypt
-- [ ] Reuse standardized error response assertions (shape and stable error codes)
+- [x] Add tests for `GET /api/v1/auth/reset-password/validate` missing/invalid/expired/used/valid scenarios
+- [x] Add tests for `POST /api/v1/auth/reset-password` success and error scenarios
+- [x] Assert used tokens cannot be reused
+- [x] Assert password hash changes and remains verifiable using bcrypt
+- [x] Reuse standardized error response assertions (shape and stable error codes)

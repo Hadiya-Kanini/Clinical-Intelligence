@@ -73,9 +73,9 @@ This task focuses on the reset completion step and requires atomic updates to pr
 - [Security] Confirm password/token are not logged and bcrypt hashing is used for `User.PasswordHash`.
 
 ## Implementation Checklist
-- [ ] Add `ResetPasswordRequest` contract
-- [ ] Add `IPasswordResetService` abstraction
-- [ ] Implement `PasswordResetService` with transactional update (password + token consumption)
-- [ ] Add `POST /api/v1/auth/reset-password` endpoint in `Program.cs`
-- [ ] Return standardized error responses for invalid/expired/used token
-- [ ] Ensure token and password are never logged
+- [x] Add `ResetPasswordRequest` contract
+- [x] Add `IPasswordResetService` abstraction
+- [x] Implement `PasswordResetService` with transactional update (password + token consumption)
+- [x] Add `POST /api/v1/auth/reset-password` endpoint in `Program.cs`
+- [x] Return standardized error responses for invalid/expired/used token
+- [x] Ensure token and password are never logged

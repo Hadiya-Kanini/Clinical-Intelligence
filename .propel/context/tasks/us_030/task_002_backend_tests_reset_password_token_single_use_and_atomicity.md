@@ -62,8 +62,8 @@ Extend backend integration tests to verify the reset-password flow is single-use
 - [Data Validation] Confirm test assertions query the correct token row by `TokenHash`.
 
 ## Implementation Checklist
-- [ ] Add test for token invalidation after successful reset (`UsedAt` set)
-- [ ] Add test for token reuse rejection (`invalid_token`)
-- [ ] Add test that weak password reset attempt does not consume token (`UsedAt` remains null)
-- [ ] Add concurrency test that exactly one request succeeds for the same token
-- [ ] Ensure tests do not rely on timing-sensitive assertions beyond necessary coordination
+- [x] Add test for token invalidation after successful reset (`UsedAt` set)
+- [x] Add test for token reuse rejection (`invalid_token`)
+- [x] Add test that weak password reset attempt does not consume token (`UsedAt` remains null)
+- [x] Add concurrency test that exactly one request succeeds for the same token
+- [x] Ensure tests do not rely on timing-sensitive assertions beyond necessary coordination

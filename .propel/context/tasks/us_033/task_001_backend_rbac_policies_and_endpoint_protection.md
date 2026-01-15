@@ -67,9 +67,9 @@ This task focuses on backend role definition + endpoint protection only. It does
 - [Manual/API] Confirm `/health/db` and `/health/db/pool` return `200` when authenticated as Admin.
 
 ## Implementation Checklist
-- [ ] Add centralized role constants and ensure casing is consistent with seeded data
-- [ ] Add authorization policy definitions (at least `AdminOnly`)
-- [ ] Register authorization policies in `Program.cs`
-- [ ] Apply `AdminOnly` to admin/system-health endpoints
-- [ ] Validate `401/403/200` behavior for unauthenticated/standard/admin requests
-- [ ] Ensure logs do not leak sensitive authorization details
+- [x] Add centralized role constants and ensure casing is consistent with seeded data
+- [x] Add authorization policy definitions (at least `AdminOnly`)
+- [x] Register authorization policies in `Program.cs`
+- [x] Apply `AdminOnly` to admin/system-health endpoints
+- [x] Validate `401/403/200` behavior for unauthenticated/standard/admin requests
+- [x] Ensure logs do not leak sensitive authorization details

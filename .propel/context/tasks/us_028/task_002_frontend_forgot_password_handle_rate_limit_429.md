@@ -64,8 +64,8 @@ This task should preserve the generic "check email" success behavior for syntact
 - [Regression] Ensure other API calls using `apiClient` are unaffected by the added optional header field.
 
 ## Implementation Checklist
-- [ ] Extend `apiClient` failure results to include parsed `Retry-After` when present
-- [ ] Wire `ForgotPasswordPage` to call `POST /api/v1/auth/forgot-password`
-- [ ] Handle 429 by showing a user-friendly retry timeframe message (UXR-010)
-- [ ] Keep generic success UX (no enumeration)
+- [x] Extend `apiClient` failure results to include parsed `Retry-After` when present
+- [x] Wire `ForgotPasswordPage` to call `POST /api/v1/auth/forgot-password`
+- [x] Handle 429 by showing a user-friendly retry timeframe message (UXR-010)
+- [x] Keep generic success UX (no enumeration)
 - [ ] Manually verify behavior with a simulated/exercised rate limit

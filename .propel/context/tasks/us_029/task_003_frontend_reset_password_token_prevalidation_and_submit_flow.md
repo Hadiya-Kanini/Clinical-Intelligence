@@ -63,12 +63,12 @@ Update the existing Reset Password page to pre-validate the reset token with the
 - [Manual] Simulate API failure and confirm safe error messaging.
 
 ## Implementation Checklist
-- [ ] Add token pre-validation request on page load and a loading state
-- [ ] Block form render until token is validated successfully
-- [ ] Add invalid/expired token UI state with navigation to `/forgot-password`
-- [ ] Wire submit to `POST /api/v1/auth/reset-password` with `{ token, password }`
-- [ ] Disable submit while submitting to prevent duplicate requests
-- [ ] Preserve password strength indicator and validation UI
+- [x] Add token pre-validation request on page load and a loading state
+- [x] Block form render until token is validated successfully
+- [x] Add invalid/expired token UI state with navigation to `/forgot-password`
+- [x] Wire submit to `POST /api/v1/auth/reset-password` with `{ token, password }`
+- [x] Disable submit while submitting to prevent duplicate requests
+- [x] Preserve password strength indicator and validation UI
 
 ---
 

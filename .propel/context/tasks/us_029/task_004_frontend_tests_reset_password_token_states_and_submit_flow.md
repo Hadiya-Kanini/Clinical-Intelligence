@@ -53,12 +53,12 @@ Add Playwright UI test coverage for the Reset Password page to validate the new 
 - [Automated] Run Playwright visual test suite and confirm the new reset-password tests are stable.
 
 ## Implementation Checklist
-- [ ] Add route mocks for `GET /api/v1/auth/reset-password/validate` (valid + invalid)
-- [ ] Add route mocks for `POST /api/v1/auth/reset-password` (success + failure)
-- [ ] Add test for missing token -> invalid/expired state
-- [ ] Add test for valid token -> form renders after validation
-- [ ] Add test for invalid token -> error UI + request new reset option
-- [ ] Add test for success -> redirect to `/login`
+- [x] Add route mocks for `GET /api/v1/auth/reset-password/validate` (valid + invalid)
+- [x] Add route mocks for `POST /api/v1/auth/reset-password` (success + failure)
+- [x] Add test for missing token -> invalid/expired state
+- [x] Add test for valid token -> form renders after validation
+- [x] Add test for invalid token -> error UI + request new reset option
+- [x] Add test for success -> redirect to `/login`
 
 ---
 

@@ -305,6 +305,49 @@ public sealed class ForgotPasswordEndpointTests : IClassFixture<TestWebApplicati
         var details = detailsElement.EnumerateArray().Select(d => d.GetString()).ToList();
         Assert.Contains("email:required", details);
     }
+
+    [Fact]
+    public async Task ForgotPassword_ValidEmail_CreatesPasswordResetRequestedAuditEvent()
+    {
+        // Arrange
+        var request = new ForgotPasswordRequest { Email = "test@example.com" };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/forgot-password", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Allow time for async audit write
+        await Task.Delay(100);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var auditEvent = await dbContext.AuditLogEvents
+            .Where(e => e.ActionType == "PASSWORD_RESET_REQUESTED")
+            .OrderByDescending(e => e.Timestamp)
+            .FirstOrDefaultAsync();
+
+        Assert.NotNull(auditEvent);
+        Assert.Equal("Auth", auditEvent.ResourceType);
+        Assert.NotNull(auditEvent.UserId);
+        Assert.NotNull(auditEvent.Metadata);
+
+        // Parse metadata and validate required fields
+        using var metadataDoc = JsonDocument.Parse(auditEvent.Metadata);
+        var metadata = metadataDoc.RootElement;
+
+        Assert.True(metadata.TryGetProperty("email", out var emailProp));
+        Assert.Equal("test@example.com", emailProp.GetString());
+
+        Assert.True(metadata.TryGetProperty("tokenId", out var tokenIdProp));
+        Assert.True(Guid.TryParse(tokenIdProp.GetString(), out _));
+
+        // Ensure no raw token is logged
+        Assert.False(metadata.TryGetProperty("token", out _));
+        Assert.False(metadata.TryGetProperty("plainToken", out _));
+    }
 }
 
 /// <summary>
@@ -568,5 +611,178 @@ public sealed class ResetPasswordEndpointTests : IClassFixture<TestWebApplicatio
         Assert.NotEmpty(user.PasswordHash);
         Assert.Equal(0, user.FailedLoginAttempts);
         Assert.Null(user.LockedUntil);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ValidToken_CreatesPasswordResetCompletedAuditEvent()
+    {
+        // Arrange - Create a reset token
+        var resetToken = await CreateResetToken();
+        var request = new ResetPasswordRequest
+        {
+            Token = resetToken.PlainToken,
+            NewPassword = "NewPassword123!"
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/reset-password", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Allow time for async audit write
+        await Task.Delay(100);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var auditEvent = await dbContext.AuditLogEvents
+            .Where(e => e.ActionType == "PASSWORD_RESET_COMPLETED")
+            .OrderByDescending(e => e.Timestamp)
+            .FirstOrDefaultAsync();
+
+        Assert.NotNull(auditEvent);
+        Assert.Equal("Auth", auditEvent.ResourceType);
+        Assert.Equal(resetToken.UserId, auditEvent.UserId);
+        Assert.NotNull(auditEvent.Metadata);
+
+        // Parse metadata and validate required fields
+        using var metadataDoc = JsonDocument.Parse(auditEvent.Metadata);
+        var metadata = metadataDoc.RootElement;
+
+        Assert.True(metadata.TryGetProperty("userId", out var userIdProp));
+        Assert.Equal(resetToken.UserId.ToString(), userIdProp.GetString());
+
+        // Ensure no raw token is logged
+        Assert.False(metadata.TryGetProperty("token", out _));
+        Assert.False(metadata.TryGetProperty("plainToken", out _));
+        Assert.False(metadata.TryGetProperty("newPassword", out _));
+    }
+
+    [Fact]
+    public async Task ResetPassword_InvalidToken_CreatesPasswordResetFailedAuditEvent()
+    {
+        // Arrange
+        var request = new ResetPasswordRequest
+        {
+            Token = Guid.NewGuid().ToString(),
+            NewPassword = "NewPassword123!"
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/reset-password", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+
+        // Allow time for async audit write
+        await Task.Delay(100);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var auditEvent = await dbContext.AuditLogEvents
+            .Where(e => e.ActionType == "PASSWORD_RESET_FAILED")
+            .OrderByDescending(e => e.Timestamp)
+            .FirstOrDefaultAsync();
+
+        Assert.NotNull(auditEvent);
+        Assert.Equal("Auth", auditEvent.ResourceType);
+        Assert.Null(auditEvent.UserId); // User not known for invalid token
+        Assert.NotNull(auditEvent.Metadata);
+
+        // Parse metadata and validate required fields
+        using var metadataDoc = JsonDocument.Parse(auditEvent.Metadata);
+        var metadata = metadataDoc.RootElement;
+
+        Assert.True(metadata.TryGetProperty("reason", out var reasonProp));
+        Assert.Equal("invalid_token", reasonProp.GetString());
+
+        // Ensure no raw token is logged
+        Assert.False(metadata.TryGetProperty("token", out _));
+        Assert.False(metadata.TryGetProperty("plainToken", out _));
+    }
+
+    [Fact]
+    public async Task ResetPassword_ExpiredToken_CreatesPasswordResetFailedAuditEvent()
+    {
+        // Arrange - Create expired token
+        var expiredToken = await CreateExpiredResetToken();
+        var request = new ResetPasswordRequest
+        {
+            Token = expiredToken.PlainToken,
+            NewPassword = "NewPassword123!"
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/reset-password", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+
+        // Allow time for async audit write
+        await Task.Delay(100);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var auditEvent = await dbContext.AuditLogEvents
+            .Where(e => e.ActionType == "PASSWORD_RESET_FAILED")
+            .OrderByDescending(e => e.Timestamp)
+            .FirstOrDefaultAsync();
+
+        Assert.NotNull(auditEvent);
+        Assert.Equal("Auth", auditEvent.ResourceType);
+        Assert.NotNull(auditEvent.Metadata);
+
+        // Parse metadata and validate required fields
+        using var metadataDoc = JsonDocument.Parse(auditEvent.Metadata);
+        var metadata = metadataDoc.RootElement;
+
+        Assert.True(metadata.TryGetProperty("reason", out var reasonProp));
+        Assert.Equal("token_expired", reasonProp.GetString());
+
+        // Ensure no raw token is logged
+        Assert.False(metadata.TryGetProperty("token", out _));
+    }
+
+    [Fact]
+    public async Task ResetPassword_AuditMetadata_DoesNotContainRawToken()
+    {
+        // Arrange - Create a reset token
+        var resetToken = await CreateResetToken();
+        var request = new ResetPasswordRequest
+        {
+            Token = resetToken.PlainToken,
+            NewPassword = "NewPassword123!"
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/reset-password", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Allow time for async audit write
+        await Task.Delay(100);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        // Check all recent audit events for this flow
+        var auditEvents = await dbContext.AuditLogEvents
+            .Where(e => e.ActionType.StartsWith("PASSWORD_RESET"))
+            .OrderByDescending(e => e.Timestamp)
+            .Take(5)
+            .ToListAsync();
+
+        foreach (var auditEvent in auditEvents)
+        {
+            if (auditEvent.Metadata != null)
+            {
+                // Ensure the raw token value is not present in metadata
+                Assert.DoesNotContain(resetToken.PlainToken, auditEvent.Metadata);
+            }
+        }
     }
 }

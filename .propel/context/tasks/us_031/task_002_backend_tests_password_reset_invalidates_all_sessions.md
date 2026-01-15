@@ -63,7 +63,7 @@ Because the API uses JWT cookies with a `sid` claim and enforces revocation via 
 - [Automated] Run backend test suite and confirm the new integration tests pass consistently.
 
 ## Implementation Checklist
-- [ ] Add integration test to create multiple sessions for a user (multiple clients) and verify both are invalidated after password reset
-- [ ] Assert `401` is returned when using old session cookies post-reset
-- [ ] Assert audit log event exists with expected action type
-- [ ] Assert audit metadata does not contain sensitive values (token/password)
+- [x] Add integration test to create multiple sessions for a user (multiple clients) and verify both are invalidated after password reset
+- [x] Assert `401` is returned when using old session cookies post-reset
+- [x] Assert audit log event exists with expected action type
+- [x] Assert audit metadata does not contain sensitive values (token/password)

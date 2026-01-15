@@ -69,9 +69,9 @@ This task creates a dedicated validation endpoint and a reusable validation serv
 - [Security] Confirm logs do not contain raw token values.
 
 ## Implementation Checklist
-- [ ] Add response contract for token validation result
-- [ ] Add `IPasswordResetTokenValidator` abstraction
-- [ ] Implement validator using `ApplicationDbContext.PasswordResetTokens` and UTC expiry checks
-- [ ] Add `GET /api/v1/auth/reset-password/validate` endpoint
-- [ ] Use standardized error responses via `ApiErrorResults`
-- [ ] Confirm raw tokens are never logged
+- [x] Add response contract for token validation result
+- [x] Add `IPasswordResetTokenValidator` abstraction
+- [x] Implement validator using `ApplicationDbContext.PasswordResetTokens` and UTC expiry checks
+- [x] Add `GET /api/v1/auth/reset-password/validate` endpoint
+- [x] Use standardized error responses via `ApiErrorResults`
+- [x] Confirm raw tokens are never logged

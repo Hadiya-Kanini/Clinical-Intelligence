@@ -1,5 +1,7 @@
 import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import type { RootState } from './store'
 import App from './App.tsx'
 import LoginPage from './pages/LoginPage.tsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx'
@@ -13,6 +15,10 @@ import ExportPage from './pages/ExportPage.tsx'
 import AdminDashboardPage from './pages/AdminDashboardPage.tsx'
 import UserManagementPage from './pages/UserManagementPage.tsx'
 
+/**
+ * @deprecated Use useSelector to access auth state from Redux store instead.
+ * Kept for backward compatibility during migration.
+ */
 export function isAuthenticated(): boolean {
   try {
     return window.localStorage.getItem('ci_auth') === '1'
@@ -21,6 +27,10 @@ export function isAuthenticated(): boolean {
   }
 }
 
+/**
+ * @deprecated Use useSelector to access user.role from Redux store instead.
+ * Kept for backward compatibility during migration.
+ */
 export function getUserRole(): 'admin' | 'standard' | null {
   try {
     const role = window.localStorage.getItem('ci_user_role')
@@ -33,6 +43,10 @@ export function getUserRole(): 'admin' | 'standard' | null {
   }
 }
 
+/**
+ * @deprecated Use useSelector to check user.role === 'admin' from Redux store instead.
+ * Kept for backward compatibility during migration.
+ */
 export function isAdmin(): boolean {
   return getUserRole() === 'admin'
 }
@@ -41,8 +55,14 @@ type RequireAuthProps = {
   children: ReactElement
 }
 
+/**
+ * Route guard component that requires authentication.
+ * Uses Redux auth state (server-derived) as the source of truth.
+ */
 export function RequireAuth({ children }: RequireAuthProps): ReactElement {
-  if (!isAuthenticated()) {
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
+
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />
   }
 
@@ -53,12 +73,18 @@ type RequireAdminProps = {
   children: ReactElement
 }
 
+/**
+ * Route guard component that requires Admin role.
+ * Uses Redux auth state (server-derived) as the source of truth.
+ */
 export function RequireAdmin({ children }: RequireAdminProps): ReactElement {
-  if (!isAuthenticated()) {
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
+
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />
   }
 
-  if (!isAdmin()) {
+  if (user.role !== 'admin') {
     return <Navigate to="/dashboard" replace />
   }
 

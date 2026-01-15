@@ -41,7 +41,9 @@ This task focuses on the seed/migration behavior itself, not on enforcing “can
 **Focus on how to implement**
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- Migration `20260115100000_SeedStaticAdminAccount.cs` exists and implements all required functionality
+- Tests in `StaticAdminSeedMigrationTests.cs` cover env-var validation, email validation, password policy, bcrypt hashing, and idempotency
+- Migration applies automatically in Development via `dbContext.Database.Migrate()` in Program.cs
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -66,9 +68,9 @@ This task focuses on the seed/migration behavior itself, not on enforcing “can
 - [Tests] Run the backend test suite including `StaticAdminSeedMigrationTests` (skippable if DB not available).
 
 ## Implementation Checklist
-- [ ] Review `SeedStaticAdminAccount` migration for env var validation, normalization, and policy enforcement
-- [ ] Confirm bcrypt hashing behavior and documented work factor alignment
-- [ ] Confirm idempotency behavior and ensure reruns do not create duplicates
-- [ ] Validate how/when migrations run during initialization and document expectations
-- [ ] Update/add tests for missing env vars, invalid email, weak password
-- [ ] Update/add tests for seeded admin properties and idempotency
+- [x] Review `SeedStaticAdminAccount` migration for env var validation, normalization, and policy enforcement
+- [x] Confirm bcrypt hashing behavior and documented work factor alignment
+- [x] Confirm idempotency behavior and ensure reruns do not create duplicates
+- [x] Validate how/when migrations run during initialization and document expectations
+- [x] Update/add tests for missing env vars, invalid email, weak password
+- [x] Update/add tests for seeded admin properties and idempotency

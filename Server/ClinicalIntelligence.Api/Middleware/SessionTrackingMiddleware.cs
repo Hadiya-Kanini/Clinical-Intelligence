@@ -1,7 +1,10 @@
 using ClinicalIntelligence.Api.Data;
 using ClinicalIntelligence.Api.Results;
+using ClinicalIntelligence.Api.Authorization;
+using ClinicalIntelligence.Api.Services.Security;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace ClinicalIntelligence.Api.Middleware;
 
@@ -25,7 +28,7 @@ public class SessionTrackingMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, ApplicationDbContext dbContext)
+    public async Task InvokeAsync(HttpContext context, ApplicationDbContext dbContext, IAuditLogWriter auditLogWriter)
     {
         // Skip session tracking for unauthenticated requests
         if (context.User.Identity?.IsAuthenticated != true)
@@ -97,6 +100,55 @@ public class SessionTrackingMiddleware
                 message: "Session expired due to inactivity. Please log in again."
             ).ExecuteAsync(context);
             return;
+        }
+
+        // US_033 TASK_002: Detect role mismatch between JWT and database
+        // If user's role was changed mid-session, invalidate the session
+        var jwtRoleClaim = context.User.FindFirst(ClaimTypes.Role)?.Value 
+                           ?? context.User.FindFirst("role")?.Value;
+
+        if (!string.IsNullOrEmpty(jwtRoleClaim))
+        {
+            // Load user to get current DB role
+            var user = await dbContext.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == session.UserId);
+
+            if (user != null)
+            {
+                // Compare roles (case-insensitive)
+                var dbRole = Roles.Normalize(user.Role);
+                var tokenRole = Roles.Normalize(jwtRoleClaim);
+
+                if (dbRole != null && tokenRole != null && !string.Equals(dbRole, tokenRole, StringComparison.Ordinal))
+                {
+                    _logger.LogInformation(
+                        "Role mismatch detected for session {SessionId}: JWT role '{JwtRole}' differs from DB role '{DbRole}'. Invalidating session.",
+                        sessionId, tokenRole, dbRole);
+
+                    // Revoke the session
+                    session.IsRevoked = true;
+                    await dbContext.SaveChangesAsync();
+
+                    // Audit log: ROLE_CHANGE_SESSION_INVALIDATED (best-effort)
+                    _ = auditLogWriter.WriteAsync(
+                        actionType: "ROLE_CHANGE_SESSION_INVALIDATED",
+                        userId: session.UserId,
+                        sessionId: sessionId,
+                        resourceType: "Session",
+                        resourceId: sessionId,
+                        ipAddress: context.Connection.RemoteIpAddress?.ToString(),
+                        userAgent: context.Request.Headers.UserAgent.ToString(),
+                        metadata: new { previousRole = tokenRole, newRole = dbRole },
+                        cancellationToken: context.RequestAborted);
+
+                    await ApiErrorResults.Unauthorized(
+                        code: "session_invalidated",
+                        message: "Your session was invalidated due to a role change. Please log in again."
+                    ).ExecuteAsync(context);
+                    return;
+                }
+            }
         }
 
         // Update LastActivityAt for valid session (sliding window)

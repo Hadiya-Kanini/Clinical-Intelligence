@@ -35,7 +35,9 @@ This task ensures configuration is discoverable and that missing env vars are ha
 **Focus on how to implement**
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- Updated `.env.example` with `ADMIN_EMAIL` and `ADMIN_PASSWORD` placeholders
+- Added comprehensive security guidance including password requirements, rotation procedure, and security notes
+- Documentation aligns with migration's fail-fast behavior for missing/invalid env vars
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -54,6 +56,6 @@ This task ensures configuration is discoverable and that missing env vars are ha
 - [Manual] Confirm `.env.example` documents `ADMIN_EMAIL`/`ADMIN_PASSWORD` and that local setup can follow it.
 
 ## Implementation Checklist
-- [ ] Add `ADMIN_EMAIL`/`ADMIN_PASSWORD` placeholders to `.env.example`
-- [ ] Add brief guidance on required presence when applying migrations
-- [ ] Add security notes (do not commit secrets) and password policy guidance
+- [x] Add `ADMIN_EMAIL`/`ADMIN_PASSWORD` placeholders to `.env.example`
+- [x] Add brief guidance on required presence when applying migrations
+- [x] Add security notes (do not commit secrets) and password policy guidance

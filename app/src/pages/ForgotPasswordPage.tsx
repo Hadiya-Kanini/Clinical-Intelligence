@@ -1,11 +1,11 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import axios from 'axios'
 import Button from '../components/ui/Button.tsx'
 import TextField from '../components/ui/TextField.tsx'
 import Alert from '../components/ui/Alert.tsx'
 import { isValidEmailRfc5322 } from '../lib/validation/email'
+import { api } from '../lib/apiClient'
 
 type ForgotPasswordErrors = {
   email?: string
@@ -17,7 +17,22 @@ type LocationState = {
 
 type Status = 'idle' | 'loading' | 'success' | 'error' | 'rate_limited'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5062'
+/**
+ * Format seconds into a human-readable timeframe string.
+ * @param seconds - Number of seconds to format
+ * @returns Formatted string like "5 minutes" or "1 hour"
+ */
+function formatRetryTimeframe(seconds: number): string {
+  if (seconds >= 3600) {
+    const hours = Math.ceil(seconds / 3600)
+    return hours === 1 ? '1 hour' : `${hours} hours`
+  }
+  if (seconds >= 60) {
+    const minutes = Math.ceil(seconds / 60)
+    return minutes === 1 ? '1 minute' : `${minutes} minutes`
+  }
+  return seconds === 1 ? '1 second' : `${seconds} seconds`
+}
 
 export default function ForgotPasswordPage(): JSX.Element {
   const location = useLocation()
@@ -76,26 +91,29 @@ export default function ForgotPasswordPage(): JSX.Element {
 
     setStatus('loading')
 
-    try {
-      await axios.post(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
-        email: email.trim().toLowerCase(),
-      })
-      setStatus('success')
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const statusCode = error.response?.status
-        const errorCode = error.response?.data?.error?.code
+    const result = await api.post('/api/v1/auth/forgot-password', {
+      email: email.trim().toLowerCase(),
+    }, { skipCsrf: true })
 
-        if (statusCode === 429 || errorCode === 'rate_limited') {
-          setStatus('rate_limited')
-          setErrorMessage('Too many password reset requests. Please try again later.')
+    if (result.success) {
+      setStatus('success')
+    } else {
+      if (result.status === 429 || result.error.code === 'rate_limited') {
+        setStatus('rate_limited')
+        // Display retry timeframe from Retry-After header (UXR-010)
+        const retrySeconds = result.retryAfterSeconds
+        if (retrySeconds && retrySeconds > 0) {
+          const timeframe = formatRetryTimeframe(retrySeconds)
+          setErrorMessage(`Too many reset requests. Please try again in ${timeframe}.`)
         } else {
-          setStatus('error')
-          setErrorMessage(error.response?.data?.error?.message || 'An error occurred. Please try again.')
+          setErrorMessage('Too many password reset requests. Please try again later.')
         }
-      } else {
+      } else if (result.error.code === 'network_error') {
         setStatus('error')
         setErrorMessage('Network error. Please check your connection and try again.')
+      } else {
+        setStatus('error')
+        setErrorMessage(result.error.message || 'An error occurred. Please try again.')
       }
     }
   }

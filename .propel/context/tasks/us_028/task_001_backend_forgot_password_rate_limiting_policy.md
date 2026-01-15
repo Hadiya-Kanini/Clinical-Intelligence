@@ -70,10 +70,10 @@ This task must:
 - [Manual/DB] Verify an `AUDIT_LOG_EVENT` record is written with `ActionType = RATE_LIMIT_EXCEEDED` and includes the endpoint path.
 
 ## Implementation Checklist
-- [ ] Extend `RateLimitingOptions` to include forgot-password policy settings
-- [ ] Register forgot-password rate limit policy in `Program.cs` (3/hour/IP)
-- [ ] Apply `.RequireRateLimiting(...)` to `POST /api/v1/auth/forgot-password`
-- [ ] Ensure rejection handler returns standardized JSON + `Retry-After`
-- [ ] Ensure 429 message is correct for forgot-password requests
-- [ ] Confirm audit logging still records `RATE_LIMIT_EXCEEDED` for this endpoint
+- [x] Extend `RateLimitingOptions` to include forgot-password policy settings
+- [x] Register forgot-password rate limit policy in `Program.cs` (3/hour/IP)
+- [x] Apply `.RequireRateLimiting(...)` to `POST /api/v1/auth/forgot-password`
+- [x] Ensure rejection handler returns standardized JSON + `Retry-After`
+- [x] Ensure 429 message is correct for forgot-password requests
+- [x] Confirm audit logging still records `RATE_LIMIT_EXCEEDED` for this endpoint
 - [ ] Validate behavior manually with repeated requests from the same IP

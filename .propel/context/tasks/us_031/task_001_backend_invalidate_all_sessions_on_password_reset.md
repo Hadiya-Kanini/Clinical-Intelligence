@@ -71,10 +71,10 @@ The codebase already supports session revocation via the `sessions` table and JW
 - [Auditability] Confirm an audit event is persisted when sessions are invalidated.
 
 ## Implementation Checklist
-- [ ] Add `ISessionInvalidationService` abstraction
-- [ ] Implement `SessionInvalidationService` to revoke sessions for a user (return revoked count)
-- [ ] Register the new service in DI (`Program.cs`)
-- [ ] Update `POST /api/v1/auth/reset-password` to revoke all sessions after successful password reset
-- [ ] Write an `AuditLogEvent` for the invalidation action (safe metadata only)
-- [ ] Ensure password update + token consumption + session invalidation + audit write are atomic (transaction)
-- [ ] Validate old JWTs return `401` after reset
+- [x] Add `ISessionInvalidationService` abstraction
+- [x] Implement `SessionInvalidationService` to revoke sessions for a user (return revoked count)
+- [x] Register the new service in DI (`Program.cs`)
+- [x] Update `POST /api/v1/auth/reset-password` to revoke all sessions after successful password reset
+- [x] Write an `AuditLogEvent` for the invalidation action (safe metadata only)
+- [x] Ensure password update + token consumption + session invalidation + audit write are atomic (transaction)
+- [x] Validate old JWTs return `401` after reset

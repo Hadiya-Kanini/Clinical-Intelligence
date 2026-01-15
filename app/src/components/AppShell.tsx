@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { isAdmin } from '../routes'
+import { useSelector } from 'react-redux'
+import type { RootState } from '../store'
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout'
 import Button from './ui/Button'
 import Modal from './ui/Modal'
@@ -24,9 +25,13 @@ function getTitle(pathname: string): string {
 export default function AppShell({ children }: AppShellProps): JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useSelector((state: RootState) => state.auth)
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false)
   const [sessionExpiredOpen, setSessionExpiredOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  // Derive admin status from Redux auth state (server-derived)
+  const isUserAdmin = user?.role === 'admin'
 
   // Handle session expiration from inactivity timeout
   const handleInactivityTimeout = useCallback(() => {
@@ -120,7 +125,7 @@ export default function AppShell({ children }: AppShellProps): JSX.Element {
             Export
           </NavLink>
 
-          {isAdmin() && (
+          {isUserAdmin && (
             <>
               <div style={{ height: 'var(--space-6)' }} />
 

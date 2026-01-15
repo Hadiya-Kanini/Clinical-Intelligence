@@ -7,10 +7,12 @@ using ClinicalIntelligence.Api.Contracts.Auth;
 using ClinicalIntelligence.Api.Services;
 using ClinicalIntelligence.Api.Services.Auth;
 using ClinicalIntelligence.Api.Services.Email;
+using ClinicalIntelligence.Api.Services.Security;
 using ClinicalIntelligence.Api.Health;
 using ClinicalIntelligence.Api.Diagnostics;
 using ClinicalIntelligence.Api.Domain.Models;
 using ClinicalIntelligence.Api.Validation;
+using ClinicalIntelligence.Api.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Http;
@@ -142,7 +144,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // AdminOnly policy: requires Admin role
+    options.AddPolicy(AuthorizationPolicies.AdminOnly, policy =>
+        policy.RequireRole(Roles.Admin));
+
+    // Authenticated policy: requires any authenticated user
+    options.AddPolicy(AuthorizationPolicies.Authenticated, policy =>
+        policy.RequireAuthenticatedUser());
+});
 
 // Configure CORS policy with configuration-driven allowed origins (US_023)
 var corsOptions = builder.Configuration.GetSection(CorsOptions.SectionName).Get<CorsOptions>() ?? new CorsOptions();
@@ -210,6 +221,22 @@ builder.Services.AddSingleton<IResponseTimingNormalizer, ResponseTimingNormalize
 
 // Register password reset token service (US_025)
 builder.Services.AddScoped<IPasswordResetTokenService, PasswordResetTokenService>();
+
+// Register password reset token validator (US_029 TASK_001)
+builder.Services.AddScoped<IPasswordResetTokenValidator, PasswordResetTokenValidator>();
+
+// Register password reset service (US_029 TASK_002)
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+
+// Register session invalidation service (US_031 TASK_001)
+builder.Services.AddScoped<ISessionInvalidationService, SessionInvalidationService>();
+
+// Register audit log writer (US_032 TASK_001)
+builder.Services.AddScoped<IAuditLogWriter, AuditLogWriter>();
+
+// Register static admin guard (US_034 TASK_002)
+builder.Services.AddScoped<IStaticAdminGuard, StaticAdminGuard>();
+
 if (smtpConfigured)
 {
     Console.WriteLine("SMTP email service configured and enabled.");
@@ -226,6 +253,7 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
+    // Login rate limiting policy (US_015)
     options.AddPolicy(RateLimitingOptions.LoginPolicyName, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -237,9 +265,33 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
+    // Forgot-password rate limiting policy (US_028)
+    options.AddPolicy(RateLimitingOptions.ForgotPasswordPolicyName, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = rateLimitingOptions.ForgotPasswordPermitLimit,
+                Window = rateLimitingOptions.ForgotPasswordWindow,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
     options.OnRejected = async (context, cancellationToken) =>
     {
-        var retryAfterSeconds = rateLimitingOptions.LoginWindowSeconds;
+        // Determine which policy was triggered based on endpoint path
+        var endpointPath = context.HttpContext.Request.Path.Value ?? string.Empty;
+        var isForgotPassword = endpointPath.EndsWith("/forgot-password", StringComparison.OrdinalIgnoreCase);
+
+        // Use appropriate window seconds based on endpoint
+        var defaultWindowSeconds = isForgotPassword 
+            ? rateLimitingOptions.ForgotPasswordWindowSeconds 
+            : rateLimitingOptions.LoginWindowSeconds;
+        var permitLimit = isForgotPassword 
+            ? rateLimitingOptions.ForgotPasswordPermitLimit 
+            : rateLimitingOptions.LoginPermitLimit;
+
+        var retryAfterSeconds = defaultWindowSeconds;
         if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
         {
             retryAfterSeconds = (int)Math.Ceiling(retryAfter.TotalSeconds);
@@ -247,16 +299,20 @@ builder.Services.AddRateLimiter(options =>
 
         context.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
 
-        // Write standardized JSON error response
+        // Write standardized JSON error response with endpoint-appropriate message
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
         context.HttpContext.Response.ContentType = "application/json";
+
+        var errorMessage = isForgotPassword
+            ? "Too many password reset requests. Please try again later."
+            : "Too many login attempts. Please try again later.";
 
         var errorResponse = new
         {
             error = new
             {
                 code = "rate_limited",
-                message = "Too many login attempts. Please try again later.",
+                message = errorMessage,
                 details = Array.Empty<string>()
             }
         };
@@ -283,9 +339,9 @@ builder.Services.AddRateLimiter(options =>
                     Timestamp = DateTime.UtcNow,
                     Metadata = JsonSerializer.Serialize(new
                     {
-                        endpoint = context.HttpContext.Request.Path.Value,
-                        permitLimit = rateLimitingOptions.LoginPermitLimit,
-                        windowSeconds = rateLimitingOptions.LoginWindowSeconds,
+                        endpoint = endpointPath,
+                        permitLimit = permitLimit,
+                        windowSeconds = defaultWindowSeconds,
                         retryAfterSeconds = retryAfterSeconds
                     })
                 };
@@ -401,6 +457,7 @@ app.MapGet("/health/db", async (HttpContext context) =>
     context.Response.ContentType = "application/json";
     await context.Response.WriteAsJsonAsync(response);
 })
+    .RequireAuthorization(AuthorizationPolicies.AdminOnly)
     .WithName("DatabaseHealthCheck")
     .WithOpenApi();
 
@@ -447,6 +504,7 @@ app.MapGet("/health/db/pool", async (HttpContext context) =>
         timestamp = snapshot.Timestamp
     });
 })
+    .RequireAuthorization(AuthorizationPolicies.AdminOnly)
     .WithName("DatabasePoolMetrics")
     .WithOpenApi();
 
@@ -800,8 +858,8 @@ v1.MapGet("/ping", () => Results.Ok(new { status = "OK" }))
     .WithName("PingV1")
     .WithOpenApi();
 
-// Password Reset Flow - Forgot Password (Task 003, US_025 + US_026 + US_027)
-v1.MapPost("/auth/forgot-password", async (HttpContext context, ForgotPasswordRequest request, ApplicationDbContext dbContext, IEmailService emailService, ISmtpEmailSender smtpEmailSender, IPasswordResetTokenService tokenService, IPasswordResetLinkBuilder linkBuilder, IResponseTimingNormalizer timingNormalizer, ILogger<Program> logger) =>
+// Password Reset Flow - Forgot Password (Task 003, US_025 + US_026 + US_027 + US_032)
+v1.MapPost("/auth/forgot-password", async (HttpContext context, ForgotPasswordRequest request, ApplicationDbContext dbContext, IEmailService emailService, ISmtpEmailSender smtpEmailSender, IPasswordResetTokenService tokenService, IPasswordResetLinkBuilder linkBuilder, IResponseTimingNormalizer timingNormalizer, IAuditLogWriter auditLogWriter, ILogger<Program> logger) =>
 {
     // Validate email format using RFC 5322 compliant validator
     var emailValidation = EmailValidation.ValidateWithDetails(request.Email);
@@ -862,6 +920,18 @@ v1.MapPost("/auth/forgot-password", async (HttpContext context, ForgotPasswordRe
         // Generate new token using the service (invalidates previous tokens automatically)
         var tokenResult = await tokenService.GenerateTokenAsync(user.Id, context.RequestAborted);
 
+        // Audit: PASSWORD_RESET_REQUESTED (US_032) - best-effort, no raw token logged
+        _ = auditLogWriter.WriteAsync(
+            actionType: "PASSWORD_RESET_REQUESTED",
+            userId: user.Id,
+            sessionId: null,
+            resourceType: "Auth",
+            resourceId: tokenResult.TokenId,
+            ipAddress: context.Connection.RemoteIpAddress?.ToString(),
+            userAgent: context.Request.Headers.UserAgent.ToString(),
+            metadata: new { email = email, tokenId = tokenResult.TokenId },
+            cancellationToken: context.RequestAborted);
+
         // Build reset URL using link builder (US_026 TASK_002)
         var resetUrl = linkBuilder.BuildResetUrl(tokenResult.PlainToken);
 
@@ -907,16 +977,55 @@ v1.MapPost("/auth/forgot-password", async (HttpContext context, ForgotPasswordRe
         return Results.Ok(successResponse);
     }
 })
+    .RequireRateLimiting(RateLimitingOptions.ForgotPasswordPolicyName)
     .WithName("ForgotPassword")
     .WithOpenApi();
 
-// Password Reset Flow - Reset Password (Task 004)
-v1.MapPost("/auth/reset-password", async (HttpContext context, ResetPasswordRequest request, ApplicationDbContext dbContext, IEmailService emailService, IBcryptPasswordHasher passwordHasher) =>
+// Password Reset Flow - Validate Token (US_029 TASK_001)
+v1.MapGet("/auth/reset-password/validate", async (HttpContext context, IPasswordResetTokenValidator tokenValidator) =>
+{
+    var token = context.Request.Query["token"].ToString();
+
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return ApiErrorResults.BadRequest("invalid_input", "Token is required.", new[] { "token:required" });
+    }
+
+    var result = await tokenValidator.ValidateTokenAsync(token, context.RequestAborted);
+
+    if (!result.IsValid)
+    {
+        return result.InvalidReason switch
+        {
+            TokenInvalidReason.Missing => ApiErrorResults.BadRequest("invalid_input", "Token is required.", new[] { "token:required" }),
+            TokenInvalidReason.Malformed => ApiErrorResults.BadRequest("invalid_input", "Invalid token format.", new[] { "token:invalid_format" }),
+            TokenInvalidReason.NotFound => ApiErrorResults.Unauthorized("invalid_token", "Invalid or expired reset link."),
+            TokenInvalidReason.Expired => ApiErrorResults.Unauthorized("token_expired", "Reset link has expired."),
+            TokenInvalidReason.AlreadyUsed => ApiErrorResults.Unauthorized("token_used", "This reset link has already been used."),
+            TokenInvalidReason.UserInvalid => ApiErrorResults.Unauthorized("invalid_token", "Invalid or expired reset link."),
+            _ => ApiErrorResults.Unauthorized("invalid_token", "Invalid or expired reset link.")
+        };
+    }
+
+    return Results.Ok(new ValidateResetPasswordTokenResponse
+    {
+        Valid = true,
+        ExpiresAt = result.ExpiresAt
+    });
+})
+    .WithName("ValidateResetPasswordToken")
+    .WithOpenApi(operation => new(operation)
+    {
+        Summary = "Validate a password reset token",
+        Description = "Validates whether a password reset token is valid (not expired, not used) before displaying the reset form."
+    });
+
+// Password Reset Flow - Reset Password (US_029 TASK_002 + US_032)
+v1.MapPost("/auth/reset-password", async (HttpContext context, ResetPasswordRequest request, IPasswordResetService passwordResetService, IEmailService emailService, IAuditLogWriter auditLogWriter) =>
 {
     var token = request.Token?.Trim();
     var newPassword = request.NewPassword;
 
-    // Validate inputs
     if (string.IsNullOrEmpty(token))
     {
         return ApiErrorResults.BadRequest("invalid_input", "Token is required.", new[] { "token:required" });
@@ -927,72 +1036,50 @@ v1.MapPost("/auth/reset-password", async (HttpContext context, ResetPasswordRequ
         return ApiErrorResults.BadRequest("invalid_input", "New password is required.", new[] { "newPassword:required" });
     }
 
-    // Validate token is valid GUID format
-    if (!Guid.TryParse(token, out _))
+    var result = await passwordResetService.ResetPasswordAsync(token, newPassword, context.RequestAborted);
+
+    if (!result.Success)
     {
-        return ApiErrorResults.BadRequest("invalid_input", "Invalid token format.", new[] { "token:invalid_format" });
+        // Audit: PASSWORD_RESET_FAILED (US_032) - best-effort, no raw token logged
+        // Only log for token-related failures (not input validation failures)
+        if (result.ErrorCode is "invalid_token" or "token_expired" or "token_used")
+        {
+            _ = auditLogWriter.WriteAsync(
+                actionType: "PASSWORD_RESET_FAILED",
+                userId: null,
+                sessionId: null,
+                resourceType: "Auth",
+                resourceId: null,
+                ipAddress: context.Connection.RemoteIpAddress?.ToString(),
+                userAgent: context.Request.Headers.UserAgent.ToString(),
+                metadata: new { reason = result.ErrorCode },
+                cancellationToken: context.RequestAborted);
+        }
+
+        return result.ErrorCode switch
+        {
+            "invalid_input" => ApiErrorResults.BadRequest(result.ErrorCode, result.ErrorMessage!, result.ErrorDetails),
+            "password_requirements_not_met" => ApiErrorResults.BadRequest(result.ErrorCode, result.ErrorMessage!, result.ErrorDetails),
+            "token_expired" => ApiErrorResults.Unauthorized(result.ErrorCode, result.ErrorMessage!),
+            "token_used" => ApiErrorResults.Unauthorized(result.ErrorCode, result.ErrorMessage!),
+            _ => ApiErrorResults.Unauthorized(result.ErrorCode!, result.ErrorMessage!)
+        };
     }
 
-    // Validate password complexity (FR-009c)
-    var passwordErrors = new List<string>();
-    if (newPassword.Length < 8)
-        passwordErrors.Add("Password must be at least 8 characters.");
-    if (!Regex.IsMatch(newPassword, @"[A-Z]"))
-        passwordErrors.Add("Password must contain at least one uppercase letter.");
-    if (!Regex.IsMatch(newPassword, @"[a-z]"))
-        passwordErrors.Add("Password must contain at least one lowercase letter.");
-    if (!Regex.IsMatch(newPassword, @"\d"))
-        passwordErrors.Add("Password must contain at least one digit.");
-    if (!Regex.IsMatch(newPassword, @"[^A-Za-z0-9]"))
-        passwordErrors.Add("Password must contain at least one special character.");
-
-    if (passwordErrors.Count > 0)
-    {
-        return ApiErrorResults.BadRequest("password_requirements_not_met", "Password does not meet complexity requirements.", passwordErrors.ToArray());
-    }
-
-    // Hash token to lookup in database
-    var tokenHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
-
-    // Query token by hash where not used
-    var resetToken = await dbContext.PasswordResetTokens
-        .Include(t => t.User)
-        .FirstOrDefaultAsync(t => t.TokenHash == tokenHash && t.UsedAt == null);
-
-    if (resetToken == null)
-    {
-        return ApiErrorResults.Unauthorized("invalid_token", "Invalid or expired reset link.");
-    }
-
-    // Check if token is expired
-    if (resetToken.ExpiresAt <= DateTime.UtcNow)
-    {
-        return ApiErrorResults.Unauthorized("token_expired", "Reset link has expired.");
-    }
-
-    // Check if user exists and is not deleted
-    var user = resetToken.User;
-    if (user == null || user.IsDeleted)
-    {
-        return ApiErrorResults.Unauthorized("invalid_token", "Invalid or expired reset link.");
-    }
-
-    // Hash new password using centralized bcrypt hasher with configured work factor
-    var passwordHash = passwordHasher.HashPassword(newPassword);
-
-    // Update user
-    user.PasswordHash = passwordHash;
-    user.FailedLoginAttempts = 0;
-    user.LockedUntil = null;
-    user.UpdatedAt = DateTime.UtcNow;
-
-    // Mark token as used
-    resetToken.UsedAt = DateTime.UtcNow;
-
-    await dbContext.SaveChangesAsync();
+    // Audit: PASSWORD_RESET_COMPLETED (US_032) - best-effort, no raw token logged
+    _ = auditLogWriter.WriteAsync(
+        actionType: "PASSWORD_RESET_COMPLETED",
+        userId: result.UserId,
+        sessionId: null,
+        resourceType: "Auth",
+        resourceId: null,
+        ipAddress: context.Connection.RemoteIpAddress?.ToString(),
+        userAgent: context.Request.Headers.UserAgent.ToString(),
+        metadata: new { userId = result.UserId },
+        cancellationToken: context.RequestAborted);
 
     // Send confirmation email asynchronously
-    _ = emailService.SendPasswordResetConfirmationAsync(user.Email, user.Name);
+    _ = emailService.SendPasswordResetConfirmationAsync(result.UserEmail!, result.UserName!);
 
     return Results.Ok(new { message = "Password reset successful. You can now log in." });
 })

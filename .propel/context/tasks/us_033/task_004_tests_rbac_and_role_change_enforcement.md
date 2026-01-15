@@ -61,7 +61,7 @@ This task focuses on tests and validation harnesses; it assumes RBAC logic has b
 - [Automated] Frontend tests demonstrate correct routing outcomes for Admin vs Standard.
 
 ## Implementation Checklist
-- [ ] Add backend integration tests for 401/403/200 across protected endpoints
-- [ ] Add backend integration test for role-change mid-session invalidation
-- [ ] Add frontend tests for admin route guarding and redirects
-- [ ] Ensure tests are deterministic and do not rely on shared state
+- [x] Add backend integration tests for 401/403/200 across protected endpoints
+- [x] Add backend integration test for role-change mid-session invalidation
+- [x] Add frontend tests for admin route guarding and redirects
+- [x] Ensure tests are deterministic and do not rely on shared state

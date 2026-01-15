@@ -26,10 +26,11 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
 
 /**
  * Result type for API responses.
+ * On failure, includes optional retryAfterSeconds for 429 rate limiting responses.
  */
 export type ApiResult<T> =
   | { success: true; data: T }
-  | { success: false; error: ApiErrorResponse['error']; status: number }
+  | { success: false; error: ApiErrorResponse['error']; status: number; retryAfterSeconds?: number }
 
 /**
  * Session expired error code returned by the backend.
@@ -220,7 +221,19 @@ async function executeRequest<T = unknown>(
     // The storage event listener in AppShell will handle navigation
   }
 
-  return { success: false, error, status: response.status }
+  // Extract Retry-After header for 429 responses (US_028)
+  let retryAfterSeconds: number | undefined
+  if (response.status === 429) {
+    const retryAfterHeader = response.headers.get('Retry-After')
+    if (retryAfterHeader) {
+      const parsed = parseInt(retryAfterHeader, 10)
+      if (!isNaN(parsed) && parsed > 0) {
+        retryAfterSeconds = parsed
+      }
+    }
+  }
+
+  return { success: false, error, status: response.status, retryAfterSeconds }
 }
 
 /**

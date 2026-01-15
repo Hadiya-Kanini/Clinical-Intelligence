@@ -68,8 +68,8 @@ These tests should validate persistence into the test database used by `TestWebA
   - no raw reset token is present in `AuditLogEvent.Metadata`
 
 ## Implementation Checklist
-- [ ] Add integration test assertions for `PASSWORD_RESET_REQUESTED` audit event creation
-- [ ] Add integration test assertions for `PASSWORD_RESET_COMPLETED` audit event creation
-- [ ] Add integration test for invalid token attempt logging
-- [ ] Parse and validate `AuditLogEvent.Metadata` JSON fields (email/userId/tokenId/reason)
-- [ ] Ensure tests remain deterministic and do not depend on event ordering
+- [x] Add integration test assertions for `PASSWORD_RESET_REQUESTED` audit event creation
+- [x] Add integration test assertions for `PASSWORD_RESET_COMPLETED` audit event creation
+- [x] Add integration test for invalid token attempt logging
+- [x] Parse and validate `AuditLogEvent.Metadata` JSON fields (email/userId/tokenId/reason)
+- [x] Ensure tests remain deterministic and do not depend on event ordering

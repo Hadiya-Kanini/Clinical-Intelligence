@@ -64,8 +64,8 @@ Goal: ensure that a user does not retain access beyond their current role assign
 - [Security] Verify that role changes cannot be abused to bypass authorization checks.
 
 ## Implementation Checklist
-- [ ] Load user role from DB during session validation
-- [ ] Compare DB role to JWT role claim for the active session
-- [ ] Revoke session and return `401` with consistent error code on mismatch
-- [ ] Add audit logging for role-mismatch invalidations
-- [ ] Validate behavior for both downgrade (Admin->Standard) and upgrade (Standard->Admin)
+- [x] Load user role from DB during session validation
+- [x] Compare DB role to JWT role claim for the active session
+- [x] Revoke session and return `401` with consistent error code on mismatch
+- [x] Add audit logging for role-mismatch invalidations
+- [x] Validate behavior for both downgrade (Admin->Standard) and upgrade (Standard->Admin)

@@ -74,8 +74,8 @@ This task also removes reliance on legacy `localStorage` role flags (e.g., `ci_u
 - [Manual/UI] Simulate backend session invalidation and confirm user is redirected to login and cannot access protected routes.
 
 ## Implementation Checklist
-- [ ] Update route guards to use authenticated user role from app state
-- [ ] Update AppShell navigation rendering to use app state role
-- [ ] Remove reliance on `ci_user_role` / `ci_auth` for role decisions
-- [ ] Validate access/redirect behavior for Admin and Standard users
-- [ ] Validate UI behavior on session invalidation (401)
+- [x] Update route guards to use authenticated user role from app state
+- [x] Update AppShell navigation rendering to use app state role
+- [x] Remove reliance on `ci_user_role` / `ci_auth` for role decisions
+- [x] Validate access/redirect behavior for Admin and Standard users
+- [x] Validate UI behavior on session invalidation (401)

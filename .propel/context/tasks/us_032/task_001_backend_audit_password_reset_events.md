@@ -90,10 +90,10 @@ Audit logging must be **best-effort** and must **not** change the externally obs
 - [Resilience] Simulate audit persistence failure (e.g., DB write exception) and confirm the password reset endpoints still return the same responses as before.
 
 ## Implementation Checklist
-- [ ] Add `IAuditLogWriter` abstraction for audit event persistence (DIP)
-- [ ] Implement `AuditLogWriter` with safe JSON metadata serialization and best-effort persistence
-- [ ] Register `IAuditLogWriter` in DI
-- [ ] Add `PASSWORD_RESET_REQUESTED` audit event in forgot-password flow with email, IP, timestamp, and token ID (when available)
-- [ ] Add `PASSWORD_RESET_COMPLETED` audit event in reset-password success flow with user ID, IP, timestamp, token ID
-- [ ] Add failed reset attempt audit event for invalid/expired/used tokens (no raw token)
-- [ ] Confirm audit failures do not break or alter reset flows
+- [x] Add `IAuditLogWriter` abstraction for audit event persistence (DIP)
+- [x] Implement `AuditLogWriter` with safe JSON metadata serialization and best-effort persistence
+- [x] Register `IAuditLogWriter` in DI
+- [x] Add `PASSWORD_RESET_REQUESTED` audit event in forgot-password flow with email, IP, timestamp, and token ID (when available)
+- [x] Add `PASSWORD_RESET_COMPLETED` audit event in reset-password success flow with user ID, IP, timestamp, token ID
+- [x] Add failed reset attempt audit event for invalid/expired/used tokens (no raw token)
+- [x] Confirm audit failures do not break or alter reset flows
