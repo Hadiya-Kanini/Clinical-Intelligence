@@ -57,11 +57,11 @@ Add and/or update frontend automated tests to validate the rate limit and lockou
   - UI transitions to retry-enabled state after lockout expiry without refresh
 
 ## Implementation Checklist
-- [ ] Update Playwright mock: 429 includes `Retry-After`
-- [ ] Update Playwright mock: account locked includes deterministic timeframe details
-- [ ] Add test for lockout expiry enabling retry without refresh
-- [ ] Add assertion for presence of support option in both modes
-- [ ] Ensure tests are stable across time zones and machines
+- [x] Update Playwright mock: 429 includes `Retry-After`
+- [x] Update Playwright mock: account locked includes deterministic timeframe details
+- [x] Add test for lockout expiry enabling retry without refresh
+- [x] Add assertion for presence of support option in both modes
+- [x] Ensure tests are stable across time zones and machines
 
 ## Design Reference
 

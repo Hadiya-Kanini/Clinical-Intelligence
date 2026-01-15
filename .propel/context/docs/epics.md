@@ -138,7 +138,7 @@
 - Secure reset-token generation and email send
 - Generic “check email” responses to avoid account enumeration
 - UC-002 request portion alignment
-
+`r`n`r`n**User Stories**:`r`n- US_009: Implement Password Reset Flow with Email Notifications (17 hours)`r`n- US_016: Account lockout email notification (2 hours)`r`n
 ### EP-007: Password Reset Confirmation & Recovery UX
 **Priority**: High  
 **Business Value**: Enables secure account recovery with reduced support calls and ensures compromised sessions are revoked after reset.  

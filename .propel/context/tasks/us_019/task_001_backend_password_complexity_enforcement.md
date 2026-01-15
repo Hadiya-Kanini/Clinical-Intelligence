@@ -56,10 +56,10 @@ Introduce a single, reusable backend password complexity policy (FR-009c) and ap
 - [Manual] Validate that invalid `ADMIN_PASSWORD` values fail migration with a clear, non-sensitive error message.
 
 ## Implementation Checklist
-- [ ] Implement `PasswordPolicy` with min/max length and required categories (lower/upper/digit/special)
-- [ ] Decide and implement special character detection consistent with frontend (including unicode handling)
-- [ ] Add helper API to return missing requirements (for consistent error handling)
-- [ ] Update `SeedStaticAdminAccount` migration to call `PasswordPolicy` (remove duplicated regex)
-- [ ] Extend `StaticAdminSeedMigrationTests` to cover valid/invalid examples (per requirement categories)
-- [ ] Confirm error messages do not leak sensitive values and remain consistent with OWASP guidance
-- [ ] Validate behavior for existing users: enforce policy only on password set/change operations
+- [x] Implement `PasswordPolicy` with min/max length and required categories (lower/upper/digit/special)
+- [x] Decide and implement special character detection consistent with frontend (including unicode handling)
+- [x] Add helper API to return missing requirements (for consistent error handling)
+- [x] Update `SeedStaticAdminAccount` migration to call `PasswordPolicy` (remove duplicated regex)
+- [x] Extend `StaticAdminSeedMigrationTests` to cover valid/invalid examples (per requirement categories)
+- [x] Confirm error messages do not leak sensitive values and remain consistent with OWASP guidance
+- [x] Validate behavior for existing users: enforce policy only on password set/change operations

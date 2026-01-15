@@ -1,10 +1,14 @@
 using System.Text.Json;
 using ClinicalIntelligence.Api.Results;
+using ClinicalIntelligence.Api.Services.Security;
 
 namespace ClinicalIntelligence.Api.Middleware;
 
 /// <summary>
 /// Middleware that validates incoming HTTP requests for security and compliance.
+/// Validates query parameters and selected headers for injection patterns.
+/// JSON body validation is intentionally scoped to avoid false positives on
+/// legitimate clinical content and password fields.
 /// </summary>
 public class RequestValidationMiddleware
 {
@@ -66,43 +70,48 @@ public class RequestValidationMiddleware
             }
         }
 
-        // Validate query parameters for SQL injection attempts
+        // Validate query parameters using InputValidationPolicy
         foreach (var queryParam in context.Request.Query)
         {
-            if (ContainsSqlInjectionPatterns(queryParam.Value))
+            foreach (var value in queryParam.Value)
             {
-                _logger.LogWarning("Potential SQL injection detected in query parameter {Param}: {Value}", 
-                    queryParam.Key, queryParam.Value);
+                if (!InputValidationPolicy.IsQueryParameterSafe(value, out var detectedPattern))
+                {
+                    // Log safely without exposing raw input values (FR-009g)
+                    _logger.LogWarning(
+                        "Suspicious input detected in query parameter. Path: {Path}, Parameter: {Param}, Pattern: {Pattern}",
+                        context.Request.Path,
+                        queryParam.Key,
+                        detectedPattern);
+                    
+                    await ApiErrorResults.BadRequest(
+                        "invalid_input",
+                        "Invalid characters detected in request parameters"
+                    ).ExecuteAsync(context);
+                    return;
+                }
+            }
+        }
+
+        // Validate selected custom headers (skip common browser headers)
+        foreach (var header in context.Request.Headers)
+        {
+            if (!InputValidationPolicy.IsHeaderValueSafe(header.Key, header.Value, out var detectedPattern))
+            {
+                _logger.LogWarning(
+                    "Suspicious input detected in header. Path: {Path}, Header: {Header}, Pattern: {Pattern}",
+                    context.Request.Path,
+                    header.Key,
+                    detectedPattern);
                 
                 await ApiErrorResults.BadRequest(
                     "invalid_input",
-                    "Invalid characters detected in request parameters"
+                    "Invalid characters detected in request headers"
                 ).ExecuteAsync(context);
                 return;
             }
         }
 
         await _next(context);
-    }
-
-    /// <summary>
-    /// Checks if a value contains potential SQL injection patterns.
-    /// </summary>
-    /// <param name="value">The value to check.</param>
-    /// <returns>True if suspicious patterns are found, false otherwise.</returns>
-    private static bool ContainsSqlInjectionPatterns(string? value)
-    {
-        if (string.IsNullOrEmpty(value))
-            return false;
-
-        var suspiciousPatterns = new[]
-        {
-            "drop table", "delete from", "insert into", "update set", 
-            "union select", "exec(", "script>", "<script", "--", "/*", "*/",
-            "xp_", "sp_", "0x", "waitfor delay", "benchmark("
-        };
-
-        var lowerValue = value.ToLowerInvariant();
-        return suspiciousPatterns.Any(pattern => lowerValue.Contains(pattern));
     }
 }

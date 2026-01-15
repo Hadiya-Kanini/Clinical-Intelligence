@@ -64,12 +64,12 @@ Standardize frontend email validation by replacing the current simplistic email 
 - [Automated] Add/adjust frontend tests (see TASK_003) to lock the validator behavior.
 
 ## Implementation Checklist
-- [ ] Create shared `email.ts` validator utility with RFC 5322 regex
-- [ ] Replace email regex usage in `LoginPage.tsx`
-- [ ] Replace email regex usage in `ForgotPasswordPage.tsx`
-- [ ] Add email format validation to `UserManagementPage.tsx` create/edit flow
-- [ ] Ensure error messages are specific and accessible
-- [ ] Verify edge-case valid emails (`+tag`) are accepted
+- [x] Create shared `email.ts` validator utility with RFC 5322 regex
+- [x] Replace email regex usage in `LoginPage.tsx`
+- [x] Replace email regex usage in `ForgotPasswordPage.tsx`
+- [x] Add email format validation to `UserManagementPage.tsx` create/edit flow
+- [x] Ensure error messages are specific and accessible
+- [x] Verify edge-case valid emails (`+tag`) are accepted
 
 ## Design Reference
 

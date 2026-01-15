@@ -68,13 +68,13 @@ Enhance the login UI lockout experience so the user sees a clear remaining locko
 - [Automated] Run Playwright login visual tests and confirm locked state renders correctly.
 
 ## Implementation Checklist
-- [ ] Detect `account_locked` error on login failure
-- [ ] Parse `unlock_at:` and/or `remaining_seconds:` from `error.details`
-- [ ] Render lockout reason + remaining timeframe (UXR-009)
-- [ ] Implement countdown timer with cleanup-safe `useEffect`
-- [ ] Auto-clear lockout UI state when unlock time is reached (no refresh)
-- [ ] Include contact support/administrator option in the lockout message
-- [ ] Update Playwright mocked response and validate screenshots
+- [x] Detect `account_locked` error on login failure
+- [x] Parse `unlock_at:` and/or `remaining_seconds:` from `error.details`
+- [x] Render lockout reason + remaining timeframe (UXR-009)
+- [x] Implement countdown timer with cleanup-safe `useEffect`
+- [x] Auto-clear lockout UI state when unlock time is reached (no refresh)
+- [x] Include contact support/administrator option in the lockout message
+- [x] Update Playwright mocked response and validate screenshots
 
 ## Design Reference
 

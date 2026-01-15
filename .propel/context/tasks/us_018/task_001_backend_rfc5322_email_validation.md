@@ -65,10 +65,10 @@ Implement backend email format validation using an RFC 5322-compliant regex in a
 - [Automated] Add/adjust backend tests (see TASK_003) to validate edge cases.
 
 ## Implementation Checklist
-- [ ] Create centralized `EmailValidation` helper and RFC 5322 regex
-- [ ] Validate email format in `/api/v1/auth/login` prior to DB query
-- [ ] Return standardized `400` response for invalid email format with stable `details`
-- [ ] Ensure common valid emails (`+tag`) pass
-- [ ] Decide/document IDN handling behavior (punycode vs unicode)
-- [ ] Update static admin seeding validation to reuse the same helper
-- [ ] Verify no sensitive info leakage in validation responses
+- [x] Create centralized `EmailValidation` helper and RFC 5322 regex
+- [x] Validate email format in `/api/v1/auth/login` prior to DB query
+- [x] Return standardized `400` response for invalid email format with stable `details`
+- [x] Ensure common valid emails (`+tag`) pass
+- [x] Decide/document IDN handling behavior (punycode vs unicode)
+- [x] Update static admin seeding validation to reuse the same helper
+- [x] Verify no sensitive info leakage in validation responses

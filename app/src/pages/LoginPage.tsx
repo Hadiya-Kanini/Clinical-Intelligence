@@ -1,6 +1,7 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { isValidEmailRfc5322 } from '../lib/validation/email'
 
 export default function LoginPage(): JSX.Element {
   const [email, setEmail] = useState('')
@@ -16,12 +17,16 @@ export default function LoginPage(): JSX.Element {
   const [logoutSuccessMessage, setLogoutSuccessMessage] = useState('')
   const [sessionInvalidatedMessage, setSessionInvalidatedMessage] = useState('')
   const [accountLockedMessage, setAccountLockedMessage] = useState('')
+  const [rateLimitMessage, setRateLimitMessage] = useState('')
+  const [lockoutUnlockTime, setLockoutUnlockTime] = useState<Date | null>(null)
+  const [lockoutCountdown, setLockoutCountdown] = useState('')
 
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const emailInputRef = useRef<HTMLInputElement>(null)
   const passwordInputRef = useRef<HTMLInputElement>(null)
+  const lockoutTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('ci_auth') === '1'
@@ -73,6 +78,57 @@ export default function LoginPage(): JSX.Element {
     }
   }, [])
 
+  // Lockout countdown timer with auto-retry enablement (UXR-009)
+  useEffect(() => {
+    if (!lockoutUnlockTime) {
+      if (lockoutTimerRef.current) {
+        clearInterval(lockoutTimerRef.current)
+        lockoutTimerRef.current = null
+      }
+      return
+    }
+
+    const updateCountdown = () => {
+      const now = new Date()
+      const diff = lockoutUnlockTime.getTime() - now.getTime()
+
+      if (diff <= 0) {
+        // Lockout expired - enable retry without refresh
+        setLockoutCountdown('')
+        setAccountLockedMessage('')
+        setLockoutUnlockTime(null)
+        if (lockoutTimerRef.current) {
+          clearInterval(lockoutTimerRef.current)
+          lockoutTimerRef.current = null
+        }
+        return
+      }
+
+      const minutes = Math.floor(diff / 60000)
+      const seconds = Math.floor((diff % 60000) / 1000)
+
+      if (minutes > 0) {
+        setLockoutCountdown(`${minutes}m ${seconds}s`)
+      } else {
+        setLockoutCountdown(`${seconds}s`)
+      }
+    }
+
+    // Initial update
+    updateCountdown()
+
+    // Set interval for countdown updates
+    lockoutTimerRef.current = setInterval(updateCountdown, 1000)
+
+    // Cleanup on unmount or when lockoutUnlockTime changes
+    return () => {
+      if (lockoutTimerRef.current) {
+        clearInterval(lockoutTimerRef.current)
+        lockoutTimerRef.current = null
+      }
+    }
+  }, [lockoutUnlockTime])
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     
@@ -104,6 +160,10 @@ export default function LoginPage(): JSX.Element {
     }
     if (accountLockedMessage) {
       setAccountLockedMessage('')
+      setLockoutUnlockTime(null)
+    }
+    if (rateLimitMessage) {
+      setRateLimitMessage('')
     }
   }
 
@@ -111,12 +171,11 @@ export default function LoginPage(): JSX.Element {
     const errors = { email: '', password: '' }
     let isValid = true
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    // Email validation using RFC 5322 compliant validator
     if (!email) {
       errors.email = 'Email is required'
       isValid = false
-    } else if (!emailRegex.test(email)) {
+    } else if (!isValidEmailRfc5322(email)) {
       errors.email = 'Please enter a valid email address'
       isValid = false
     }
@@ -153,29 +212,62 @@ export default function LoginPage(): JSX.Element {
       if (!response.ok) {
         const errorData = await response.json()
         
-        // Handle account_locked error with unlock timeframe (UXR-009)
+        // Handle HTTP 429 rate limiting with Retry-After header (UXR-010)
+        if (response.status === 429) {
+          const retryAfterHeader = response.headers.get('Retry-After')
+          let retryMessage = 'Too many login attempts.'
+          
+          if (retryAfterHeader) {
+            // Parse Retry-After header (seconds or HTTP date format)
+            const retrySeconds = parseInt(retryAfterHeader, 10)
+            
+            if (!isNaN(retrySeconds)) {
+              // Seconds format (e.g., "60")
+              if (retrySeconds < 60) {
+                retryMessage = `Too many login attempts. Try again in ${retrySeconds} seconds.`
+              } else if (retrySeconds < 3600) {
+                const minutes = Math.ceil(retrySeconds / 60)
+                retryMessage = `Too many login attempts. Try again in ${minutes} minute${minutes > 1 ? 's' : ''}.`
+              } else {
+                const retryTime = new Date(Date.now() + retrySeconds * 1000)
+                retryMessage = `Too many login attempts. Try again at ${retryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+              }
+            } else {
+              // HTTP date format (e.g., "Wed, 21 Oct 2015 07:28:00 GMT")
+              const retryDate = new Date(retryAfterHeader)
+              if (!isNaN(retryDate.getTime())) {
+                retryMessage = `Too many login attempts. Try again at ${retryDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+              }
+            }
+          }
+          
+          setRateLimitMessage(retryMessage)
+          setError('')
+          return
+        }
+        
+        // Handle account_locked error with unlock timeframe and countdown (UXR-009)
         if (errorData.error?.code === 'account_locked' && errorData.error?.details) {
           const details = errorData.error.details as string[]
-          let unlockTime = ''
+          let unlockDate: Date | null = null
           
           // Parse unlock_at from details
           const unlockAtDetail = details.find((d: string) => d.startsWith('unlock_at:'))
           if (unlockAtDetail) {
             const unlockAtStr = unlockAtDetail.replace('unlock_at:', '')
-            const unlockDate = new Date(unlockAtStr)
-            unlockTime = unlockDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            unlockDate = new Date(unlockAtStr)
           } else {
             // Fallback to remaining_seconds if unlock_at not present
             const remainingDetail = details.find((d: string) => d.startsWith('remaining_seconds:'))
             if (remainingDetail) {
               const remainingSeconds = parseInt(remainingDetail.replace('remaining_seconds:', ''), 10)
-              const unlockDate = new Date(Date.now() + remainingSeconds * 1000)
-              unlockTime = unlockDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              unlockDate = new Date(Date.now() + remainingSeconds * 1000)
             }
           }
           
-          if (unlockTime) {
-            setAccountLockedMessage(`Your account is locked. Try again at ${unlockTime}.`)
+          if (unlockDate && !isNaN(unlockDate.getTime())) {
+            setLockoutUnlockTime(unlockDate)
+            setAccountLockedMessage('Your account is temporarily locked due to too many failed login attempts.')
           } else {
             setAccountLockedMessage('Your account is temporarily locked. Please try again later.')
           }
@@ -317,12 +409,30 @@ export default function LoginPage(): JSX.Element {
             </div>
           )}
 
+          {rateLimitMessage && (
+            <div className="error-message rate-limited visible" role="alert" aria-live="assertive">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+              </svg>
+              <div className="error-content">
+                <span>{rateLimitMessage}</span>
+                <span className="support-link">If you need assistance, please <a href="mailto:support@hospital.com">contact support</a>.</span>
+              </div>
+            </div>
+          )}
+
           {accountLockedMessage && (
             <div className="error-message account-locked visible" role="alert" aria-live="assertive">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
                 <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
               </svg>
-              <span>{accountLockedMessage}</span>
+              <div className="error-content">
+                <span>{accountLockedMessage}</span>
+                {lockoutCountdown && (
+                  <span className="countdown" aria-live="polite">Time remaining: {lockoutCountdown}</span>
+                )}
+                <span className="support-link">If you need assistance, please <a href="mailto:support@hospital.com">contact support</a>.</span>
+              </div>
             </div>
           )}
 

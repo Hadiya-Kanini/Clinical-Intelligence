@@ -66,6 +66,50 @@ public sealed class SecretsOptions
     /// </summary>
     public string DevelopmentDatabaseName { get; init; } = "clinicalintelligence.db";
 
+    #region SMTP Configuration
+
+    /// <summary>
+    /// SMTP server hostname.
+    /// </summary>
+    public string? SmtpHost { get; init; }
+
+    /// <summary>
+    /// SMTP server port (default: 587 for TLS).
+    /// </summary>
+    public int SmtpPort { get; init; } = 587;
+
+    /// <summary>
+    /// SMTP authentication username.
+    /// </summary>
+    public string? SmtpUsername { get; init; }
+
+    /// <summary>
+    /// SMTP authentication password.
+    /// </summary>
+    public string? SmtpPassword { get; init; }
+
+    /// <summary>
+    /// Email address to send from.
+    /// </summary>
+    public string? SmtpFromEmail { get; init; }
+
+    /// <summary>
+    /// Display name for the sender.
+    /// </summary>
+    public string SmtpFromName { get; init; } = "Clinical Intelligence";
+
+    /// <summary>
+    /// Enable SSL/TLS for SMTP connection.
+    /// </summary>
+    public bool SmtpEnableSsl { get; init; } = true;
+
+    /// <summary>
+    /// Frontend URL for constructing password reset links.
+    /// </summary>
+    public string FrontendUrl { get; init; } = "http://localhost:5173";
+
+    #endregion
+
     /// <summary>
     /// Creates a SecretsOptions instance from configuration.
     /// </summary>
@@ -80,7 +124,16 @@ public sealed class SecretsOptions
         {
             DatabaseConnectionString = string.IsNullOrWhiteSpace(connectionString) ? null : connectionString,
             JwtKey = configuration["JWT_KEY"],
-            DevelopmentDatabaseName = configuration["DEV_DATABASE_NAME"] ?? "clinicalintelligence.db"
+            DevelopmentDatabaseName = configuration["DEV_DATABASE_NAME"] ?? "clinicalintelligence.db",
+            // SMTP Configuration
+            SmtpHost = configuration["SMTP_HOST"],
+            SmtpPort = int.TryParse(configuration["SMTP_PORT"], out var port) ? port : 587,
+            SmtpUsername = configuration["SMTP_USERNAME"],
+            SmtpPassword = configuration["SMTP_PASSWORD"],
+            SmtpFromEmail = configuration["SMTP_FROM_EMAIL"],
+            SmtpFromName = configuration["SMTP_FROM_NAME"] ?? "Clinical Intelligence",
+            SmtpEnableSsl = !string.Equals(configuration["SMTP_ENABLE_SSL"], "false", StringComparison.OrdinalIgnoreCase),
+            FrontendUrl = configuration["FRONTEND_URL"] ?? "http://localhost:5173"
         };
     }
 
@@ -222,5 +275,39 @@ public sealed class SecretsOptions
                 "JWT_KEY must be at least 32 characters long for secure token signing."
             );
         }
+    }
+
+    /// <summary>
+    /// Validates SMTP configuration for email service.
+    /// </summary>
+    /// <returns>True if SMTP is configured, false if not configured (email disabled).</returns>
+    /// <exception cref="InvalidOperationException">Thrown when SMTP is partially configured.</exception>
+    public bool ValidateSmtpConfiguration()
+    {
+        var hasHost = !string.IsNullOrWhiteSpace(SmtpHost);
+        var hasFromEmail = !string.IsNullOrWhiteSpace(SmtpFromEmail);
+
+        // If neither is set, SMTP is disabled (valid state)
+        if (!hasHost && !hasFromEmail)
+        {
+            return false;
+        }
+
+        // If partially configured, throw error
+        if (!hasHost)
+        {
+            throw new InvalidOperationException(
+                "Missing required SMTP configuration: SMTP_HOST must be provided when SMTP_FROM_EMAIL is set."
+            );
+        }
+
+        if (!hasFromEmail)
+        {
+            throw new InvalidOperationException(
+                "Missing required SMTP configuration: SMTP_FROM_EMAIL must be provided when SMTP_HOST is set."
+            );
+        }
+
+        return true;
     }
 }

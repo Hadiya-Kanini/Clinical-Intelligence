@@ -34,8 +34,43 @@ test.describe('Login Page Visual Tests', () => {
         await route.fulfill({
           status: 429,
           contentType: 'application/json',
+          headers: {
+            'Retry-After': '60',
+          },
           body: JSON.stringify({
             error: { code: 'rate_limited', message: 'Too many requests.', details: [] },
+          }),
+        })
+        return
+      }
+
+      if (body.includes('"password":"ratelimited-long"')) {
+        await route.fulfill({
+          status: 429,
+          contentType: 'application/json',
+          headers: {
+            'Retry-After': '1800',
+          },
+          body: JSON.stringify({
+            error: { code: 'rate_limited', message: 'Too many requests.', details: [] },
+          }),
+        })
+        return
+      }
+
+      if (body.includes('"password":"locked-short"')) {
+        // Mock short lockout (3 seconds) for testing auto-retry enablement
+        const unlockAt = new Date(Date.now() + 3 * 1000).toISOString()
+        const remainingSeconds = 3
+        await route.fulfill({
+          status: 403,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            error: {
+              code: 'account_locked',
+              message: 'Account temporarily locked. Please try again later.',
+              details: [`unlock_at:${unlockAt}`, `remaining_seconds:${remainingSeconds}`],
+            },
           }),
         })
         return
@@ -254,5 +289,101 @@ test.describe('Login Page Visual Tests', () => {
     await page.goto('http://localhost:5173/dashboard')
     await page.waitForURL('**/login')
     await expect(page.locator('text=Log in')).toBeVisible()
+  })
+
+  test('rate limit message displays retry timeframe (UXR-010)', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'ratelimited')
+    await page.click('button:has-text("Log in")')
+
+    await expect(page.locator('text=Too many login attempts')).toBeVisible()
+    await expect(page.locator('text=1 minute')).toBeVisible()
+    await expect(page.locator('.rate-limited')).toBeVisible()
+    await expect(page).toHaveScreenshot('login-rate-limited.png')
+  })
+
+  test('rate limit message includes support option', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'ratelimited')
+    await page.click('button:has-text("Log in")')
+
+    await expect(page.locator('text=Too many login attempts')).toBeVisible()
+    await expect(page.locator('.rate-limited a[href="mailto:support@hospital.com"]')).toBeVisible()
+    await expect(page.locator('text=contact support')).toBeVisible()
+  })
+
+  test('lockout message displays remaining time and reason (UXR-009)', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'locked')
+    await page.click('button:has-text("Log in")')
+
+    await expect(page.locator('text=Your account is temporarily locked')).toBeVisible()
+    await expect(page.locator('text=too many failed login attempts')).toBeVisible()
+    await expect(page.locator('.countdown')).toBeVisible()
+    await expect(page.locator('text=Time remaining')).toBeVisible()
+    await expect(page).toHaveScreenshot('login-account-locked.png')
+  })
+
+  test('lockout message includes support option', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'locked')
+    await page.click('button:has-text("Log in")')
+
+    await expect(page.locator('text=Your account is temporarily locked')).toBeVisible()
+    await expect(page.locator('.account-locked a[href="mailto:support@hospital.com"]')).toBeVisible()
+    await expect(page.locator('text=contact support')).toBeVisible()
+  })
+
+  test('lockout expiry enables retry without page refresh', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'locked-short')
+    await page.click('button:has-text("Log in")')
+
+    // Verify lockout message is shown
+    await expect(page.locator('text=Your account is temporarily locked')).toBeVisible()
+    await expect(page.locator('.countdown')).toBeVisible()
+
+    // Wait for lockout to expire (3 seconds + buffer)
+    await page.waitForTimeout(4000)
+
+    // Verify lockout message is cleared without refresh
+    await expect(page.locator('text=Your account is temporarily locked')).not.toBeVisible()
+    await expect(page.locator('.countdown')).not.toBeVisible()
+
+    // Verify form is enabled for retry
+    await expect(page.locator('button:has-text("Log in")')).toBeEnabled()
+  })
+
+  test('rate limit and lockout messages are accessible', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 })
+
+    // Test rate limit accessibility
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'ratelimited')
+    await page.click('button:has-text("Log in")')
+
+    const rateLimitAlert = page.locator('.rate-limited')
+    await expect(rateLimitAlert).toHaveAttribute('role', 'alert')
+    await expect(rateLimitAlert).toHaveAttribute('aria-live', 'assertive')
+
+    // Clear and test lockout accessibility
+    await page.reload()
+    await page.fill('input[type="email"]', 'name@hospital.org')
+    await page.fill('input[type="password"]', 'locked')
+    await page.click('button:has-text("Log in")')
+
+    const lockoutAlert = page.locator('.account-locked')
+    await expect(lockoutAlert).toHaveAttribute('role', 'alert')
+    await expect(lockoutAlert).toHaveAttribute('aria-live', 'assertive')
   })
 })
