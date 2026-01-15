@@ -119,4 +119,110 @@ public class ApiVersioningMiddlewareTests : IClassFixture<WebApplicationFactory<
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task UnsupportedVersion_V0_ReturnsBadRequest()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v0/endpoint");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        
+        var content = await response.Content.ReadAsStringAsync();
+        var jsonDoc = JsonDocument.Parse(content);
+        var root = jsonDoc.RootElement;
+        
+        Assert.True(root.TryGetProperty("error", out var error));
+        Assert.True(error.TryGetProperty("code", out var code));
+        Assert.Equal("unsupported_api_version", code.GetString());
+    }
+
+    [Fact]
+    public async Task UnsupportedVersion_V10_ReturnsBadRequest()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v10/endpoint");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        
+        var content = await response.Content.ReadAsStringAsync();
+        var jsonDoc = JsonDocument.Parse(content);
+        var root = jsonDoc.RootElement;
+        
+        Assert.True(root.TryGetProperty("error", out var error));
+        Assert.True(error.TryGetProperty("code", out var code));
+        Assert.Equal("unsupported_api_version", code.GetString());
+    }
+
+    [Fact]
+    public async Task VersionedEndpoint_WithTrailingSlash_ReturnsExpectedResponse()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/ping/");
+
+        Assert.True(
+            response.StatusCode == HttpStatusCode.Unauthorized || 
+            response.StatusCode == HttpStatusCode.NotFound,
+            $"Expected Unauthorized or NotFound, but got {response.StatusCode}"
+        );
+    }
+
+    [Fact]
+    public async Task VersionPrefix_WithoutEndpointPath_ReturnsNotFound()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1");
+
+        Assert.True(
+            response.StatusCode == HttpStatusCode.NotFound || 
+            response.StatusCode == HttpStatusCode.MethodNotAllowed,
+            $"Expected NotFound or MethodNotAllowed, but got {response.StatusCode}"
+        );
+    }
+
+    [Fact]
+    public async Task VersionPrefix_WithTrailingSlashOnly_ReturnsNotFound()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/");
+
+        Assert.True(
+            response.StatusCode == HttpStatusCode.NotFound || 
+            response.StatusCode == HttpStatusCode.MethodNotAllowed,
+            $"Expected NotFound or MethodNotAllowed, but got {response.StatusCode}"
+        );
+    }
+
+    [Fact]
+    public async Task MalformedVersion_NonNumeric_ReturnsBadRequest()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/vX/endpoint");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        
+        var content = await response.Content.ReadAsStringAsync();
+        var jsonDoc = JsonDocument.Parse(content);
+        var root = jsonDoc.RootElement;
+        
+        Assert.True(root.TryGetProperty("error", out var error));
+        Assert.True(error.TryGetProperty("code", out var code));
+        Assert.Equal("unsupported_api_version", code.GetString());
+    }
+
+    [Fact]
+    public async Task DoubleVersionPrefix_ReturnsNotFound()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/api/v1/ping");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }
