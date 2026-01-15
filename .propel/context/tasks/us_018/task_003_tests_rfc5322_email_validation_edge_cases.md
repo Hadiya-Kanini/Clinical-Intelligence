@@ -60,8 +60,8 @@ Add automated test coverage to ensure the RFC 5322 email validator behavior rema
 - [Automated] Ensure edge-case valid emails are accepted by both validators.
 
 ## Implementation Checklist
-- [ ] Add frontend unit tests for `app/src/lib/validation/email.ts`
-- [ ] Add backend unit tests for `EmailValidation`
-- [ ] Add backend integration test for `/api/v1/auth/login` invalid email => `400` + stable details
-- [ ] Verify `user+tag@domain.com` passes in both layers
-- [ ] Add at least 5 invalid format cases to prevent regex regressions
+- [x] Add frontend unit tests for `app/src/lib/validation/email.ts`
+- [x] Add backend unit tests for `EmailValidation`
+- [x] Add backend integration test for `/api/v1/auth/login` invalid email => `400` + stable details
+- [x] Verify `user+tag@domain.com` passes in both layers
+- [x] Add at least 5 invalid format cases to prevent regex regressions

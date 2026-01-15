@@ -8,6 +8,7 @@ import Modal from '../components/ui/Modal'
 import Select from '../components/ui/Select'
 import Table from '../components/ui/Table'
 import TextField from '../components/ui/TextField'
+import { isValidEmailRfc5322 } from '../lib/validation/email'
 
 type Role = 'standard' | 'admin'
 
@@ -67,6 +68,12 @@ export default function UserManagementPage(): JSX.Element {
     if (!formName.trim() || !formEmail.trim()) {
       setToast('Name and email are required.')
       setTimeout(() => setToast(''), 2000)
+      return
+    }
+
+    if (!isValidEmailRfc5322(formEmail.trim())) {
+      setToast('Please enter a valid email address.')
+      setTimeout(() => setToast(''), 2500)
       return
     }
 

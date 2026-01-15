@@ -1,9 +1,11 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import axios from 'axios'
 import Button from '../components/ui/Button.tsx'
 import TextField from '../components/ui/TextField.tsx'
 import Alert from '../components/ui/Alert.tsx'
+import { isValidEmailRfc5322 } from '../lib/validation/email'
 
 type ForgotPasswordErrors = {
   email?: string
@@ -13,7 +15,9 @@ type LocationState = {
   email?: unknown
 }
 
-type Status = 'idle' | 'success'
+type Status = 'idle' | 'loading' | 'success' | 'error' | 'rate_limited'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5062'
 
 export default function ForgotPasswordPage(): JSX.Element {
   const location = useLocation()
@@ -39,7 +43,7 @@ export default function ForgotPasswordPage(): JSX.Element {
 
     if (!normalizedEmail) {
       nextErrors.email = 'Email is required.'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    } else if (!isValidEmailRfc5322(normalizedEmail)) {
       nextErrors.email = 'Enter a valid email address.'
     }
 
@@ -55,9 +59,12 @@ export default function ForgotPasswordPage(): JSX.Element {
     }
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>): void {
+  const [errorMessage, setErrorMessage] = useState<string>('')
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault()
     setHasSubmitted(true)
+    setErrorMessage('')
 
     const nextErrors = validate(email)
     setErrors(nextErrors)
@@ -67,7 +74,30 @@ export default function ForgotPasswordPage(): JSX.Element {
       return
     }
 
-    setStatus('success')
+    setStatus('loading')
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+        email: email.trim().toLowerCase(),
+      })
+      setStatus('success')
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status
+        const errorCode = error.response?.data?.error?.code
+
+        if (statusCode === 429 || errorCode === 'rate_limited') {
+          setStatus('rate_limited')
+          setErrorMessage('Too many password reset requests. Please try again later.')
+        } else {
+          setStatus('error')
+          setErrorMessage(error.response?.data?.error?.message || 'An error occurred. Please try again.')
+        }
+      } else {
+        setStatus('error')
+        setErrorMessage('Network error. Please check your connection and try again.')
+      }
+    }
   }
 
   return (
@@ -120,6 +150,10 @@ export default function ForgotPasswordPage(): JSX.Element {
             <Alert variant="success">If an account exists for that email, we'll send a password reset link.</Alert>
           ) : null}
 
+          {status === 'error' || status === 'rate_limited' ? (
+            <Alert variant="error">{errorMessage}</Alert>
+          ) : null}
+
           <TextField
             id="forgot-password-email"
             label="Email"
@@ -138,7 +172,9 @@ export default function ForgotPasswordPage(): JSX.Element {
             <Link className="ui-link" to="/login" state={{ email: email.trim() || undefined }}>
               Back to login
             </Link>
-            <Button type="submit">Send reset link</Button>
+            <Button type="submit" disabled={status === 'loading' || status === 'success'}>
+              {status === 'loading' ? 'Sending...' : 'Send reset link'}
+            </Button>
           </div>
         </form>
       </section>

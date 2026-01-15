@@ -2,6 +2,8 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
+using ClinicalIntelligence.Api.Services.Auth;
+using ClinicalIntelligence.Api.Validation;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -47,19 +49,15 @@ namespace ClinicalIntelligence.Api.Migrations
             // Normalize email
             adminEmail = adminEmail.Trim().ToLowerInvariant();
 
-            // Validate email format
-            if (!IsValidEmail(adminEmail))
+            // Validate email format using centralized RFC 5322 validator
+            if (!EmailValidation.IsValid(adminEmail))
             {
                 throw new InvalidOperationException(
                     "ADMIN_EMAIL must be a valid email address format");
             }
 
-            // Validate password complexity per FR-009c
-            if (!IsValidPasswordComplexity(adminPassword))
-            {
-                throw new InvalidOperationException(
-                    "ADMIN_PASSWORD must be at least 8 characters with mixed case, number, and special character");
-            }
+            // Validate password complexity per FR-009c using centralized policy
+            PasswordPolicy.ValidateOrThrow(adminPassword, "ADMIN_PASSWORD");
 
             // Hash password using bcrypt with 12 rounds
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword, BcryptWorkFactor);
@@ -117,41 +115,5 @@ namespace ClinicalIntelligence.Api.Migrations
                 table: "users");
         }
 
-        private static bool IsValidEmail(string email)
-        {
-            try
-            {
-                var mailAddress = new MailAddress(email);
-                return mailAddress.Address == email;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private static bool IsValidPasswordComplexity(string password)
-        {
-            if (string.IsNullOrEmpty(password) || password.Length < 8)
-                return false;
-
-            // Check for at least one lowercase letter
-            if (!Regex.IsMatch(password, @"[a-z]"))
-                return false;
-
-            // Check for at least one uppercase letter
-            if (!Regex.IsMatch(password, @"[A-Z]"))
-                return false;
-
-            // Check for at least one digit
-            if (!Regex.IsMatch(password, @"\d"))
-                return false;
-
-            // Check for at least one special character
-            if (!Regex.IsMatch(password, @"[!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]"))
-                return false;
-
-            return true;
-        }
     }
 }

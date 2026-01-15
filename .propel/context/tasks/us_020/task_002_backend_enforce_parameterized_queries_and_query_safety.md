@@ -31,7 +31,12 @@ Establish a backend guardrail to ensure all database operations are performed sa
   - Keep the rule narrow to avoid false positives.
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- EF Core usage in API is LINQ-based (parameterized by default); no `FromSqlRaw` / `ExecuteSqlRaw` usage found in `Server/ClinicalIntelligence.Api`.
+- Direct Npgsql usage exists only in infrastructure-style components with constant SQL:
+  - `Health/DatabaseHealthCheck.cs`: `SELECT 1;`
+  - `Data/DatabaseWarmupHostedService.cs`: `SELECT 1;`
+  - `Diagnostics/DbPoolMetricsSnapshot.cs`: constant `pg_stat_activity` query
+- Guardrail test added to prevent introduction of risky raw SQL APIs and dynamic SQL construction in production code.
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -55,8 +60,8 @@ Establish a backend guardrail to ensure all database operations are performed sa
 - [Code review] Confirm any Npgsql command uses parameters (if any new user-influenced SQL is added).
 
 ## Implementation Checklist
-- [ ] Inventory current DB access paths (EF Core LINQ vs any direct SQL)
-- [ ] Confirm no user input is ever used to construct SQL text in existing Npgsql usage
-- [ ] Add `SqlInjectionGuardrailTests` to prevent introduction of risky raw SQL patterns
-- [ ] Verify guardrail excludes generated build artifacts (`obj/`, `bin/`) to avoid noise
-- [ ] Confirm acceptance criteria coverage for parameterized queries (AC: “parameterized queries are used for all database operations”)
+- [x] Inventory current DB access paths (EF Core LINQ vs any direct SQL)
+- [x] Confirm no user input is ever used to construct SQL text in existing Npgsql usage
+- [x] Add `SqlInjectionGuardrailTests` to prevent introduction of risky raw SQL patterns
+- [x] Verify guardrail excludes generated build artifacts (`obj/`, `bin/`) to avoid noise
+- [x] Confirm acceptance criteria coverage for parameterized queries (AC: “parameterized queries are used for all database operations”)

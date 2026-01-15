@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ClinicalIntelligence.Api.Data;
 using ClinicalIntelligence.Api.Domain.Models;
+using ClinicalIntelligence.Api.Services.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -114,9 +115,9 @@ public class StaticAdminSeedMigrationTests : IDisposable
         Environment.SetEnvironmentVariable("ADMIN_EMAIL", "admin@example.com");
         Environment.SetEnvironmentVariable("ADMIN_PASSWORD", password);
 
-        // Act & Assert
+        // Act & Assert - Use centralized PasswordPolicy
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            ValidatePasswordComplexity(password));
+            PasswordPolicy.ValidateOrThrow(password, "ADMIN_PASSWORD"));
 
         Assert.Equal(
             "ADMIN_PASSWORD must be at least 8 characters with mixed case, number, and special character",
@@ -129,9 +130,66 @@ public class StaticAdminSeedMigrationTests : IDisposable
     [InlineData("C0mpl3x@Password")]
     public void ValidPasswordComplexity_DoesNotThrow(string password)
     {
-        // Act & Assert - should not throw
-        var isValid = IsValidPasswordComplexity(password);
-        Assert.True(isValid);
+        // Act & Assert - Use centralized PasswordPolicy
+        Assert.True(PasswordPolicy.IsValid(password));
+    }
+
+    [Theory]
+    [InlineData("Pass1!", "Password must be at least 8 characters")]
+    [InlineData("PASSWORD1!", "Password must contain a lowercase letter")]
+    [InlineData("password1!", "Password must contain an uppercase letter")]
+    [InlineData("Password!!", "Password must contain a number")]
+    [InlineData("Password12", "Password must contain a special character")]
+    public void PasswordPolicy_GetMissingRequirements_ReturnsCorrectMessage(string password, string expectedMessage)
+    {
+        // Act
+        var missing = PasswordPolicy.GetMissingRequirements(password);
+
+        // Assert
+        Assert.Contains(expectedMessage, missing);
+    }
+
+    [Fact]
+    public void PasswordPolicy_NullPassword_ReturnsAllRequirements()
+    {
+        // Act
+        var missing = PasswordPolicy.GetMissingRequirements(null);
+
+        // Assert
+        Assert.Equal(5, missing.Count);
+    }
+
+    [Fact]
+    public void PasswordPolicy_EmptyPassword_ReturnsAllRequirements()
+    {
+        // Act
+        var missing = PasswordPolicy.GetMissingRequirements(string.Empty);
+
+        // Assert
+        Assert.Equal(5, missing.Count);
+    }
+
+    [Fact]
+    public void PasswordPolicy_ExceedsMaxLength_ReturnsMaxLengthError()
+    {
+        // Arrange - Create password exceeding 128 characters
+        var longPassword = new string('A', 129) + "a1!";
+
+        // Act
+        var missing = PasswordPolicy.GetMissingRequirements(longPassword);
+
+        // Assert
+        Assert.Contains($"Password must not exceed {PasswordPolicy.MaxLength} characters", missing);
+    }
+
+    [Theory]
+    [InlineData("Pässwörd1!")]  // Unicode letters
+    [InlineData("Password1™")]  // Unicode symbol as special char
+    [InlineData("Password1€")]  // Currency symbol as special char
+    public void PasswordPolicy_UnicodeSpecialCharacters_AreAccepted(string password)
+    {
+        // Act & Assert - Unicode non-alphanumeric chars count as special
+        Assert.True(PasswordPolicy.IsValid(password));
     }
 
     [Fact]
@@ -233,32 +291,4 @@ public class StaticAdminSeedMigrationTests : IDisposable
         }
     }
 
-    private static void ValidatePasswordComplexity(string password)
-    {
-        if (!IsValidPasswordComplexity(password))
-        {
-            throw new InvalidOperationException(
-                "ADMIN_PASSWORD must be at least 8 characters with mixed case, number, and special character");
-        }
-    }
-
-    private static bool IsValidPasswordComplexity(string password)
-    {
-        if (string.IsNullOrEmpty(password) || password.Length < 8)
-            return false;
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"[a-z]"))
-            return false;
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"[A-Z]"))
-            return false;
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"\d"))
-            return false;
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"[!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]"))
-            return false;
-
-        return true;
-    }
 }

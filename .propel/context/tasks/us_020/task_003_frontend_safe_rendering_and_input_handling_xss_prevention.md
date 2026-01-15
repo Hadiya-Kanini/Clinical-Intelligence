@@ -54,7 +54,7 @@ Ensure the frontend renders any user-provided or server-provided text safely (no
 - [Manual] Enter strings resembling HTML/JS (e.g., `<img src=x onerror=alert(1)>`) into any UI input and confirm it renders as visible text, not executed markup.
 
 ## Implementation Checklist
-- [ ] Add a frontend guardrail test for `dangerouslySetInnerHTML` / `innerHTML` usage
-- [ ] Validate high-risk display areas (`Patient360Page` citations and narrative fields) render as text-only
-- [ ] Validate user-entered values (User management, document search) are displayed without HTML injection
-- [ ] Document a decision point: if rich text rendering is required later, choose a vetted sanitizer rather than introducing raw HTML
+- [x] Add a frontend guardrail test for `dangerouslySetInnerHTML` / `innerHTML` usage
+- [x] Validate high-risk display areas (`Patient360Page` citations and narrative fields) render as text-only
+- [x] Validate user-entered values (User management, document search) are displayed without HTML injection
+- [x] Document a decision point: if rich text rendering is required later, choose a vetted sanitizer rather than introducing raw HTML

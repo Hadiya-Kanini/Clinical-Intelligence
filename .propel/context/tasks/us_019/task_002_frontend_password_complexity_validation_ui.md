@@ -53,12 +53,12 @@ Update the reset password UI to enforce password complexity (FR-009c) locally wi
 - [Manual] Verify confirm password mismatch behavior remains correct.
 
 ## Implementation Checklist
-- [ ] Add `app/src/utils/passwordPolicy.ts` with requirement checks and a "missing requirements" helper
-- [ ] Update `ResetPasswordPage.validate()` to enforce all required rules (length, lower, upper, number, special)
-- [ ] Highlight missing requirements on validation failure (not only generic error)
-- [ ] Ensure real-time requirement list and validation use the same underlying policy helper
-- [ ] Confirm accessibility: errors are associated to fields and missing requirements are readable
-- [ ] Align special character logic and max length behavior with backend policy
+- [x] Add `app/src/lib/validation/passwordPolicy.ts` with requirement checks and a "missing requirements" helper
+- [x] Update `ResetPasswordPage.validate()` to enforce all required rules (length, lower, upper, number, special)
+- [x] Highlight missing requirements on validation failure (not only generic error)
+- [x] Ensure real-time requirement list and validation use the same underlying policy helper
+- [x] Confirm accessibility: errors are associated to fields and missing requirements are readable
+- [x] Align special character logic and max length behavior with backend policy
 
 # Design Reference
 

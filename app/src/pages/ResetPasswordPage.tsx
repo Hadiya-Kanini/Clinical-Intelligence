@@ -1,17 +1,21 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 import Alert from '../components/ui/Alert'
 import Button from '../components/ui/Button'
 import PasswordStrength from '../components/ui/PasswordStrength'
 import TextField from '../components/ui/TextField'
+import { getPasswordRequirements, getMissingRequirements, isPasswordValid } from '../lib/validation/passwordPolicy'
 
 type Errors = {
   password?: string
   confirmPassword?: string
 }
 
-type Status = 'idle' | 'success' | 'tokenExpired'
+type Status = 'idle' | 'loading' | 'success' | 'tokenExpired' | 'tokenUsed' | 'error'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5062'
 
 export default function ResetPasswordPage(): JSX.Element {
   const [searchParams] = useSearchParams()
@@ -25,13 +29,14 @@ export default function ResetPasswordPage(): JSX.Element {
   const [status, setStatus] = useState<Status>(token ? 'idle' : 'tokenExpired')
   const [errors, setErrors] = useState<Errors>({})
 
-  function validate(nextPassword: string, nextConfirm: string): Errors {
+  function validate(nextPassword: string, nextConfirm: string, checkAllRequirements = false): Errors {
     const nextErrors: Errors = {}
 
     if (!nextPassword) {
       nextErrors.password = 'Password is required.'
-    } else if (nextPassword.length < 8) {
-      nextErrors.password = 'Password must be at least 8 characters.'
+    } else if (checkAllRequirements && !isPasswordValid(nextPassword)) {
+      const missing = getMissingRequirements(nextPassword)
+      nextErrors.password = missing.length > 0 ? missing.join('. ') + '.' : 'Password does not meet requirements.'
     }
 
     if (!nextConfirm) {
@@ -43,15 +48,27 @@ export default function ResetPasswordPage(): JSX.Element {
     return nextErrors
   }
 
-  const passwordRequirements = useMemo(() => {
-    return [
-      { label: 'At least 8 characters', met: password.length >= 8 },
-      { label: 'Lowercase letter', met: /[a-z]/.test(password) },
-      { label: 'Uppercase letter', met: /[A-Z]/.test(password) },
-      { label: 'Number', met: /\\d/.test(password) },
-      { label: 'Symbol', met: /[^A-Za-z0-9]/.test(password) },
-    ]
-  }, [password])
+  const [errorMessage, setErrorMessage] = useState<string>('')
+  const [countdown, setCountdown] = useState<number>(3)
+
+  const passwordRequirements = useMemo(() => getPasswordRequirements(password), [password])
+
+  useEffect(() => {
+    if (status !== 'success') return
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          navigate('/login', { replace: true, state: { reset: 'success' } })
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [status, navigate])
 
   function handlePasswordChange(e: ChangeEvent<HTMLInputElement>): void {
     const next = e.target.value
@@ -73,6 +90,7 @@ export default function ResetPasswordPage(): JSX.Element {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault()
+    setErrorMessage('')
 
     if (!token) {
       setStatus('tokenExpired')
@@ -81,16 +99,42 @@ export default function ResetPasswordPage(): JSX.Element {
 
     setHasSubmitted(true)
 
-    const nextErrors = validate(password, confirmPassword)
+    const nextErrors = validate(password, confirmPassword, true)
     setErrors(nextErrors)
 
     if (Object.keys(nextErrors).length > 0) return
 
-    setStatus('success')
+    setStatus('loading')
 
-    setTimeout(() => {
-      navigate('/login', { replace: true, state: { reset: 'success' } })
-    }, 800)
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/auth/reset-password`, {
+        token,
+        newPassword: password,
+      })
+      setStatus('success')
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorCode = error.response?.data?.error?.code
+
+        if (errorCode === 'token_expired') {
+          setStatus('tokenExpired')
+          setErrorMessage('Reset link has expired. Please request a new one.')
+        } else if (errorCode === 'invalid_token') {
+          setStatus('tokenUsed')
+          setErrorMessage('This reset link has already been used or is invalid.')
+        } else if (errorCode === 'password_requirements_not_met') {
+          setStatus('error')
+          const details = error.response?.data?.error?.details || []
+          setErrorMessage(details.join(' '))
+        } else {
+          setStatus('error')
+          setErrorMessage(error.response?.data?.error?.message || 'An error occurred. Please try again.')
+        }
+      } else {
+        setStatus('error')
+        setErrorMessage('Network error. Please check your connection and try again.')
+      }
+    }
   }
 
   return (
@@ -131,9 +175,28 @@ export default function ResetPasswordPage(): JSX.Element {
         </header>
 
         {status === 'tokenExpired' ? (
-          <Alert variant="error">This reset link is invalid or has expired. Please request a new one.</Alert>
+          <Alert variant="error">
+            This reset link is invalid or has expired.{' '}
+            <Link className="ui-link" to="/forgot-password">
+              Request a new one
+            </Link>
+          </Alert>
         ) : null}
-        {status === 'success' ? <Alert variant="success">Password updated. Redirecting to login…</Alert> : null}
+
+        {status === 'tokenUsed' ? (
+          <Alert variant="error">
+            This reset link has already been used.{' '}
+            <Link className="ui-link" to="/forgot-password">
+              Request a new one
+            </Link>
+          </Alert>
+        ) : null}
+
+        {status === 'error' ? <Alert variant="error">{errorMessage}</Alert> : null}
+
+        {status === 'success' ? (
+          <Alert variant="success">Password updated. Redirecting to login in {countdown}…</Alert>
+        ) : null}
 
         <form
           onSubmit={handleSubmit}
@@ -158,19 +221,23 @@ export default function ResetPasswordPage(): JSX.Element {
             errorText={errors.password}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <ul
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', margin: 0, padding: 0, listStyle: 'none' }}
+            aria-label="Password requirements"
+          >
             {passwordRequirements.map((req) => (
-              <div
-                key={req.label}
+              <li
+                key={req.id}
                 style={{
                   fontSize: 'var(--font-size-body-small)',
                   color: req.met ? 'var(--color-success-dark)' : 'var(--color-text-muted)',
                 }}
+                aria-label={`${req.label}: ${req.met ? 'met' : 'not met'}`}
               >
                 {req.met ? '✓' : '○'} {req.label}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
 
           <TextField
             id="reset-password-confirm"
@@ -189,8 +256,8 @@ export default function ResetPasswordPage(): JSX.Element {
             <Link className="ui-link" to="/login">
               Back to login
             </Link>
-            <Button type="submit" disabled={status !== 'idle'}>
-              Update password
+            <Button type="submit" disabled={status === 'loading' || status === 'success' || status === 'tokenExpired' || status === 'tokenUsed'}>
+              {status === 'loading' ? 'Updating...' : 'Update password'}
             </Button>
           </div>
         </form>

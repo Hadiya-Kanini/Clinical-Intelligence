@@ -60,11 +60,11 @@ Update the login UI to display an actionable, non-sensitive rate limiting messag
 - [Automated] Run Playwright login visual tests and confirm screenshots capture the rate limit state.
 
 ## Implementation Checklist
-- [ ] Detect HTTP 429 from `POST /api/v1/auth/login`
-- [ ] Parse `Retry-After` header (seconds or date format)
-- [ ] Render a user-friendly retry timeframe (relative and/or local-time)
-- [ ] Include contact support/administrator option in the message
-- [ ] Update Playwright mocked response to include `Retry-After` and validate screenshots
+- [x] Detect HTTP 429 from `POST /api/v1/auth/login`
+- [x] Parse `Retry-After` header (seconds or date format)
+- [x] Render a user-friendly retry timeframe (relative and/or local-time)
+- [x] Include contact support/administrator option in the message
+- [x] Update Playwright mocked response to include `Retry-After` and validate screenshots
 
 ## Design Reference
 

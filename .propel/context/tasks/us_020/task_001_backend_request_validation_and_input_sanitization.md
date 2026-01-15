@@ -58,9 +58,9 @@ Harden backend request input handling to reduce injection risk by applying consi
 - [Security] Confirm logs do not contain raw user input values for rejected requests.
 
 ## Implementation Checklist
-- [ ] Implement `InputValidationPolicy` for suspicious pattern detection and safe normalization helpers
-- [ ] Refactor `RequestValidationMiddleware` to use the policy and clearly scope validation to reduce false positives
-- [ ] Ensure middleware returns standardized `invalid_input` error for detected suspicious patterns (FR-009g)
-- [ ] Ensure logging is informative (path + key) but avoids leaking raw input values
-- [ ] Validate behavior for `/auth/login` (do not block passwords containing special characters or substrings)
-- [ ] Confirm existing JSON Content-Type and request size protections remain intact
+- [x] Implement `InputValidationPolicy` for suspicious pattern detection and safe normalization helpers
+- [x] Refactor `RequestValidationMiddleware` to use the policy and clearly scope validation to reduce false positives
+- [x] Ensure middleware returns standardized `invalid_input` error for detected suspicious patterns (FR-009g)
+- [x] Ensure logging is informative (path + key) but avoids leaking raw input values
+- [x] Validate behavior for `/auth/login` (do not block passwords containing special characters or substrings)
+- [x] Confirm existing JSON Content-Type and request size protections remain intact
