@@ -63,9 +63,9 @@ Estimated Effort: 6 hours
 - Confirm that when the cookie is expired/cleared, the UI transitions to unauthenticated state and protected calls fail gracefully (401).
 
 ## Implementation Checklist
-- [ ] Remove token persistence (`ci_token`) from `localStorage` and clear legacy keys on logout
-- [ ] Configure axios to send credentialed requests (`withCredentials: true`)
-- [ ] Update `checkAuthAsync` to use `/api/v1/auth/me` without `Authorization` header
-- [ ] Update `loginAsync` to not store token and to set authenticated state based on response/session
-- [ ] Update `logoutAsync` to call backend logout and clear client-side auth state
-- [ ] Run frontend unit tests and build
+- [x] Remove token persistence (`ci_token`) from `localStorage` and clear legacy keys on logout
+- [x] Configure axios to send credentialed requests (`withCredentials: true`)
+- [x] Update `checkAuthAsync` to use `/api/v1/auth/me` without `Authorization` header
+- [x] Update `loginAsync` to not store token and to set authenticated state based on response/session
+- [x] Update `logoutAsync` to call backend logout and clear client-side auth state
+- [x] Run frontend unit tests and build

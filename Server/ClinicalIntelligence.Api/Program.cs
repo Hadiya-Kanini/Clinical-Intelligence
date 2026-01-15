@@ -78,7 +78,10 @@ if (isPostgreSql)
     builder.Services.AddSingleton(new DbPoolMetricsCollector(connectionString));
 }
 
-// Add JWT Authentication
+// Cookie name for JWT access token
+const string AccessTokenCookieName = "ci_access_token";
+
+// Add JWT Authentication with cookie support
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -92,9 +95,40 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = secrets.JwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secrets.JwtKey!))
         };
+
+        // Read JWT from HttpOnly cookie (with Authorization header fallback)
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // First, try to get token from cookie
+                if (context.Request.Cookies.TryGetValue(AccessTokenCookieName, out var cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+                // Fallback: Authorization header is handled automatically by the middleware
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
+
+// Add CORS policy for frontend with credentials support
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://localhost:5173",
+                "https://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -114,6 +148,8 @@ if (app.Environment.IsDevelopment())
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.Migrate();
 }
+
+app.UseCors("AllowFrontend");
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ApiExceptionMiddleware>();
@@ -235,7 +271,7 @@ app.MapGet("/health/db/pool", async (HttpContext context) =>
 var v1 = app.MapGroup("/api/v1");
 
 // Authentication endpoint - database-backed authentication
-v1.MapPost("/auth/login", async (LoginRequest request, ApplicationDbContext dbContext) =>
+v1.MapPost("/auth/login", async (HttpContext context, LoginRequest request, ApplicationDbContext dbContext) =>
 {
     // Validate input
     var email = request.Email?.Trim().ToLowerInvariant();
@@ -314,9 +350,20 @@ v1.MapPost("/auth/login", async (LoginRequest request, ApplicationDbContext dbCo
 
     // Generate JWT with role claims
     var token = GenerateJwtToken(user, secrets);
+
+    // Set JWT in HttpOnly cookie
+    var cookieOptions = new CookieOptions
+    {
+        HttpOnly = true,
+        Secure = !app.Environment.IsDevelopment(), // Secure in production, allow HTTP in development
+        SameSite = SameSiteMode.Lax, // Lax for same-site navigation, Strict would block cross-origin redirects
+        Path = "/",
+        MaxAge = TimeSpan.FromMinutes(secrets.JwtExpirationMinutes)
+    };
+    context.Response.Cookies.Append(AccessTokenCookieName, token, cookieOptions);
+
     return Results.Ok(new 
     { 
-        token = token, 
         expires_in = secrets.JwtExpirationMinutes * 60,
         user = new 
         {
@@ -329,8 +376,18 @@ v1.MapPost("/auth/login", async (LoginRequest request, ApplicationDbContext dbCo
     .WithName("Login")
     .WithOpenApi();
 
-v1.MapPost("/auth/logout", () =>
+v1.MapPost("/auth/logout", (HttpContext context) =>
 {
+    // Clear the JWT cookie with matching options
+    var cookieOptions = new CookieOptions
+    {
+        HttpOnly = true,
+        Secure = !app.Environment.IsDevelopment(),
+        SameSite = SameSiteMode.Lax,
+        Path = "/"
+    };
+    context.Response.Cookies.Delete(AccessTokenCookieName, cookieOptions);
+
     return Results.Ok(new { status = "logged_out" });
 })
     .WithName("Logout")

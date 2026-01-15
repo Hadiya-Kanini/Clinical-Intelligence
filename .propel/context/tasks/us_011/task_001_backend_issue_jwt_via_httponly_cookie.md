@@ -78,10 +78,10 @@ Estimated Effort: 8 hours
 - Call `/api/v1/auth/logout` and confirm the cookie is removed and subsequent protected calls return 401.
 
 ## Implementation Checklist
-- [ ] Update JWT expiration to 15 minutes and confirm token `exp` aligns to config
-- [ ] Set JWT access token into an HttpOnly cookie on successful login
-- [ ] Configure JWT bearer authentication to read token from cookie (and optionally accept Authorization header fallback)
-- [ ] Clear JWT cookie on logout
-- [ ] Ensure `/api/v1/auth/me` and other protected endpoints authorize via cookie-based JWT
-- [ ] Add/adjust CORS policy if the frontend runs on a different origin and needs credentialed requests
-- [ ] Build and run backend tests
+- [x] Update JWT expiration to 15 minutes and confirm token `exp` aligns to config
+- [x] Set JWT access token into an HttpOnly cookie on successful login
+- [x] Configure JWT bearer authentication to read token from cookie (and optionally accept Authorization header fallback)
+- [x] Clear JWT cookie on logout
+- [x] Ensure `/api/v1/auth/me` and other protected endpoints authorize via cookie-based JWT
+- [x] Add/adjust CORS policy if the frontend runs on a different origin and needs credentialed requests
+- [x] Build and run backend tests

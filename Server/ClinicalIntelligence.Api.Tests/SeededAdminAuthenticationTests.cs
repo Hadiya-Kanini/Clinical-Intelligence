@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ClinicalIntelligence.Api.Contracts;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Net.Http.Headers;
 using Xunit;
 
 namespace ClinicalIntelligence.Api.Tests;
@@ -74,9 +75,9 @@ public class SeededAdminAuthenticationTests : IClassFixture<WebApplicationFactor
 
         var content = await response.Content.ReadAsStringAsync();
         var jsonDoc = JsonDocument.Parse(content);
-        var token = jsonDoc.RootElement.GetProperty("token").GetString();
 
-        Assert.NotNull(token);
+        // Token should NOT be in response body (it's in HttpOnly cookie)
+        Assert.False(jsonDoc.RootElement.TryGetProperty("token", out _), "Token should not be in response body");
 
         // Verify user object in response
         Assert.True(jsonDoc.RootElement.TryGetProperty("user", out var userElement));
@@ -88,9 +89,22 @@ public class SeededAdminAuthenticationTests : IClassFixture<WebApplicationFactor
         Assert.Equal("admin", userRole);
         Assert.True(Guid.TryParse(userId, out _), "User ID should be a valid GUID");
 
+        // Verify Set-Cookie header is present with HttpOnly cookie
+        Assert.True(response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders));
+        var setCookieList = setCookieHeaders.ToList();
+        Assert.NotEmpty(setCookieList);
+
+        var accessTokenCookie = setCookieList.FirstOrDefault(c => c.StartsWith("ci_access_token="));
+        Assert.NotNull(accessTokenCookie);
+        Assert.Contains("HttpOnly", accessTokenCookie, StringComparison.OrdinalIgnoreCase);
+
+        // Extract token from cookie for JWT validation
+        var cookieValue = accessTokenCookie.Split(';')[0].Split('=')[1];
+        Assert.NotNull(cookieValue);
+
         // Decode JWT and verify role claim
         var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
+        var jwtToken = handler.ReadJwtToken(cookieValue);
 
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role || c.Type == "role");
         Assert.NotNull(roleClaim);
@@ -105,6 +119,12 @@ public class SeededAdminAuthenticationTests : IClassFixture<WebApplicationFactor
         var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email);
         Assert.NotNull(emailClaim);
         Assert.Equal(adminEmail.Trim().ToLowerInvariant(), emailClaim.Value);
+
+        // Verify token expiry is approximately 15 minutes
+        var exp = jwtToken.ValidTo;
+        var expectedExpiry = DateTime.UtcNow.AddMinutes(15);
+        var expiryDiff = Math.Abs((exp - expectedExpiry).TotalMinutes);
+        Assert.True(expiryDiff < 1, $"Token expiry should be ~15 minutes from now, but was {exp}");
     }
 
     [Fact]
