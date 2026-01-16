@@ -75,11 +75,11 @@ This task focuses on making the page functional for read-only listing. Full CRUD
 - [Accessibility] Confirm keyboard access to search input, sort controls, and pagination controls.
 
 ## Implementation Checklist
-- [ ] Add `adminUsersApi` wrapper for `GET /api/v1/admin/users`
-- [ ] Replace hardcoded list in `UserManagementPage` with API-backed data and loading/error states
-- [ ] Implement debounced search by name/email
-- [ ] Implement sortable columns (name, email, role, status) with state + visual indication
-- [ ] Implement pagination controls and page reset behavior on query/sort changes
+- [x] Add `adminUsersApi` wrapper for `GET /api/v1/admin/users`
+- [x] Replace hardcoded list in `UserManagementPage` with API-backed data and loading/error states
+- [x] Implement debounced search by name/email
+- [x] Implement sortable columns (name, email, role, status) with state + visual indication
+- [x] Implement pagination controls and page reset behavior on query/sort changes
 
 ---
 

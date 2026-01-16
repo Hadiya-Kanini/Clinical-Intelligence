@@ -83,17 +83,20 @@ function clearAuthState(): void {
 async function fetchCsrfToken(): Promise<string | null> {
   // Return cached token if available
   if (csrfToken) {
+    console.log('Using cached CSRF token:', csrfToken.substring(0, 10) + '...')
     return csrfToken
   }
 
   // Return existing fetch promise if in progress
   if (csrfTokenFetchPromise) {
+    console.log('CSRF token fetch already in progress')
     return csrfTokenFetchPromise
   }
 
   // Fetch new token
   csrfTokenFetchPromise = (async () => {
     try {
+      console.log('Fetching CSRF token...')
       const response = await fetch('/api/v1/auth/csrf', {
         method: 'GET',
         credentials: 'include',
@@ -102,15 +105,20 @@ async function fetchCsrfToken(): Promise<string | null> {
         },
       })
 
+      console.log('CSRF token response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
         csrfToken = data.token
+        console.log('CSRF token fetched successfully:', csrfToken?.substring(0, 10) + '...')
         return csrfToken
       }
 
+      console.log('CSRF token fetch failed with status:', response.status)
       // If unauthorized, don't cache the failure
       return null
-    } catch {
+    } catch (error) {
+      console.error('CSRF token fetch error:', error)
       return null
     } finally {
       csrfTokenFetchPromise = null
@@ -182,8 +190,12 @@ async function executeRequest<T = unknown>(
   // Add CSRF token for state-changing methods (unless explicitly skipped)
   if (includeCsrf && !skipCsrf && STATE_CHANGING_METHODS.includes(method)) {
     const token = await fetchCsrfToken()
+    console.log('CSRF token for request:', token ? token.substring(0, 10) + '...' : 'null')
     if (token) {
       ;(headers as Record<string, string>)[CSRF_HEADER_NAME] = token
+      console.log('CSRF token added to headers')
+    } else {
+      console.log('No CSRF token available - request may fail')
     }
   }
 
@@ -196,6 +208,13 @@ async function executeRequest<T = unknown>(
   if (body !== undefined) {
     config.body = JSON.stringify(body)
   }
+
+  console.log('Request config:', {
+    method: config.method,
+    headers: config.headers,
+    credentials: config.credentials,
+    endpoint
+  })
 
   const response = await fetch(endpoint, config)
 

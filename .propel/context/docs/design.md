@@ -33,7 +33,7 @@ Primary users:
 | Email | SMTP service | Password reset workflows; TLS |
 | Observability | Structured logging + health endpoints | `/health` on API; `/health`, `/health/ready`, `/health/live` on worker |
 | Database Migrations | Entity Framework Core Migrations | For .NET Backend schema versioning |
-| API Documentation | Swagger UI (Swashbuckle.AspNetCore) | Interactive API documentation with OpenAPI 3.0 spec |
+| API Documentation | Swagger/OpenAPI | Auto-generated API docs for Backend API |
 | Frontend State Management | Redux Toolkit or Zustand | Global state management for React |
 | HTTP Client | Axios | Frontend API communication |
 | Frontend Testing | Jest + React Testing Library | Unit and integration tests |
@@ -85,7 +85,7 @@ Primary users:
 - **Clickable References**: Anchor links to page numbers (#page=N)
 - **Highlighting**: Text coordinate-based highlighting when available
 - **Fallback**: Page-level navigation if coordinates unavailable
-
+  
 References package:
 ```yaml
 - url: https://learn.microsoft.com/en-us/aspnet/core/security/authentication/configure-jwt-bearer-authentication?view=aspnetcore-10.0
@@ -199,7 +199,7 @@ Comparison of primary stack vs a secondary stack (Python-only) across 5 criteria
 - TR-011: System MUST prevent export until all conflicts are resolved and code review decisions are captured; export MUST support CSV and JSON and provide clipboard copy.
 - TR-012: System MUST expose health check endpoints on the Backend API (`/health`) and on the AI Worker (`/health`, `/health/ready`, `/health/live`) and implement structured logging suitable for centralized aggregation.
 - TR-013: System MUST implement CSRF protections for all state-changing endpoints when cookie-based auth is used.
-- TR-014: System MUST enforce RBAC with at least two roles (Admin and Standard) and restrict admin-only features (user management, system health views) from Standard users. Phase 1 uses a single static admin account initialized during database setup.
+- TR-014: System MUST enforce RBAC with at least two roles (Admin and Standard) and restrict admin-only features (user management, system health views) from Standard users.
 - TR-015: System MUST implement API versioning using URL path prefix (e.g., /api/v1/) to support backward compatibility and future API evolution.
 - TR-016: System MUST return standardized error responses with consistent structure: { "error": { "code": "string", "message": "string", "details": [] } }.
 - TR-017: System MUST implement pagination for all list endpoints (documents, patients, audit logs) with configurable page size (default 20, max 50) and total count.
@@ -264,13 +264,12 @@ Comparison of primary stack vs a secondary stack (Python-only) across 5 criteria
 - Grounding constraint: extracted entities without citations are invalid and must not be finalized.
 - Deployment model: Phase 1 does not require containerization; RabbitMQ may run as a local/Windows service for development.
 - Phase 1 assumes single-organization deployment; multi-tenant isolation deferred to Phase 2.
-- Admin account: Phase 1 uses a single static admin account created via database seed/migration with credentials from environment variables; static admin creates all Standard User accounts.
 - Clickable references use PDF.js with page anchors (#page=N); coordinate-based highlighting when metadata available.
-- Phase 1 uses 15-minute access tokens; concurrent sessions allowed but tracked in audit logs.
+- Phase 1 uses 15-minute access tokens without refresh tokens; concurrent sessions allowed but tracked in audit logs.
 
 ## Development Workflow
 1. Domain entity changes require database migration scripts, referential integrity checks, and unit tests for repositories/services.
-2. Backend API endpoints should be documented via Swagger UI (OpenAPI specification) and implemented with RBAC, rate limiting, CSRF protection (when cookie-auth), and structured audit logging.
+2. Backend API endpoints should be specified via OpenAPI and implemented with RBAC, rate limiting, CSRF protection (when cookie-auth), and structured audit logging.
 3. AI Worker implementation should be developed against stable job contracts (message schema) and idempotent processing rules to safely support retries.
 4. UI implementation should integrate loading/error states for upload and processing status, provide conflict resolution and code review workflows, and enforce export gating when conflicts exist.
 5. Every feature that touches PHI must include security validation (authorization, audit logging) and basic performance checks aligned to NFR thresholds.

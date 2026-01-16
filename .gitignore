@@ -1,5 +1,5 @@
 # Environment variables
-.env
+# .env
 .env.local
 .env.*.local
 
@@ -20,6 +20,7 @@ uploads/
 logs/
 TestResults/
 coverage/
+.coverage
 
 # .NET build artifacts
 bin/
@@ -36,6 +37,13 @@ obj/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
 
 # Temporary files
 *.tmp

@@ -57,10 +57,10 @@ Add frontend automated tests to ensure the User Management page behaviors are st
 - [Manual] Spot-check selectors and accessibility flows (Tab navigation).
 
 ## Implementation Checklist
-- [ ] Add E2E spec for `/admin/users` basic rendering
-- [ ] Cover search behavior and result changes
-- [ ] Cover sorting behavior on at least one column
-- [ ] Cover pagination behavior (next/prev)
+- [x] Add E2E spec for `/admin/users` basic rendering
+- [x] Cover search behavior and result changes
+- [x] Cover sorting behavior on at least one column
+- [x] Cover pagination behavior (next/prev)
 
 ---
 

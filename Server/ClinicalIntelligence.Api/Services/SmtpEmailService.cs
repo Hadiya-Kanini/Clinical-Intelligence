@@ -85,6 +85,16 @@ public sealed class SmtpEmailService : IEmailService
         return await SendEmailAsync(to, subject, htmlBody, isHtml: true);
     }
 
+    /// <inheritdoc />
+    public async Task<bool> SendNewUserCredentialsEmailAsync(string to, string userName, string temporaryPassword)
+    {
+        var subject = "Your Clinical Intelligence Account Credentials";
+        var htmlBody = GenerateNewUserCredentialsEmailHtml(userName, to, temporaryPassword);
+        
+        _logger.LogInformation("Sending new user credentials email to {Email}", to);
+        return await SendEmailAsync(to, subject, htmlBody, isHtml: true);
+    }
+
     private async Task<bool> SendWithRetryAsync(MimeMessage message, string recipientEmail)
     {
         for (var attempt = 0; attempt < MaxRetryAttempts; attempt++)
@@ -295,6 +305,74 @@ public sealed class SmtpEmailService : IEmailService
                 
                 <p style=""color: #9ca3af; font-size: 12px; line-height: 1.5; margin: 0;"">
                     This is an automated security notification from Clinical Intelligence.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style=""padding: 24px; text-align: center;"">
+                <p style=""color: #9ca3af; font-size: 12px; margin: 0;"">
+                    © {DateTime.UtcNow.Year} Clinical Intelligence. All rights reserved.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+    }
+
+    private static string GenerateNewUserCredentialsEmailHtml(string userName, string email, string temporaryPassword)
+    {
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Your Account Credentials</title>
+</head>
+<body style=""margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;"">
+    <table role=""presentation"" width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""max-width: 600px; margin: 0 auto; padding: 40px 20px;"">
+        <tr>
+            <td style=""background-color: #ffffff; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"">
+                <h1 style=""color: #1a1a1a; font-size: 24px; margin: 0 0 24px 0;"">Welcome to Clinical Intelligence</h1>
+                
+                <p style=""color: #4a4a4a; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;"">
+                    Hi {System.Net.WebUtility.HtmlEncode(userName)},
+                </p>
+                
+                <p style=""color: #4a4a4a; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;"">
+                    Your Clinical Intelligence account has been created. Below are your login credentials:
+                </p>
+                
+                <table role=""presentation"" cellspacing=""0"" cellpadding=""0"" style=""margin: 0 0 24px 0; background-color: #f8f9fa; border-radius: 6px; padding: 20px; width: 100%;"">
+                    <tr>
+                        <td style=""padding: 8px 0;"">
+                            <strong style=""color: #4a4a4a;"">Email:</strong>
+                            <span style=""color: #1a1a1a; margin-left: 8px;"">{System.Net.WebUtility.HtmlEncode(email)}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style=""padding: 8px 0;"">
+                            <strong style=""color: #4a4a4a;"">Temporary Password:</strong>
+                            <code style=""color: #1a1a1a; margin-left: 8px; background-color: #e9ecef; padding: 4px 8px; border-radius: 4px; font-family: monospace;"">{System.Net.WebUtility.HtmlEncode(temporaryPassword)}</code>
+                        </td>
+                    </tr>
+                </table>
+                
+                <div style=""background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 16px; margin: 0 0 24px 0;"">
+                    <p style=""color: #856404; font-size: 14px; line-height: 1.5; margin: 0;"">
+                        <strong>⚠ Security Notice:</strong><br>
+                        For your security, please change your password immediately after your first login.
+                    </p>
+                </div>
+                
+                <hr style=""border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;"">
+                
+                <p style=""color: #9ca3af; font-size: 12px; line-height: 1.5; margin: 0;"">
+                    <strong>Security Tips:</strong><br>
+                    • Never share your password with anyone<br>
+                    • Clinical Intelligence will never ask for your password via email<br>
+                    • If you did not expect this email, please contact support
                 </p>
             </td>
         </tr>

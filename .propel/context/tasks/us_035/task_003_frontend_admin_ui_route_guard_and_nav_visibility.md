@@ -66,10 +66,10 @@ Enforce admin-only restrictions in the React UI by:
 - [Manual/UI] Login as Admin and confirm admin routes are accessible.
 
 ## Implementation Checklist
-- [ ] Update `RequireAdmin` to use store-based role (server-derived)
-- [ ] Hide admin navigation items in `AppShell` for Standard users
-- [ ] Remove reliance on `ci_user_role` / `ci_auth` for authorization decisions
-- [ ] Validate redirects and menu visibility for Admin vs Standard
+- [x] Update `RequireAdmin` to use store-based role (server-derived)
+- [x] Hide admin navigation items in `AppShell` for Standard users
+- [x] Remove reliance on `ci_user_role` / `ci_auth` for authorization decisions
+- [x] Validate redirects and menu visibility for Admin vs Standard
 
 ## Design Reference
 

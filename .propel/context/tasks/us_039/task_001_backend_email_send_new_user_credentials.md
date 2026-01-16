@@ -69,8 +69,8 @@ This task focuses on **email service capability and templating only** (no admin 
 - [Security] Confirm SMTP connection uses StartTLS when enabled (existing `SmtpEmailService` behavior).
 
 ## Implementation Checklist
-- [ ] Add `SendNewUserCredentialsEmailAsync(...)` to `IEmailService`
-- [ ] Implement method in `SmtpEmailService` using `SendEmailAsync(...)`
-- [ ] Add HTML generator function for credential email (encode inputs)
-- [ ] Ensure logging excludes temporary password
-- [ ] Verify email sends successfully using a dev SMTP provider
+- [x] Add `SendNewUserCredentialsEmailAsync(...)` to `IEmailService`
+- [x] Implement method in `SmtpEmailService` using `SendEmailAsync(...)`
+- [x] Add HTML generator function for credential email (encode inputs)
+- [x] Ensure logging excludes temporary password
+- [x] Verify email sends successfully using a dev SMTP provider

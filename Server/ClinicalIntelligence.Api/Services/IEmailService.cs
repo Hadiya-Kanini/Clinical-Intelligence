@@ -47,4 +47,13 @@ public interface IEmailService
     /// Indicates whether the email service is configured and available.
     /// </summary>
     bool IsConfigured { get; }
+
+    /// <summary>
+    /// Sends a new user credentials email with login information.
+    /// </summary>
+    /// <param name="to">Recipient email address.</param>
+    /// <param name="userName">User's display name.</param>
+    /// <param name="temporaryPassword">The temporary password for initial login.</param>
+    /// <returns>True if email was sent successfully, false otherwise.</returns>
+    Task<bool> SendNewUserCredentialsEmailAsync(string to, string userName, string temporaryPassword);
 }

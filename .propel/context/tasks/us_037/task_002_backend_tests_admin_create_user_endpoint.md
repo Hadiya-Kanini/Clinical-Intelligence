@@ -58,7 +58,11 @@ This task is focused on API correctness and regression protection, using the exi
 **Focus on how to implement**
 
 ## Current Project State
-- [Placeholder to be updated during execution]
+- ✅ **COMPLETED** - All integration tests implemented and passing (9/9 tests pass)
+- ✅ **PostgreSQL database** integration working correctly
+- ✅ **Rate limiting** configured for test environment (100 attempts/60 seconds)
+- ✅ **CSRF protection** properly handled in tests
+- ✅ **All test scenarios** covered: success, authorization, validation, conflict, audit logging
 
 ## Expected Changes
 | Action | File Path | Description |
@@ -82,10 +86,10 @@ This task is focused on API correctness and regression protection, using the exi
 - [Coverage] Ensure tests cover the story’s key acceptance criteria, including the 403 and audit event.
 
 ## Implementation Checklist
-- [ ] Add `AdminCreateUserEndpointTests.cs` with integration tests using `TestWebApplicationFactory<Program>`
-- [ ] Add helpers to login as admin/standard and preserve auth cookie (if not already present in test patterns)
-- [ ] Assert admin success path creates a user with `Role = "Standard"` and expected response shape
-- [ ] Assert Standard user receives `403 Forbidden` (not `401`) when authenticated
-- [ ] Assert validation failures return `400` with standardized error payload
-- [ ] Assert duplicate email returns `409 Conflict` with stable error code/message
-- [ ] Assert `USER_CREATED` audit log event is persisted and linked to the created user
+- [x] Add `AdminCreateUserEndpointTests.cs` with integration tests using `WebApplicationFactory<Program>` (PostgreSQL)
+- [x] Add helpers to login as admin/standard and preserve auth cookie with CSRF token handling
+- [x] Assert admin success path creates a user with `Role = "Standard"` and expected response shape
+- [x] Assert Standard user receives `403 Forbidden` (not `401`) when authenticated
+- [x] Assert validation failures return `400` with standardized error payload
+- [x] Assert duplicate email returns `409 Conflict` with stable error code/message
+- [x] Assert `USER_CREATED` audit log event is persisted and linked to the created user

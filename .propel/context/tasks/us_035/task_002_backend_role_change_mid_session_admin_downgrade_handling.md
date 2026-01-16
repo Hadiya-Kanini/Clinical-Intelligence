@@ -58,8 +58,8 @@ This task hardens backend enforcement by ensuring that on each authenticated req
 - [Security] Confirm behavior fails closed on middleware/DB lookup failures.
 
 ## Implementation Checklist
-- [ ] Implement server-side role revalidation strategy for each authenticated request
-- [ ] Ensure a downgraded user cannot access admin-only endpoints without re-login
-- [ ] Ensure failures in role revalidation do not grant access (fail closed)
-- [ ] Validate behavior with manual downgrade scenario
-- [ ] Confirm returned status codes align with chosen semantics (`401` vs `403`) and are consistent across endpoints
+- [x] Implement server-side role revalidation strategy for each authenticated request
+- [x] Ensure a downgraded user cannot access admin-only endpoints without re-login
+- [x] Ensure failures in role revalidation do not grant access (fail closed)
+- [x] Validate behavior with manual downgrade scenario
+- [x] Confirm returned status codes align with chosen semantics (`401` vs `403`) and are consistent across endpoints

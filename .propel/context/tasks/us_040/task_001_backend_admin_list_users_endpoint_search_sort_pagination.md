@@ -81,8 +81,8 @@ This task only covers the **list** capability required to render the admin table
 - [Performance] Seed 200+ users and confirm response times remain acceptable and memory usage is bounded due to pagination.
 
 ## Implementation Checklist
-- [ ] Add request/response contracts for admin user listing (query + response DTOs)
-- [ ] Implement `GET /api/v1/admin/users` with admin-only authorization
-- [ ] Add validated search, sort (whitelist), and pagination logic
-- [ ] Ensure standardized 400/403 errors via `ApiErrorResults`
-- [ ] Validate manually with multiple queries and edge cases (empty list, large list)
+- [x] Add request/response contracts for admin user listing (query + response DTOs)
+- [x] Implement `GET /api/v1/admin/users` with admin-only authorization
+- [x] Add validated search, sort (whitelist), and pagination logic
+- [x] Ensure standardized 400/403 errors via `ApiErrorResults`
+- [x] Validate manually with multiple queries and edge cases (empty list, large list)

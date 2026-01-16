@@ -63,7 +63,7 @@ This task ensures the access-control behavior remains stable over time and guard
 - [Automated] Frontend E2E tests pass verifying redirect and nav visibility behavior.
 
 ## Implementation Checklist
-- [ ] Add backend integration tests for 401/403/200 across admin-only endpoints
-- [ ] Add frontend E2E tests for admin route guarding and redirects
-- [ ] Add frontend assertions for admin menu items not being visible to Standard users
-- [ ] Ensure tests are deterministic and do not rely on shared state
+- [x] Add backend integration tests for 401/403/200 across admin-only endpoints
+- [x] Add frontend E2E tests for admin route guarding and redirects
+- [x] Add frontend assertions for admin menu items not being visible to Standard users
+- [x] Ensure tests are deterministic and do not rely on shared state

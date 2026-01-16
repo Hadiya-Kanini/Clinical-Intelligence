@@ -67,8 +67,8 @@ This task focuses on enforcing access control at the API boundary (least privile
 - [Manual/API] Confirm `/health/db` and `/health/db/pool` return `200` when authenticated as Admin.
 
 ## Implementation Checklist
-- [ ] Add `Roles` constants and confirm casing matches DB + JWT claims
-- [ ] Add `AuthorizationPolicies` and register with `AddAuthorization(...)`
-- [ ] Apply `AdminOnly` to admin-only endpoints (start with `/health/db` and `/health/db/pool`)
-- [ ] Validate `401/403/200` behavior across unauthenticated/standard/admin scenarios
-- [ ] Ensure logs do not leak sensitive authorization details
+- [x] Add `Roles` constants and confirm casing matches DB + JWT claims
+- [x] Add `AuthorizationPolicies` and register with `AddAuthorization(...)`
+- [x] Apply `AdminOnly` to admin-only endpoints (start with `/health/db` and `/health/db/pool`)
+- [x] Validate `401/403/200` behavior across unauthenticated/standard/admin scenarios
+- [x] Ensure logs do not leak sensitive authorization details

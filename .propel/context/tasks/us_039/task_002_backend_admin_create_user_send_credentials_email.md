@@ -82,9 +82,9 @@ This task focuses on backend endpoint orchestration and response semantics.
   - logs show warning/error without leaking the temporary password
 
 ## Implementation Checklist
-- [ ] Implement a temporary password generator that satisfies `PasswordPolicy`
-- [ ] Update/create admin create-user contracts under `Server/ClinicalIntelligence.Api/Contracts/Admin/`
-- [ ] Update `POST /api/v1/admin/users` to generate password + persist hash
-- [ ] Invoke `SendNewUserCredentialsEmailAsync(...)` and capture success/failure
-- [ ] Return delivery status to admin (no secrets)
-- [ ] Ensure audit logging excludes plaintext password
+- [x] Implement a temporary password generator that satisfies `PasswordPolicy`
+- [x] Update/create admin create-user contracts under `Server/ClinicalIntelligence.Api/Contracts/Admin/`
+- [x] Update `POST /api/v1/admin/users` to generate password + persist hash
+- [x] Invoke `SendNewUserCredentialsEmailAsync(...)` and capture success/failure
+- [x] Return delivery status to admin (no secrets)
+- [x] Ensure audit logging excludes plaintext password

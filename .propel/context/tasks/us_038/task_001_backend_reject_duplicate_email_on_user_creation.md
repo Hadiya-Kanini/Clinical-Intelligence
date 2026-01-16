@@ -68,9 +68,9 @@ This story is expected to apply to the **admin-only user creation flow** introdu
 - [Concurrency] Send two near-simultaneous create requests for the same email and verify exactly one succeeds.
 
 ## Implementation Checklist
-- [ ] Normalize request email using `EmailValidation.Normalize` before querying/persisting
-- [ ] Add case-insensitive duplicate check (normalized equality)
-- [ ] Decide and implement soft-delete behavior (default: email remains reserved even if soft-deleted)
-- [ ] Map duplicates to stable `409 Conflict` response (`duplicate_email`)
-- [ ] Catch unique constraint `DbUpdateException` and map to the same conflict response
+- [x] Normalize request email using `EmailValidation.Normalize` before querying/persisting
+- [x] Add case-insensitive duplicate check (normalized equality)
+- [x] Decide and implement soft-delete behavior (default: email remains reserved even if soft-deleted)
+- [x] Map duplicates to stable `409 Conflict` response (`duplicate_email`)
+- [x] Catch unique constraint `DbUpdateException` and map to the same conflict response
 - [ ] Validate behavior with manual API calls (including different-case duplicates)

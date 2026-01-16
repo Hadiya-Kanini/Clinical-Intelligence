@@ -60,11 +60,11 @@ Ensure the frontend public surfaces do not expose any account creation entry poi
 - [Regression] Confirm existing navigation between login <-> forgot password <-> reset password still works.
 
 ## Implementation Checklist
-- [ ] Audit `LoginPage` for any registration-related UI and remove it if present
-- [ ] Audit `ForgotPasswordPage` for any registration-related UI and remove it if present
-- [ ] Audit `ResetPasswordPage` for any registration-related UI and remove it if present
-- [ ] Verify `routes.tsx` does not expose any registration route
-- [ ] Manually validate public pages do not display sign-up/register options
+- [x] Audit `LoginPage` for any registration-related UI and remove it if present
+- [x] Audit `ForgotPasswordPage` for any registration-related UI and remove it if present
+- [x] Audit `ResetPasswordPage` for any registration-related UI and remove it if present
+- [x] Verify `routes.tsx` does not expose any registration route
+- [x] Manually validate public pages do not display sign-up/register options
 
 ## Design Reference
 

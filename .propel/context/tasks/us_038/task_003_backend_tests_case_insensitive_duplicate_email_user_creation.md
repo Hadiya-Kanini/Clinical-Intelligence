@@ -64,7 +64,7 @@ Primary target endpoint: `POST /api/v1/admin/users` from `US_037`.
 - [Automated/Postgres] Run the schema tests with a Postgres connection string set and confirm case-insensitive uniqueness is enforced.
 
 ## Implementation Checklist
-- [ ] Extend admin create-user endpoint tests to cover different-case duplicate emails
-- [ ] Assert conflict response does not include any existing user details
-- [ ] Add Postgres-only DB constraint test for case-insensitive uniqueness
-- [ ] Ensure tests are deterministic and do not log secrets
+- [x] Extend admin create-user endpoint tests to cover different-case duplicate emails
+- [x] Assert conflict response does not include any existing user details
+- [x] Add Postgres-only DB constraint test for case-insensitive uniqueness
+- [x] Ensure tests are deterministic and do not log secrets

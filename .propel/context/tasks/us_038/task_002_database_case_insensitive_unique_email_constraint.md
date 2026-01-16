@@ -62,8 +62,8 @@ This task provides defense-in-depth beyond application-level checks and prevents
 - [Migration Safety] Validate migration applies cleanly on a database that already contains users (including the seeded static admin).
 
 ## Implementation Checklist
-- [ ] Decide and document (in code) whether `citext` or a functional unique index will be used
-- [ ] Implement migration to enforce case-insensitive uniqueness for users email
-- [ ] Ensure the unique index name remains stable (`ix_users_email`) if referenced by tests
+- [x] Decide and document (in code) whether `citext` or a functional unique index will be used
+- [x] Implement migration to enforce case-insensitive uniqueness for users email
+- [x] Ensure the unique index name remains stable (`ix_users_email`) if referenced by tests
 - [ ] Apply migration and validate it works with existing seeded data
-- [ ] Add/adjust schema validation tests for case-insensitive duplicates
+- [x] Add/adjust schema validation tests for case-insensitive duplicates

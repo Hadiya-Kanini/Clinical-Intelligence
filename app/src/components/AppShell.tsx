@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import type { RootState } from '../store'
+import { api } from '../lib/apiClient'
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout'
 import Button from './ui/Button'
 import Modal from './ui/Modal'
@@ -72,19 +73,46 @@ export default function AppShell({ children }: AppShellProps): JSX.Element {
     setIsLoggingOut(true)
 
     try {
-      await fetch('/api/v1/auth/logout', { method: 'POST' })
-    } catch {
+      console.log('Attempting logout...')
+      const result = await api.post('/api/v1/auth/logout')
+      console.log('Logout result:', result)
+      
+      // Immediate redirect test
+      console.log('Logout successful - redirecting immediately...')
+      window.location.href = '/login'
+      return
+      
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Even if API call fails, continue with local cleanup
     } finally {
+      console.log('Starting cleanup and navigation...')
       try {
+        console.log('Clearing localStorage...')
         window.localStorage.removeItem('ci_auth')
         window.localStorage.removeItem('ci_token')
         window.localStorage.removeItem('ci_user_role')
-      } catch {
+        console.log('LocalStorage cleared')
+      } catch (error) {
+        console.error('Error clearing localStorage:', error)
       }
 
+      console.log('Setting loading state to false...')
       setIsLoggingOut(false)
+      
+      console.log('Closing logout modal...')
       setConfirmLogoutOpen(false)
-      navigate('/login', { replace: true, state: { logout: 'success' } })
+      
+      console.log('Navigating to login page...')
+      try {
+        navigate('/login', { replace: true, state: { logout: 'success' } })
+        console.log('Navigation called successfully')
+      } catch (error) {
+        console.error('Navigation error:', error)
+        // Fallback: use window.location
+        console.log('Using fallback navigation...')
+        window.location.href = '/login'
+      }
     }
   }
 

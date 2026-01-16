@@ -73,8 +73,8 @@ Tests should use the existing `ClinicalIntelligence.Api.Tests` integration testi
   - regression in email send invocation or response fields causes test failure
 
 ## Implementation Checklist
-- [ ] Implement a fake `IEmailService` for tests (captures send invocations)
-- [ ] Override DI in `TestWebApplicationFactory` to use the fake
-- [ ] Add success test for `credentials_email_sent = true`
-- [ ] Add failure test for `credentials_email_sent = false`
-- [ ] Ensure tests avoid leaking plaintext passwords into logs
+- [x] Implement a fake `IEmailService` for tests (captures send invocations)
+- [x] Override DI in `TestWebApplicationFactory` to use the fake
+- [x] Add success test for `credentials_email_sent = true`
+- [x] Add failure test for `credentials_email_sent = false`
+- [x] Ensure tests avoid leaking plaintext passwords into logs

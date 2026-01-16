@@ -96,4 +96,57 @@ public static class PasswordPolicy
                 $"{contextMessage} must be at least {MinLength} characters with mixed case, number, and special character");
         }
     }
+
+    private const string LowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+    private const string UppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private const string DigitChars = "0123456789";
+    private const string SpecialChars = "!@#$%^&*()-_=+[]{}|;:,.<>?";
+
+    /// <summary>
+    /// Generates a cryptographically secure random password that satisfies all policy requirements.
+    /// </summary>
+    /// <param name="length">Desired password length (minimum 12, default 16).</param>
+    /// <returns>A random password meeting all complexity requirements.</returns>
+    public static string GenerateSecurePassword(int length = 16)
+    {
+        if (length < 12)
+            length = 12;
+
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var password = new char[length];
+        var allChars = LowercaseChars + UppercaseChars + DigitChars + SpecialChars;
+
+        password[0] = GetRandomChar(rng, LowercaseChars);
+        password[1] = GetRandomChar(rng, UppercaseChars);
+        password[2] = GetRandomChar(rng, DigitChars);
+        password[3] = GetRandomChar(rng, SpecialChars);
+
+        for (var i = 4; i < length; i++)
+        {
+            password[i] = GetRandomChar(rng, allChars);
+        }
+
+        Shuffle(rng, password);
+
+        return new string(password);
+    }
+
+    private static char GetRandomChar(System.Security.Cryptography.RandomNumberGenerator rng, string chars)
+    {
+        var bytes = new byte[4];
+        rng.GetBytes(bytes);
+        var index = (int)(BitConverter.ToUInt32(bytes, 0) % (uint)chars.Length);
+        return chars[index];
+    }
+
+    private static void Shuffle(System.Security.Cryptography.RandomNumberGenerator rng, char[] array)
+    {
+        var bytes = new byte[4];
+        for (var i = array.Length - 1; i > 0; i--)
+        {
+            rng.GetBytes(bytes);
+            var j = (int)(BitConverter.ToUInt32(bytes, 0) % (uint)(i + 1));
+            (array[i], array[j]) = (array[j], array[i]);
+        }
+    }
 }

@@ -58,7 +58,7 @@ Harden the backend API surface to ensure there is no public self-service registr
 - [Security] Confirm there is no endpoint that allows unauthenticated user creation.
 
 ## Implementation Checklist
-- [ ] Add `NoPublicRegistrationEndpointTests` covering common registration endpoint paths and asserting `404`
-- [ ] If an admin user creation endpoint exists, add negative tests for unauthenticated and Standard user access (`401/403`)
-- [ ] Ensure tests are stable and do not rely on side effects (no user creation in negative-path tests)
-- [ ] Confirm no changes introduce a public registration route or handler
+- [x] Add `NoPublicRegistrationEndpointTests` covering common registration endpoint paths and asserting `404`
+- [x] If an admin user creation endpoint exists, add negative tests for unauthenticated and Standard user access (`401/403`)
+- [x] Ensure tests are stable and do not rely on side effects (no user creation in negative-path tests)
+- [x] Confirm no changes introduce a public registration route or handler

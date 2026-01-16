@@ -1,14 +1,19 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import { loginAsync } from '../store/slices/authSlice'
 import { isValidEmailRfc5322 } from '../lib/validation/email'
+import type { AppDispatch, RootState } from '../store'
 
 export default function LoginPage(): JSX.Element {
+  const dispatch = useDispatch<AppDispatch>()
+  const { isAuthenticated, isLoading: authLoading } = useSelector((state: RootState) => state.auth)
+  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({
     email: '',
     password: '',
@@ -17,6 +22,7 @@ export default function LoginPage(): JSX.Element {
   const [logoutSuccessMessage, setLogoutSuccessMessage] = useState('')
   const [sessionInvalidatedMessage, setSessionInvalidatedMessage] = useState('')
   const [accountLockedMessage, setAccountLockedMessage] = useState('')
+  const [accountDeactivatedMessage, setAccountDeactivatedMessage] = useState('')
   const [rateLimitMessage, setRateLimitMessage] = useState('')
   const [lockoutUnlockTime, setLockoutUnlockTime] = useState<Date | null>(null)
   const [lockoutCountdown, setLockoutCountdown] = useState('')
@@ -29,12 +35,12 @@ export default function LoginPage(): JSX.Element {
   const lockoutTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('ci_auth') === '1'
+    // Redirect to dashboard if already authenticated via Redux state
     if (isAuthenticated) {
       const from = location.state?.from?.pathname || '/dashboard'
       navigate(from, { replace: true })
     }
-  }, [navigate, location])
+  }, [isAuthenticated, navigate, location])
 
   // Check for logout redirect state (success or expired)
   useEffect(() => {
@@ -162,6 +168,9 @@ export default function LoginPage(): JSX.Element {
       setAccountLockedMessage('')
       setLockoutUnlockTime(null)
     }
+    if (accountDeactivatedMessage) {
+      setAccountDeactivatedMessage('')
+    }
     if (rateLimitMessage) {
       setRateLimitMessage('')
     }
@@ -197,102 +206,26 @@ export default function LoginPage(): JSX.Element {
       return
     }
 
-    setIsLoading(true)
     setError('')
-
+    setAccountDeactivatedMessage('')
+    
     try {
-      const response = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        
-        // Handle HTTP 429 rate limiting with Retry-After header (UXR-010)
-        if (response.status === 429) {
-          const retryAfterHeader = response.headers.get('Retry-After')
-          let retryMessage = 'Too many login attempts.'
-          
-          if (retryAfterHeader) {
-            // Parse Retry-After header (seconds or HTTP date format)
-            const retrySeconds = parseInt(retryAfterHeader, 10)
-            
-            if (!isNaN(retrySeconds)) {
-              // Seconds format (e.g., "60")
-              if (retrySeconds < 60) {
-                retryMessage = `Too many login attempts. Try again in ${retrySeconds} seconds.`
-              } else if (retrySeconds < 3600) {
-                const minutes = Math.ceil(retrySeconds / 60)
-                retryMessage = `Too many login attempts. Try again in ${minutes} minute${minutes > 1 ? 's' : ''}.`
-              } else {
-                const retryTime = new Date(Date.now() + retrySeconds * 1000)
-                retryMessage = `Too many login attempts. Try again at ${retryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
-              }
-            } else {
-              // HTTP date format (e.g., "Wed, 21 Oct 2015 07:28:00 GMT")
-              const retryDate = new Date(retryAfterHeader)
-              if (!isNaN(retryDate.getTime())) {
-                retryMessage = `Too many login attempts. Try again at ${retryDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
-              }
-            }
-          }
-          
-          setRateLimitMessage(retryMessage)
-          setError('')
-          return
-        }
-        
-        // Handle account_locked error with unlock timeframe and countdown (UXR-009)
-        if (errorData.error?.code === 'account_locked' && errorData.error?.details) {
-          const details = errorData.error.details as string[]
-          let unlockDate: Date | null = null
-          
-          // Parse unlock_at from details
-          const unlockAtDetail = details.find((d: string) => d.startsWith('unlock_at:'))
-          if (unlockAtDetail) {
-            const unlockAtStr = unlockAtDetail.replace('unlock_at:', '')
-            unlockDate = new Date(unlockAtStr)
-          } else {
-            // Fallback to remaining_seconds if unlock_at not present
-            const remainingDetail = details.find((d: string) => d.startsWith('remaining_seconds:'))
-            if (remainingDetail) {
-              const remainingSeconds = parseInt(remainingDetail.replace('remaining_seconds:', ''), 10)
-              unlockDate = new Date(Date.now() + remainingSeconds * 1000)
-            }
-          }
-          
-          if (unlockDate && !isNaN(unlockDate.getTime())) {
-            setLockoutUnlockTime(unlockDate)
-            setAccountLockedMessage('Your account is temporarily locked due to too many failed login attempts.')
-          } else {
-            setAccountLockedMessage('Your account is temporarily locked. Please try again later.')
-          }
-          setError('')
-          return
-        }
-        
-        throw new Error(errorData.error?.message || 'Login failed')
-      }
-
-      const data = await response.json()
+      await dispatch(loginAsync({ email, password })).unwrap()
       
-      // Store authentication state
-      localStorage.setItem('ci_auth', '1')
-      localStorage.setItem('ci_token', data.token)
-      localStorage.setItem('ci_user_role', data.user?.role || 'standard')
-      
-      // Redirect to intended page
+      // Login successful - Redux state will be updated automatically
+      // The useEffect hook will handle navigation
       const from = location.state?.from?.pathname || '/dashboard'
       navigate(from, { replace: true })
       
     } catch (err: any) {
-      setError(err.message || 'Login failed')
-    } finally {
-      setIsLoading(false)
+      // Handle structured error from authSlice
+      if (err && typeof err === 'object' && err.code === 'account_inactive') {
+        setAccountDeactivatedMessage(err.message || 'Your account has been deactivated. Please contact an administrator.')
+      } else if (err && typeof err === 'object' && err.message) {
+        setError(err.message)
+      } else {
+        setError(err || 'Login failed')
+      }
     }
   }
 
@@ -436,15 +369,27 @@ export default function LoginPage(): JSX.Element {
             </div>
           )}
 
+          {accountDeactivatedMessage && (
+            <div className="error-message account-deactivated visible" role="alert" aria-live="assertive">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/>
+              </svg>
+              <div className="error-content">
+                <span>{accountDeactivatedMessage}</span>
+                <span className="support-link">If you need assistance, please <a href="mailto:support@hospital.com">contact support</a>.</span>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="error-message visible" role="alert">
               {error}
             </div>
           )}
 
-          <button type="submit" className="button-primary" disabled={isLoading}>
+          <button type="submit" className="button-primary" disabled={authLoading}>
             <span className="spinner" aria-hidden="true"></span>
-            <span>{isLoading ? 'Signing in...' : 'Sign In'}</span>
+            <span>{authLoading ? 'Signing in...' : 'Sign In'}</span>
           </button>
 
           <div className="forgot-password">

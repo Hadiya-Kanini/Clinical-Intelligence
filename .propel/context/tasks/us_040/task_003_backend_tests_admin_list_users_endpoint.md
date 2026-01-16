@@ -64,7 +64,7 @@ Add backend integration tests validating the admin users listing endpoint behavi
 - [Security] Explicitly verify 401 vs 403 behavior is correct.
 
 ## Implementation Checklist
-- [ ] Add `AdminUsersListEndpointTests` with skip logic when DB is unavailable
-- [ ] Seed deterministic users covering search/sort permutations
-- [ ] Assert response schema (`items`, `page`, `pageSize`, `total`) and ordering
-- [ ] Verify 401/403 enforcement
+- [x] Add `AdminUsersListEndpointTests` with skip logic when DB is unavailable
+- [x] Seed deterministic users covering search/sort permutations
+- [x] Assert response schema (`items`, `page`, `pageSize`, `total`) and ordering
+- [x] Verify 401/403 enforcement

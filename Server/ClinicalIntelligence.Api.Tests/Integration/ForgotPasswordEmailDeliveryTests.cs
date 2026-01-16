@@ -548,4 +548,13 @@ public class MockEmailService : IEmailService
         }
         return Task.FromResult(true);
     }
+
+    public Task<bool> SendNewUserCredentialsEmailAsync(string to, string userName, string temporaryPassword)
+    {
+        if (ShouldThrow)
+        {
+            throw new InvalidOperationException("Mock email service configured to throw");
+        }
+        return Task.FromResult(true);
+    }
 }

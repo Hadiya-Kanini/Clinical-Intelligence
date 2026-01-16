@@ -465,9 +465,49 @@ a:visited {
   transition: width var(--motion-normal);
 }
 
+.ui-progress__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ui-progress__percentage {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-button);
+  color: var(--color-text);
+  min-width: 40px;
+}
+
 .ui-progress__label {
   font-size: var(--font-size-body-small);
   line-height: var(--line-height-body-small);
+  color: var(--color-text-muted);
+  flex: 1;
+  text-align: right;
+}
+
+.ui-progress--success .ui-progress__fill {
+  background: var(--color-success-main);
+}
+
+.ui-progress--success .ui-progress__percentage {
+  color: var(--color-success-dark);
+}
+
+.ui-progress--error .ui-progress__fill {
+  background: var(--color-error-main);
+}
+
+.ui-progress--error .ui-progress__percentage {
+  color: var(--color-error-dark);
+}
+
+.ui-progress--cancelled .ui-progress__fill {
+  background: var(--color-neutral-400);
+}
+
+.ui-progress--cancelled .ui-progress__percentage {
   color: var(--color-text-muted);
 }
 
@@ -572,4 +612,40 @@ a:visited {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-3);
+}
+
+.ui-validation-error {
+  background: var(--color-error-light);
+  border-left: 4px solid var(--color-error-main);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+}
+
+.ui-validation-error__content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.ui-validation-error__icon {
+  color: var(--color-error-main);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ui-validation-error__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ui-validation-error__message {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-button);
+  color: var(--color-error-dark);
+}
+
+.ui-validation-error__guidance {
+  font-size: var(--font-size-body-small);
+  color: var(--color-neutral-600);
 }

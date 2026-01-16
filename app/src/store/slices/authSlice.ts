@@ -17,7 +17,7 @@ interface AuthState {
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // Start with loading true to prevent premature navigation
   error: null,
 }
 
@@ -28,7 +28,12 @@ export const loginAsync = createAsyncThunk(
     const result = await api.post<{ user: User }>('/api/v1/auth/login', credentials)
     
     if (!result.success) {
-      return rejectWithValue(result.error.message || 'Login failed')
+      // Return structured error for specific handling (e.g., account_inactive)
+      return rejectWithValue({
+        code: result.error.code,
+        message: result.error.message || 'Login failed',
+        status: result.status
+      })
     }
     
     // Clear any legacy localStorage keys
@@ -121,12 +126,18 @@ const authSlice = createSlice({
         state.user = null
       })
       // Check auth
+      .addCase(checkAuthAsync.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
       .addCase(checkAuthAsync.fulfilled, (state, action) => {
+        state.isLoading = false
         state.isAuthenticated = true
         state.user = action.payload
         state.error = null
       })
       .addCase(checkAuthAsync.rejected, (state) => {
+        state.isLoading = false
         state.isAuthenticated = false
         state.user = null
       })

@@ -437,6 +437,9 @@ internal class NoOpEmailService : IEmailService
 
     public Task<bool> SendAccountLockedEmailAsync(string to, string userName, DateTime lockedUntil)
         => Task.FromResult(true);
+
+    public Task<bool> SendNewUserCredentialsEmailAsync(string to, string userName, string temporaryPassword)
+        => Task.FromResult(true);
 }
 
 /// <summary>

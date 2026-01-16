@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ClinicalIntelligence.Api.Data;
 using ClinicalIntelligence.Api.Domain.Models;
+using ClinicalIntelligence.Api.Services;
+using ClinicalIntelligence.Api.Tests.Fakes;
 
 namespace ClinicalIntelligence.Api.Tests;
 
@@ -42,7 +44,11 @@ public sealed class TestWebApplicationFactory<TProgram> : WebApplicationFactory<
                 ["Jwt:Issuer"] = "TestIssuer",
                 ["Jwt:Audience"] = "TestAudience",
                 ["Jwt:ExpirationMinutes"] = "60",
-                ["Bcrypt:WorkFactor"] = "4"
+                ["Bcrypt:WorkFactor"] = "4",
+                ["RateLimiting:LoginPermitLimit"] = "100",
+                ["RateLimiting:LoginWindowSeconds"] = "60",
+                ["RateLimiting:ForgotPasswordPermitLimit"] = "1000",
+                ["RateLimiting:ForgotPasswordWindowSeconds"] = "1"
             });
         });
 
@@ -61,6 +67,16 @@ public sealed class TestWebApplicationFactory<TProgram> : WebApplicationFactory<
             {
                 options.UseSqlite($"Data Source={_testDatabasePath}");
             });
+
+            // Remove existing IEmailService and register fake for tests
+            var emailServiceDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(IEmailService));
+            if (emailServiceDescriptor != null)
+            {
+                services.Remove(emailServiceDescriptor);
+            }
+            services.AddSingleton<FakeEmailService>();
+            services.AddSingleton<IEmailService>(sp => sp.GetRequiredService<FakeEmailService>());
 
             // Create the service provider
             var sp = services.BuildServiceProvider();

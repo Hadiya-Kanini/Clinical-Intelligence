@@ -916,4 +916,151 @@ public class BaselineSchemaMigrationValidationTests : IDisposable
     }
 
     #endregion
+
+    #region US_038 Case-Insensitive Email Uniqueness Tests
+
+    [Fact]
+    public async Task UserEmail_ShouldBeCaseInsensitiveUnique_WhenDifferentCaseInserted()
+    {
+        Skip.If(!_isPostgresAvailable, "PostgreSQL not available");
+
+        var uniqueId = Guid.NewGuid().ToString("N");
+        var lowercaseEmail = $"case-test-{uniqueId}@example.com";
+        var uppercaseEmail = $"CASE-TEST-{uniqueId}@EXAMPLE.COM";
+
+        var user1 = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = lowercaseEmail,
+            PasswordHash = "hash1",
+            Name = "Case Test User 1",
+            Role = "Standard",
+            Status = "Active"
+        };
+
+        var user2 = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = uppercaseEmail,
+            PasswordHash = "hash2",
+            Name = "Case Test User 2",
+            Role = "Standard",
+            Status = "Active"
+        };
+
+        _context!.Users.Add(user1);
+        await _context.SaveChangesAsync();
+
+        try
+        {
+            _context.Users.Add(user2);
+
+            var exception = await Assert.ThrowsAsync<DbUpdateException>(
+                async () => await _context.SaveChangesAsync());
+
+            Assert.Contains("ix_users_email", exception.InnerException?.Message ?? exception.Message,
+                StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            _context.ChangeTracker.Clear();
+            var userToRemove = await _context.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == user1.Id);
+            if (userToRemove != null)
+            {
+                _context.Users.Remove(userToRemove);
+                await _context.SaveChangesAsync();
+            }
+        }
+    }
+
+    [Fact]
+    public async Task UserEmail_ShouldBeCaseInsensitiveUnique_WhenMixedCaseInserted()
+    {
+        Skip.If(!_isPostgresAvailable, "PostgreSQL not available");
+
+        var uniqueId = Guid.NewGuid().ToString("N");
+        var email1 = $"mixed-case-{uniqueId}@example.com";
+        var email2 = $"Mixed-Case-{uniqueId}@Example.COM";
+
+        var user1 = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email1,
+            PasswordHash = "hash1",
+            Name = "Mixed Case User 1",
+            Role = "Standard",
+            Status = "Active"
+        };
+
+        var user2 = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email2,
+            PasswordHash = "hash2",
+            Name = "Mixed Case User 2",
+            Role = "Standard",
+            Status = "Active"
+        };
+
+        _context!.Users.Add(user1);
+        await _context.SaveChangesAsync();
+
+        try
+        {
+            _context.Users.Add(user2);
+
+            var exception = await Assert.ThrowsAsync<DbUpdateException>(
+                async () => await _context.SaveChangesAsync());
+
+            var errorMessage = exception.InnerException?.Message ?? exception.Message;
+            Assert.True(
+                errorMessage.Contains("ix_users_email", StringComparison.OrdinalIgnoreCase) ||
+                errorMessage.Contains("unique", StringComparison.OrdinalIgnoreCase),
+                $"Error should indicate unique constraint violation. Actual: {errorMessage}");
+        }
+        finally
+        {
+            _context.ChangeTracker.Clear();
+            var userToRemove = await _context.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == user1.Id);
+            if (userToRemove != null)
+            {
+                _context.Users.Remove(userToRemove);
+                await _context.SaveChangesAsync();
+            }
+        }
+    }
+
+    [Fact]
+    public void US038_CitextExtension_ShouldBeEnabled()
+    {
+        Skip.If(!_isPostgresAvailable, "PostgreSQL not available");
+
+        var hasCitext = _context!.Database
+            .SqlQueryRaw<int>(@"SELECT 1 FROM pg_extension WHERE extname = 'citext'")
+            .Any();
+
+        Assert.True(hasCitext, "citext extension should be enabled for case-insensitive email uniqueness (US_038)");
+    }
+
+    [Fact]
+    public void US038_UserEmailColumn_ShouldUseCitextType()
+    {
+        Skip.If(!_isPostgresAvailable, "PostgreSQL not available");
+
+        var isCitext = _context!.Database
+            .SqlQueryRaw<int>(
+                @"SELECT 1 FROM information_schema.columns 
+                  WHERE table_name = 'users' 
+                  AND column_name = 'Email' 
+                  AND udt_name = 'citext'")
+            .Any();
+
+        Assert.True(isCitext, "users.Email column should use citext type for case-insensitive uniqueness (US_038)");
+    }
+
+    #endregion
 }

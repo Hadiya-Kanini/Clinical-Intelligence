@@ -1,22 +1,20 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import Alert from '../components/ui/Alert'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import Table from '../components/ui/Table'
-
-type DocStatus = 'Pending' | 'Processing' | 'Completed' | 'Failed'
+import { listDocuments, type DocumentListItem } from '../lib/documentApi'
 
 type DocumentRow = {
   id: string
   name: string
   uploadedAt: string
-  status: DocStatus
+  status: 'Pending' | 'Processing' | 'Completed' | 'Failed'
   patientId: string
 }
 
-function statusVariant(status: DocStatus): 'info' | 'warning' | 'success' | 'error' {
+function statusVariant(status: DocumentListItem['status']): 'info' | 'warning' | 'success' | 'error' {
   if (status === 'Completed') return 'success'
   if (status === 'Failed') return 'error'
   if (status === 'Processing') return 'warning'
@@ -26,40 +24,53 @@ function statusVariant(status: DocStatus): 'info' | 'warning' | 'success' | 'err
 export default function DocumentListPage(): JSX.Element {
   const [filter, setFilter] = useState<string>('')
   const [error, setError] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [documents, setDocuments] = useState<DocumentListItem[]>([])
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const pageSize = 20
 
-  const rows: DocumentRow[] = [
-    {
-      id: 'DOC-1001',
-      name: 'Discharge Summary.pdf',
-      uploadedAt: '2026-01-13 10:41',
-      status: 'Completed',
-      patientId: 'demo',
-    },
-    {
-      id: 'DOC-1002',
-      name: 'Lab Results.docx',
-      uploadedAt: '2026-01-13 10:45',
-      status: 'Processing',
-      patientId: 'demo',
-    },
-    {
-      id: 'DOC-1003',
-      name: 'Radiology Report.pdf',
-      uploadedAt: '2026-01-13 10:52',
-      status: 'Failed',
-      patientId: 'demo',
-    },
-  ]
+  useEffect(() => {
+    async function fetchDocuments() {
+      try {
+        setLoading(true)
+        setError('')
+        
+        const result = await listDocuments(page, pageSize, filter)
+        
+        if (result.success) {
+          setDocuments(result.data.items)
+          setTotal(result.data.total)
+        } else {
+          setError(result.error.message || 'Failed to load documents')
+        }
+      } catch (err) {
+        setError('Network error. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDocuments()
+  }, [page, filter])
+
+  const rows = documents.map((doc): DocumentRow => ({
+    id: doc.id,
+    name: doc.fileName,
+    uploadedAt: new Date(doc.uploadedAt).toLocaleString(),
+    status: doc.status,
+    patientId: doc.patientId,
+  }))
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase()
     if (!q) return rows
     return rows.filter((r) => r.name.toLowerCase().includes(q) || r.id.toLowerCase().includes(q))
-  }, [filter])
+  }, [filter, rows])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-      {error ? <Alert>{error}</Alert> : null}
+      {error ? <Alert variant="error">{error}</Alert> : null}
 
       <Card
         title="Document list"
@@ -78,7 +89,9 @@ export default function DocumentListPage(): JSX.Element {
           </div>
         }
       >
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 'var(--space-6)' }}>Loading documents...</div>
+        ) : filtered.length === 0 ? (
           <Alert variant="info">No documents found. Upload your first document to get started.</Alert>
         ) : (
           <Table>
@@ -103,22 +116,12 @@ export default function DocumentListPage(): JSX.Element {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                      {row.status === 'Completed' ? (
-                        <Link className="ui-link" to={`/patients/${row.patientId}`}>
-                          View Patient 360
-                        </Link>
-                      ) : null}
-                      {row.status === 'Failed' ? (
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            setError('Retry is not wired yet. This is the wireframe UI.')
-                            setTimeout(() => setError(''), 2000)
-                          }}
-                        >
-                          Retry
-                        </Button>
-                      ) : null}
+                      <Button variant="secondary">
+                        View
+                      </Button>
+                      <Button variant="secondary">
+                        Download
+                      </Button>
                     </div>
                   </td>
                 </tr>

@@ -60,7 +60,12 @@ type RequireAuthProps = {
  * Uses Redux auth state (server-derived) as the source of truth.
  */
 export function RequireAuth({ children }: RequireAuthProps): ReactElement {
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
+  const { isAuthenticated, user, isLoading } = useSelector((state: RootState) => state.auth)
+
+  // Don't redirect while checking authentication
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />
@@ -78,7 +83,12 @@ type RequireAdminProps = {
  * Uses Redux auth state (server-derived) as the source of truth.
  */
 export function RequireAdmin({ children }: RequireAdminProps): ReactElement {
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
+  const { isAuthenticated, user, isLoading } = useSelector((state: RootState) => state.auth)
+
+  // Don't redirect while checking authentication
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />
