@@ -66,10 +66,10 @@ Implement a durable, queryable dead-letter persistence layer in the Backend API 
 - Validate `DeadLetterJob` can store and retrieve `OriginalMessage`, `ErrorDetails`, and `RetryHistory` as JSON without loss.
 
 ## Implementation Checklist
-- [ ] Create `DeadLetterJob` domain model with fields required for inspection (original message, error details, retry history)
-- [ ] Add `DbSet<DeadLetterJob>` and EF mapping for `dead_letter_jobs` (including indexes)
-- [ ] Add EF migration for DLQ persistence
-- [ ] Implement `IDeadLetterQueueWriter` abstraction
-- [ ] Implement `DbDeadLetterQueueWriter` with transactional write + `ProcessingJob` status update
-- [ ] Document the explicit call site contract for US_054 (invoke writer on retry exhaustion)
-- [ ] Verify no PHI is logged by default when persisting/serializing DLQ payloads
+- [x] Create `DeadLetterJob` domain model with fields required for inspection (original message, error details, retry history)
+- [x] Add `DbSet<DeadLetterJob>` and EF mapping for `dead_letter_jobs` (including indexes)
+- [x] Add EF migration for DLQ persistence
+- [x] Implement `IDeadLetterQueueWriter` abstraction
+- [x] Implement `DbDeadLetterQueueWriter` with transactional write + `ProcessingJob` status update
+- [x] Document the explicit call site contract for US_054 (invoke writer on retry exhaustion)
+- [x] Verify no PHI is logged by default when persisting/serializing DLQ payloads

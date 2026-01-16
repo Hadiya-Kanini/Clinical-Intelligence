@@ -76,7 +76,6 @@ public sealed class ExtractedEntity
     public ErdPatient Patient { get; set; } = null!;
     public Document Document { get; set; } = null!;
     public User? VerifiedByUser { get; set; }
-    // TEMPORARY: Commented out for vector DB installation
-    // public ICollection<EntityCitation> EntityCitations { get; set; } = new List<EntityCitation>();
+    public ICollection<EntityCitation> EntityCitations { get; set; } = new List<EntityCitation>();
     public ICollection<CodeSuggestion> CodeSuggestions { get; set; } = new List<CodeSuggestion>();
 }

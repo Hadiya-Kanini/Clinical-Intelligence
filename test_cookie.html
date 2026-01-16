@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cookie Test</title>
+</head>
+<body>
+    <h1>Cookie Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testDashboard()">Test Dashboard</button>
+    <button onclick="showCookies()">Show Cookies</button>
+    <div id="result"></div>
+
+    <script>
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'admin@clinicalintelligence.com',
+                        password: 'Admin@123456'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h3>Login Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <p>Status: ${response.status}</p>
+                `;
+                
+                // Show cookies after login
+                setTimeout(showCookies, 100);
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testDashboard() {
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/dashboard/stats', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h3>Dashboard Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <p>Status: ${response.status}</p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        function showCookies() {
+            const cookies = document.cookie;
+            const cookieArray = cookies.split(';').map(c => c.trim());
+            
+            let html = '<h3>Cookies:</h3><ul>';
+            cookieArray.forEach(cookie => {
+                html += `<li>${cookie}</li>`;
+            });
+            html += '</ul>';
+            
+            document.getElementById('result').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

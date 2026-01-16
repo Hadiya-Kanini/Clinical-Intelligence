@@ -62,11 +62,11 @@ Expose operator-facing Backend API endpoints to inspect dead-lettered jobs store
 - Verify `GET /api/v1/admin/dlq/{id}` returns complete details (original message, error details, retry history) or 404 for unknown IDs.
 
 ## Implementation Checklist
-- [ ] Create DLQ response contracts for list + item views
-- [ ] Implement `IDeadLetterQueueReader`
-- [ ] Implement `DbDeadLetterQueueReader` with pagination + filtering
-- [ ] Register reader in DI container
-- [ ] Add `GET /api/v1/admin/dlq` endpoint with pagination + filters
-- [ ] Add `GET /api/v1/admin/dlq/{id}` endpoint
-- [ ] Require `AuthorizationPolicies.AdminOnly` for both endpoints
-- [ ] Add guardrails for large DLQ (enforce max `pageSize` and return paging metadata)
+- [x] Create DLQ response contracts for list + item views
+- [x] Implement `IDeadLetterQueueReader`
+- [x] Implement `DbDeadLetterQueueReader` with pagination + filtering
+- [x] Register reader in DI container
+- [x] Add `GET /api/v1/admin/dlq` endpoint with pagination + filters
+- [x] Add `GET /api/v1/admin/dlq/{id}` endpoint
+- [x] Require `AuthorizationPolicies.AdminOnly` for both endpoints
+- [x] Add guardrails for large DLQ (enforce max `pageSize` and return paging metadata)

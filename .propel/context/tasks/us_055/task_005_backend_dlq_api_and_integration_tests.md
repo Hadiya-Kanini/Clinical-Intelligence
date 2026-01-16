@@ -60,11 +60,11 @@ Add automated tests to validate DLQ persistence, inspection endpoints, replay/di
 - Ensure authorization behavior matches Admin-only policy requirements.
 
 ## Implementation Checklist
-- [ ] Update `TestWebApplicationFactory` to seed admin + provide authenticated requests
-- [ ] Add DLQ list endpoint tests (pagination, ordering, max page size)
-- [ ] Add DLQ item endpoint tests (200/404)
-- [ ] Add replay endpoint tests (admin-only + idempotency)
-- [ ] Add discard endpoint tests (admin-only + idempotency)
-- [ ] Add DLQ metrics/health endpoint tests
-- [ ] Add non-admin authorization negative tests
-- [ ] Ensure all test payloads are synthetic and non-PHI
+- [x] Update `TestWebApplicationFactory` to seed admin + provide authenticated requests
+- [x] Add DLQ list endpoint tests (pagination, ordering, max page size)
+- [x] Add DLQ item endpoint tests (200/404)
+- [x] Add replay endpoint tests (admin-only + idempotency)
+- [x] Add discard endpoint tests (admin-only + idempotency)
+- [x] Add DLQ metrics/health endpoint tests
+- [x] Add non-admin authorization negative tests
+- [x] Ensure all test payloads are synthetic and non-PHI

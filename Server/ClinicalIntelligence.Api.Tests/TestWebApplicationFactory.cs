@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -54,7 +55,7 @@ public sealed class TestWebApplicationFactory<TProgram> : WebApplicationFactory<
 
         builder.ConfigureServices(services =>
         {
-            // Remove the existing DbContext
+            // Remove the existing DbContext registration
             var descriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
             if (descriptor != null)
@@ -62,11 +63,22 @@ public sealed class TestWebApplicationFactory<TProgram> : WebApplicationFactory<
                 services.Remove(descriptor);
             }
 
-            // Add test database
+            // Remove any existing health checks that depend on PostgreSQL features
+            var healthCheckDescriptors = services.Where(
+                d => d.ServiceType.FullName?.Contains("HealthCheck") == true).ToList();
+            foreach (var hcDescriptor in healthCheckDescriptors)
+            {
+                services.Remove(hcDescriptor);
+            }
+
+            // Add test database with SQLite (no vector extension)
             services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseSqlite($"Data Source={_testDatabasePath}");
             });
+
+            // Re-register health checks with basic implementation for tests
+            services.AddHealthChecks();
 
             // Remove existing IEmailService and register fake for tests
             var emailServiceDescriptor = services.SingleOrDefault(

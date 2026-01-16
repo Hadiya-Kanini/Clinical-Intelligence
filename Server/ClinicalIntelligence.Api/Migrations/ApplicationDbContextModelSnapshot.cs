@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Pgvector;
 
 #nullable disable
 
@@ -20,6 +21,7 @@ namespace ClinicalIntelligence.Api.Migrations
                 .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.AuditLogEvent", b =>
@@ -272,6 +274,98 @@ namespace ClinicalIntelligence.Api.Migrations
                     b.ToTable("conflict_resolutions", (string)null);
                 });
 
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.DeadLetterJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeadLetterReason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("DeadLetteredAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ErrorDetails")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastActionAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastActionByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LastReplayError")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MessageSchemaVersion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("OriginalMessage")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("ProcessingJobId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ReplayAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ReplayedJobId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RetryHistory")
+                        .HasColumnType("jsonb");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeadLetteredAt")
+                        .IsDescending()
+                        .HasDatabaseName("ix_dead_letter_jobs_dead_lettered_at");
+
+                    b.HasIndex("DocumentId")
+                        .HasDatabaseName("ix_dead_letter_jobs_document_id");
+
+                    b.HasIndex("LastActionByUserId");
+
+                    b.HasIndex("ProcessingJobId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_dead_letter_jobs_processing_job_id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_dead_letter_jobs_status");
+
+                    b.HasIndex("Status", "DeadLetteredAt")
+                        .HasDatabaseName("ix_dead_letter_jobs_status_dead_lettered_at");
+
+                    b.ToTable("dead_letter_jobs", (string)null);
+                });
+
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.Document", b =>
                 {
                     b.Property<Guid>("Id")
@@ -372,6 +466,51 @@ namespace ClinicalIntelligence.Api.Migrations
                         .HasDatabaseName("ix_document_batches_uploaded_by_user_id");
 
                     b.ToTable("document_batches", (string)null);
+                });
+
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.DocumentChunk", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChunkHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Coordinates")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Vector>("Embedding")
+                        .HasColumnType("vector(768)");
+
+                    b.Property<int?>("Page")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Section")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TextContent")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("TokenCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChunkHash")
+                        .HasDatabaseName("ix_document_chunks_chunk_hash");
+
+                    b.HasIndex("DocumentId")
+                        .HasDatabaseName("ix_document_chunks_document_id");
+
+                    b.ToTable("document_chunks", (string)null);
                 });
 
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.DocumentReference", b =>
@@ -517,6 +656,43 @@ namespace ClinicalIntelligence.Api.Migrations
                         .HasDatabaseName("ix_encounters_start_date");
 
                     b.ToTable("encounters", (string)null);
+                });
+
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.EntityCitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CitedText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Coordinates")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("DocumentChunkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ExtractedEntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Page")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Section")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentChunkId")
+                        .HasDatabaseName("ix_entity_citations_document_chunk_id");
+
+                    b.HasIndex("ExtractedEntityId")
+                        .HasDatabaseName("ix_entity_citations_extracted_entity_id");
+
+                    b.ToTable("entity_citations", (string)null);
                 });
 
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.ErdConflict", b =>
@@ -1139,6 +1315,10 @@ namespace ClinicalIntelligence.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<string>("CsrfTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1151,10 +1331,6 @@ namespace ClinicalIntelligence.Api.Migrations
 
                     b.Property<DateTime?>("LastActivityAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CsrfTokenHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("UserAgent")
                         .HasMaxLength(500)
@@ -1251,6 +1427,54 @@ namespace ClinicalIntelligence.Api.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.VectorQueryLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("QueryHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("QueryText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ResponseTimeMs")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ResultCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("ix_vector_query_logs_patient_id");
+
+                    b.HasIndex("QueryHash")
+                        .HasDatabaseName("ix_vector_query_logs_query_hash");
+
+                    b.HasIndex("Timestamp")
+                        .HasDatabaseName("ix_vector_query_logs_timestamp");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_vector_query_logs_user_id");
+
+                    b.ToTable("vector_query_logs", (string)null);
+                });
+
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.AuditLogEvent", b =>
                 {
                     b.HasOne("ClinicalIntelligence.Api.Domain.Models.Session", "Session")
@@ -1339,6 +1563,32 @@ namespace ClinicalIntelligence.Api.Migrations
                     b.Navigation("ResolvedByUser");
                 });
 
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.DeadLetterJob", b =>
+                {
+                    b.HasOne("ClinicalIntelligence.Api.Domain.Models.Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ClinicalIntelligence.Api.Domain.Models.User", "LastActionByUser")
+                        .WithMany()
+                        .HasForeignKey("LastActionByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ClinicalIntelligence.Api.Domain.Models.ProcessingJob", "ProcessingJob")
+                        .WithMany()
+                        .HasForeignKey("ProcessingJobId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
+                    b.Navigation("Document");
+
+                    b.Navigation("LastActionByUser");
+
+                    b.Navigation("ProcessingJob");
+                });
+
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.Document", b =>
                 {
                     b.HasOne("ClinicalIntelligence.Api.Domain.Models.DocumentBatch", "DocumentBatch")
@@ -1386,6 +1636,17 @@ namespace ClinicalIntelligence.Api.Migrations
                     b.Navigation("UploadedByUser");
                 });
 
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.DocumentChunk", b =>
+                {
+                    b.HasOne("ClinicalIntelligence.Api.Domain.Models.Document", "Document")
+                        .WithMany("DocumentChunks")
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Document");
+                });
+
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.DocumentReference", b =>
                 {
                     b.HasOne("ClinicalIntelligence.Api.Domain.Models.Patient", "Patient")
@@ -1406,6 +1667,25 @@ namespace ClinicalIntelligence.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.EntityCitation", b =>
+                {
+                    b.HasOne("ClinicalIntelligence.Api.Domain.Models.DocumentChunk", "DocumentChunk")
+                        .WithMany("EntityCitations")
+                        .HasForeignKey("DocumentChunkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ClinicalIntelligence.Api.Domain.Models.ExtractedEntity", "ExtractedEntity")
+                        .WithMany("EntityCitations")
+                        .HasForeignKey("ExtractedEntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DocumentChunk");
+
+                    b.Navigation("ExtractedEntity");
                 });
 
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.ErdConflict", b =>
@@ -1527,6 +1807,23 @@ namespace ClinicalIntelligence.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.VectorQueryLog", b =>
+                {
+                    b.HasOne("ClinicalIntelligence.Api.Domain.Models.ErdPatient", "Patient")
+                        .WithMany("VectorQueryLogs")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ClinicalIntelligence.Api.Domain.Models.User", "User")
+                        .WithMany("VectorQueryLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.BillingCodeCatalogItem", b =>
                 {
                     b.Navigation("CodeSuggestions");
@@ -1534,6 +1831,8 @@ namespace ClinicalIntelligence.Api.Migrations
 
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.Document", b =>
                 {
+                    b.Navigation("DocumentChunks");
+
                     b.Navigation("ExtractedEntities");
 
                     b.Navigation("ProcessingJobs");
@@ -1542,6 +1841,11 @@ namespace ClinicalIntelligence.Api.Migrations
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.DocumentBatch", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.DocumentChunk", b =>
+                {
+                    b.Navigation("EntityCitations");
                 });
 
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.Encounter", b =>
@@ -1569,11 +1873,15 @@ namespace ClinicalIntelligence.Api.Migrations
                     b.Navigation("Documents");
 
                     b.Navigation("ExtractedEntities");
+
+                    b.Navigation("VectorQueryLogs");
                 });
 
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.ExtractedEntity", b =>
                 {
                     b.Navigation("CodeSuggestions");
+
+                    b.Navigation("EntityCitations");
                 });
 
             modelBuilder.Entity("ClinicalIntelligence.Api.Domain.Models.Patient", b =>
@@ -1611,6 +1919,8 @@ namespace ClinicalIntelligence.Api.Migrations
                     b.Navigation("UploadedBatches");
 
                     b.Navigation("UploadedDocuments");
+
+                    b.Navigation("VectorQueryLogs");
 
                     b.Navigation("VerifiedEntities");
                 });

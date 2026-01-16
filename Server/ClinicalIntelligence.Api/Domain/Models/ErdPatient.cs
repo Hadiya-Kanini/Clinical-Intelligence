@@ -62,6 +62,5 @@ public sealed class ErdPatient
     public ICollection<ExtractedEntity> ExtractedEntities { get; set; } = new List<ExtractedEntity>();
     public ICollection<ErdConflict> Conflicts { get; set; } = new List<ErdConflict>();
     public ICollection<CodeSuggestion> CodeSuggestions { get; set; } = new List<CodeSuggestion>();
-    // TEMPORARY: Commented out for vector DB installation
-    // public ICollection<VectorQueryLog> VectorQueryLogs { get; set; } = new List<VectorQueryLog>();
+    public ICollection<VectorQueryLog> VectorQueryLogs { get; set; } = new List<VectorQueryLog>();
 }

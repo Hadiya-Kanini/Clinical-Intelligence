@@ -70,11 +70,11 @@ Implement operator actions for DLQ entries: replay (re-enqueue) and discard. Ens
 - Verify audit events are created for replay/discard.
 
 ## Implementation Checklist
-- [ ] Extend `DeadLetterJob` with status + action tracking fields
-- [ ] Create `IDeadLetterQueueActions` abstraction
-- [ ] Implement `DeadLetterQueueActions` with concurrency protection and idempotency
-- [ ] Add `POST /api/v1/admin/dlq/{id}/replay` endpoint
-- [ ] Add `DELETE /api/v1/admin/dlq/{id}` discard endpoint
-- [ ] Require `AuthorizationPolicies.AdminOnly` on both endpoints
-- [ ] Emit audit log events for replay/discard actions (no PHI)
-- [ ] Add failure handling for replay attempts (store last error + attempt count)
+- [x] Extend `DeadLetterJob` with status + action tracking fields
+- [x] Create `IDeadLetterQueueActions` abstraction
+- [x] Implement `DeadLetterQueueActions` with concurrency protection and idempotency
+- [x] Add `POST /api/v1/admin/dlq/{id}/replay` endpoint
+- [x] Add `DELETE /api/v1/admin/dlq/{id}` discard endpoint
+- [x] Require `AuthorizationPolicies.AdminOnly` on both endpoints
+- [x] Emit audit log events for replay/discard actions (no PHI)
+- [x] Add failure handling for replay attempts (store last error + attempt count)

@@ -53,10 +53,10 @@ Add lightweight DLQ monitoring signals to the Backend API so operators can obser
 - Verify endpoint latency remains stable for large DLQs.
 
 ## Implementation Checklist
-- [ ] Create `DlqMetricsResponse` contract
-- [ ] Implement `DeadLetterQueueHealthCheck` using efficient count/min queries
-- [ ] Register DLQ health check in `Program.cs`
-- [ ] Add `GET /health/dlq` endpoint returning DLQ depth metrics
-- [ ] Add configuration options for warning/critical thresholds
-- [ ] Ensure queries use indexed columns and avoid row materialization
-- [ ] Ensure responses do not leak PHI
+- [x] Create `DlqMetricsResponse` contract
+- [x] Implement `DeadLetterQueueHealthCheck` using efficient count/min queries
+- [x] Register DLQ health check in `Program.cs`
+- [x] Add `GET /health/dlq` endpoint returning DLQ depth metrics
+- [x] Add configuration options for warning/critical thresholds
+- [x] Ensure queries use indexed columns and avoid row materialization
+- [x] Ensure responses do not leak PHI

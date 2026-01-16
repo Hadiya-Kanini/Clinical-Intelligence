@@ -19,28 +19,28 @@ public sealed class AdminUsersListQuery
     /// Default: name.
     /// </summary>
     [JsonPropertyName("sortBy")]
-    public string SortBy { get; set; } = "name";
+    public string? SortBy { get; set; } = "name";
 
     /// <summary>
     /// Sort direction. Allowed values: asc, desc.
     /// Default: asc.
     /// </summary>
     [JsonPropertyName("sortDir")]
-    public string SortDir { get; set; } = "asc";
+    public string? SortDir { get; set; } = "asc";
 
     /// <summary>
     /// Page number (1-based).
     /// Default: 1.
     /// </summary>
     [JsonPropertyName("page")]
-    public int Page { get; set; } = 1;
+    public int? Page { get; set; } = 1;
 
     /// <summary>
     /// Number of items per page.
     /// Default: 20, Max: 100.
     /// </summary>
     [JsonPropertyName("pageSize")]
-    public int PageSize { get; set; } = 20;
+    public int? PageSize { get; set; } = 20;
 
     /// <summary>
     /// Allowed sort columns (whitelist for security).
@@ -64,16 +64,16 @@ public sealed class AdminUsersListQuery
     {
         var errors = new List<string>();
 
-        if (Page < 1)
+        if (Page.HasValue && Page < 1)
         {
             errors.Add("page:must_be_positive");
         }
 
-        if (PageSize < 1)
+        if (PageSize.HasValue && PageSize < 1)
         {
             errors.Add("pageSize:must_be_positive");
         }
-        else if (PageSize > MaxPageSize)
+        else if (PageSize.HasValue && PageSize > MaxPageSize)
         {
             errors.Add($"pageSize:max_{MaxPageSize}");
         }
@@ -98,16 +98,26 @@ public sealed class AdminUsersListQuery
     /// </summary>
     public void Normalize()
     {
-        if (Page < 1) Page = 1;
-        if (PageSize < 1) PageSize = 20;
+        if (!Page.HasValue || Page < 1) Page = 1;
+        if (!PageSize.HasValue || PageSize < 1) PageSize = 20;
         if (PageSize > MaxPageSize) PageSize = MaxPageSize;
 
-        SortBy = AllowedSortColumns.Contains(SortBy, StringComparer.OrdinalIgnoreCase) 
+        SortBy = !string.IsNullOrEmpty(SortBy) && AllowedSortColumns.Contains(SortBy, StringComparer.OrdinalIgnoreCase) 
             ? SortBy.ToLowerInvariant() 
             : "name";
 
-        SortDir = AllowedSortDirections.Contains(SortDir, StringComparer.OrdinalIgnoreCase) 
+        SortDir = !string.IsNullOrEmpty(SortDir) && AllowedSortDirections.Contains(SortDir, StringComparer.OrdinalIgnoreCase) 
             ? SortDir.ToLowerInvariant() 
             : "asc";
     }
+    
+    /// <summary>
+    /// Gets the effective page value (non-nullable).
+    /// </summary>
+    public int GetPage() => Page ?? 1;
+    
+    /// <summary>
+    /// Gets the effective page size value (non-nullable).
+    /// </summary>
+    public int GetPageSize() => PageSize ?? 20;
 }

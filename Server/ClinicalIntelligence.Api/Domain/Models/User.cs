@@ -84,6 +84,5 @@ public sealed class User
     public ICollection<ConflictResolution> ConflictResolutions { get; set; } = new List<ConflictResolution>();
     public ICollection<CodeSuggestion> CodeDecisions { get; set; } = new List<CodeSuggestion>();
     public ICollection<AuditLogEvent> AuditLogEvents { get; set; } = new List<AuditLogEvent>();
-    // TEMPORARY: Commented out for vector DB installation
-    // public ICollection<VectorQueryLog> VectorQueryLogs { get; set; } = new List<VectorQueryLog>();
+    public ICollection<VectorQueryLog> VectorQueryLogs { get; set; } = new List<VectorQueryLog>();
 }

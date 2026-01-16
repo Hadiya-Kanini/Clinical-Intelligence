@@ -79,7 +79,6 @@ public sealed class Document
     public DocumentBatch? DocumentBatch { get; set; }
     public User UploadedByUser { get; set; } = null!;
     public ICollection<ProcessingJob> ProcessingJobs { get; set; } = new List<ProcessingJob>();
-    // TEMPORARY: Commented out for vector DB installation
-    // public ICollection<DocumentChunk> DocumentChunks { get; set; } = new List<DocumentChunk>();
+    public ICollection<DocumentChunk> DocumentChunks { get; set; } = new List<DocumentChunk>();
     public ICollection<ExtractedEntity> ExtractedEntities { get; set; } = new List<ExtractedEntity>();
 }

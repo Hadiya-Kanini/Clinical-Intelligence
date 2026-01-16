@@ -1,7 +1,6 @@
 using ClinicalIntelligence.Api.Domain.Models;
 using Microsoft.EntityFrameworkCore;
-// TEMPORARY: Commented out for vector DB installation
-// using Pgvector.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 namespace ClinicalIntelligence.Api.Data;
 
@@ -25,18 +24,16 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<DocumentBatch> DocumentBatches => Set<DocumentBatch>();
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<ProcessingJob> ProcessingJobs => Set<ProcessingJob>();
-    // TEMPORARY: Commented out for vector DB installation
-    // public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
+    public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
     public DbSet<ExtractedEntity> ExtractedEntities => Set<ExtractedEntity>();
-    // TEMPORARY: Commented out for vector DB installation
-    // public DbSet<EntityCitation> EntityCitations => Set<EntityCitation>();
+    public DbSet<EntityCitation> EntityCitations => Set<EntityCitation>();
     public DbSet<ErdConflict> ErdConflicts => Set<ErdConflict>();
     public DbSet<ConflictResolution> ConflictResolutions => Set<ConflictResolution>();
     public DbSet<BillingCodeCatalogItem> BillingCodeCatalogItems => Set<BillingCodeCatalogItem>();
     public DbSet<CodeSuggestion> CodeSuggestions => Set<CodeSuggestion>();
     public DbSet<AuditLogEvent> AuditLogEvents => Set<AuditLogEvent>();
-    // TEMPORARY: Commented out for vector DB installation
-    // public DbSet<VectorQueryLog> VectorQueryLogs => Set<VectorQueryLog>();
+    public DbSet<VectorQueryLog> VectorQueryLogs => Set<VectorQueryLog>();
+    public DbSet<DeadLetterJob> DeadLetterJobs => Set<DeadLetterJob>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -47,9 +44,8 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     {
         base.OnModelCreating(modelBuilder);
 
-        // TEMPORARY: Commented out for vector DB installation
         // Enable pgvector extension
-        // modelBuilder.HasPostgresExtension("vector");
+        modelBuilder.HasPostgresExtension("vector");
 
         // Existing FHIR-aligned entity configurations
         ConfigurePatient(modelBuilder);
@@ -69,18 +65,16 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
         ConfigureDocumentBatch(modelBuilder);
         ConfigureDocument(modelBuilder);
         ConfigureProcessingJob(modelBuilder);
-        // TEMPORARY: Commented out for vector DB installation
-        // ConfigureDocumentChunk(modelBuilder);
+        ConfigureDocumentChunk(modelBuilder);
         ConfigureExtractedEntity(modelBuilder);
-        // TEMPORARY: Commented out for vector DB installation
-        // ConfigureEntityCitation(modelBuilder);
+        ConfigureEntityCitation(modelBuilder);
         ConfigureErdConflict(modelBuilder);
         ConfigureConflictResolution(modelBuilder);
         ConfigureBillingCodeCatalogItem(modelBuilder);
         ConfigureCodeSuggestion(modelBuilder);
         ConfigureAuditLogEvent(modelBuilder);
-        // TEMPORARY: Commented out for vector DB installation
-        // ConfigureVectorQueryLog(modelBuilder);
+        ConfigureVectorQueryLog(modelBuilder);
+        ConfigureDeadLetterJob(modelBuilder);
     }
 
     private static void ConfigurePatient(ModelBuilder modelBuilder)
@@ -538,8 +532,6 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
         });
     }
 
-    // TEMPORARY: Commented out for vector DB installation
-    /*
     private static void ConfigureDocumentChunk(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<DocumentChunk>(entity =>
@@ -567,7 +559,6 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
-    */
 
     private static void ConfigureExtractedEntity(ModelBuilder modelBuilder)
     {
@@ -611,8 +602,6 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
         });
     }
 
-    // TEMPORARY: Commented out for vector DB installation
-    /*
     private static void ConfigureEntityCitation(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<EntityCitation>(entity =>
@@ -640,7 +629,6 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
-    */
 
     private static void ConfigureErdConflict(ModelBuilder modelBuilder)
     {
@@ -809,8 +797,6 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
         });
     }
 
-    // TEMPORARY: Commented out for vector DB installation
-    /*
     private static void ConfigureVectorQueryLog(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<VectorQueryLog>(entity =>
@@ -846,7 +832,84 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
                 .OnDelete(DeleteBehavior.SetNull);
         });
     }
-    */
+
+    private static void ConfigureDeadLetterJob(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DeadLetterJob>(entity =>
+        {
+            entity.ToTable("dead_letter_jobs");
+            entity.HasKey(e => e.Id);
+
+            // Index for operator workflows: most recent DLQ entries first
+            entity.HasIndex(e => e.DeadLetteredAt)
+                .IsDescending()
+                .HasDatabaseName("ix_dead_letter_jobs_dead_lettered_at");
+
+            // Index for filtering by document
+            entity.HasIndex(e => e.DocumentId)
+                .HasDatabaseName("ix_dead_letter_jobs_document_id");
+
+            // Unique index on ProcessingJobId to prevent duplicate DLQ entries
+            entity.HasIndex(e => e.ProcessingJobId)
+                .IsUnique()
+                .HasDatabaseName("ix_dead_letter_jobs_processing_job_id");
+
+            // Index for filtering by status
+            entity.HasIndex(e => e.Status)
+                .HasDatabaseName("ix_dead_letter_jobs_status");
+
+            // Composite index for common query patterns
+            entity.HasIndex(e => new { e.Status, e.DeadLetteredAt })
+                .HasDatabaseName("ix_dead_letter_jobs_status_dead_lettered_at");
+
+            // Property configurations
+            entity.Property(e => e.OriginalMessage)
+                .IsRequired()
+                .HasColumnType("jsonb");
+
+            entity.Property(e => e.ErrorDetails)
+                .HasColumnType("jsonb");
+
+            entity.Property(e => e.RetryHistory)
+                .HasColumnType("jsonb");
+
+            entity.Property(e => e.DeadLetterReason)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            entity.Property(e => e.MessageSchemaVersion)
+                .HasMaxLength(20);
+
+            entity.Property(e => e.DeadLetteredAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Concurrency token for optimistic concurrency
+            entity.Property(e => e.RowVersion)
+                .IsRowVersion();
+
+            // Navigation: ProcessingJob (optional - job may not exist)
+            entity.HasOne(e => e.ProcessingJob)
+                .WithMany()
+                .HasForeignKey(e => e.ProcessingJobId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Navigation: Document
+            entity.HasOne(e => e.Document)
+                .WithMany()
+                .HasForeignKey(e => e.DocumentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Navigation: LastActionByUser
+            entity.HasOne(e => e.LastActionByUser)
+                .WithMany()
+                .HasForeignKey(e => e.LastActionByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
 
     #endregion
 }

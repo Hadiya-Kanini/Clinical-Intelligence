@@ -130,6 +130,9 @@ public sealed class SecretsOptions
         {
             DatabaseConnectionString = string.IsNullOrWhiteSpace(connectionString) ? null : connectionString,
             JwtKey = configuration["JWT_KEY"],
+            JwtIssuer = configuration["JWT_ISSUER"] ?? "ClinicalIntelligence",
+            JwtAudience = configuration["JWT_AUDIENCE"] ?? "ClinicalIntelligence.Users",
+            JwtExpirationMinutes = int.TryParse(configuration["JWT_EXPIRATION_MINUTES"], out var jwtExpiration) ? jwtExpiration : 15,
             DevelopmentDatabaseName = configuration["DEV_DATABASE_NAME"] ?? "clinicalintelligence.db",
             // SMTP Configuration
             SmtpHost = configuration["SMTP_HOST"],

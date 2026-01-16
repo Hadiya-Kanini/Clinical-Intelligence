@@ -41,9 +41,10 @@ public class RequestValidationMiddleware
             return;
         }
 
-        // Validate content type for POST/PUT requests
-        if (context.Request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase) ||
-            context.Request.Method.Equals("PUT", StringComparison.OrdinalIgnoreCase))
+        // Validate content type for POST/PUT requests (except logout)
+        if ((context.Request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase) ||
+            context.Request.Method.Equals("PUT", StringComparison.OrdinalIgnoreCase)) &&
+            !context.Request.Path.Equals("/api/v1/auth/logout", StringComparison.OrdinalIgnoreCase))
         {
             if (!context.Request.HasJsonContentType())
             {
