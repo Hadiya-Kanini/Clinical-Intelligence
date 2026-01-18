@@ -77,10 +77,10 @@ Implement the AI worker’s Gemini 2.5 Flash client call for entity extraction a
 - Validate logs/errors do not include raw chunk text by default.
 
 ## Implementation Checklist
-- [ ] Add Gemini SDK dependency and validate import at runtime
-- [ ] Extend `WorkerConfig` to include model/timeouts/retry settings
-- [ ] Implement `GeminiClient` wrapper with safe error handling
-- [ ] Implement `extract_entities_single_call(...)` orchestration using the prompt builder
-- [ ] Add bounded retry/backoff on 429 and transient network/timeouts
-- [ ] Add unit tests asserting exactly one outbound call per extraction
-- [ ] Add unit tests validating bounded retry behavior and safe error messages
+- [x] Add Gemini SDK dependency and validate import at runtime
+- [x] Extend `WorkerConfig` to include model/timeouts/retry settings
+- [x] Implement `GeminiClient` wrapper with safe error handling
+- [x] Implement `extract_entities_single_call(...)` orchestration using the prompt builder
+- [x] Add bounded retry/backoff on 429 and transient network/timeouts
+- [x] Add unit tests asserting exactly one outbound call per extraction
+- [x] Add unit tests validating bounded retry behavior and safe error messages

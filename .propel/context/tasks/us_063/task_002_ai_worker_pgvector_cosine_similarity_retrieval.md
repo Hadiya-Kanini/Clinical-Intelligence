@@ -70,9 +70,9 @@ Extend the Python AI worker to perform cosine similarity retrieval against Postg
 - [Edge case] Confirm “no relevant chunks” returns an empty list and downstream extraction can proceed with a clear fallback.
 
 ## Implementation Checklist
-- [ ] Add worker config for `DATABASE_CONNECTION_STRING`
-- [ ] Add retrieval module with embedding length validation (768)
-- [ ] Implement parameterized cosine similarity query with deterministic tie ordering
-- [ ] Clamp `k` to 10-15 (default 15)
-- [ ] Add unit tests for empty result and tie behavior
-- [ ] Add optional similarity threshold configuration and tests (if adopted)
+- [x] Add worker config for `DATABASE_CONNECTION_STRING`
+- [x] Add retrieval module with embedding length validation (768)
+- [x] Implement parameterized cosine similarity query with deterministic tie ordering
+- [x] Clamp `k` to 10-15 (default 15)
+- [x] Add unit tests for empty result and tie behavior
+- [x] Add optional similarity threshold configuration and tests (if adopted)

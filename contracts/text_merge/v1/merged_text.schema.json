@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MergedText",
+  "description": "Schema for merged text from multiple documents belonging to a single patient, preserving per-document provenance for downstream chunking.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "description": "The version of this merged text schema.",
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "patient_id": {
+      "description": "UUID of the patient whose documents were merged.",
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "merge_timestamp": {
+      "description": "ISO 8601 timestamp when the merge was performed.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_documents": {
+      "description": "List of source document IDs that were merged, in merge order.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "merged_segments": {
+      "description": "Array of merged text segments preserving per-document provenance.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "description": "The text content.",
+            "type": "string"
+          },
+          "document_id": {
+            "description": "Source document identifier for this segment.",
+            "type": "string"
+          },
+          "document_location": {
+            "description": "Positional metadata from the source document.",
+            "type": "object",
+            "properties": {
+              "page": {
+                "description": "Page number (1-indexed) in the source document.",
+                "type": "integer",
+                "minimum": 1
+              },
+              "section": {
+                "description": "Section identifier or heading name.",
+                "type": "string"
+              },
+              "coordinates": {
+                "description": "Bounding box coordinates.",
+                "type": "object",
+                "properties": {
+                  "x0": { "type": "number" },
+                  "y0": { "type": "number" },
+                  "x1": { "type": "number" },
+                  "y1": { "type": "number" }
+                }
+              }
+            }
+          },
+          "segment_index": {
+            "description": "Zero-based index in the merged sequence.",
+            "type": "integer",
+            "minimum": 0
+          },
+          "is_document_boundary": {
+            "description": "True if this segment marks the start of a new document in the merged stream.",
+            "type": "boolean"
+          }
+        },
+        "required": ["text", "document_id"]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "patient_id",
+    "source_documents",
+    "merged_segments"
+  ]
+}

@@ -1,0 +1,26 @@
+// JWT Token Generation Fix
+// The issue is that the JWT token is being received but the 'sub' claim is not being extracted properly.
+// This could be due to:
+// 1. Token validation failing before OnTokenValidated is called
+// 2. Claims not being properly mapped
+// 3. Token format issues
+
+// MINIMAL FIX: Add explicit claim mapping in JWT configuration
+// Add this to the JWT configuration in Program.cs after line 108:
+
+options.TokenValidationParameters = new TokenValidationParameters
+{
+    ValidateIssuer = true,
+    ValidateAudience = true,
+    ValidateLifetime = true,
+    ValidateIssuerSigningKey = true,
+    ValidIssuer = secrets.JwtIssuer,
+    ValidAudience = secrets.JwtAudience,
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secrets.JwtKey!)),
+    // ADD THESE LINES TO ENSURE PROPER CLAIM MAPPING:
+    NameClaimType = JwtRegisteredClaimNames.Sub,
+    RoleClaimType = "role"
+};
+
+// The issue is likely that the default claim mapping is interfering with the 'sub' claim.
+// By explicitly setting NameClaimType to 'sub', we ensure the user ID is properly mapped.

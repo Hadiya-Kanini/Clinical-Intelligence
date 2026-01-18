@@ -81,9 +81,9 @@ This task is focused on **category coverage and naming consistency** only. It do
 - [Unit] Verify prompt includes explicit instruction to omit missing categories (no hallucinated placeholders like "N/A").
 
 ## Implementation Checklist
-- [ ] Define canonical `entity_group_name` constants for the 10 core categories
-- [ ] Define recommended `entity_name` keys per category aligned to FR-039..FR-048
-- [ ] Update `prompt_builder` to embed the canonical taxonomy and output constraints
-- [ ] Ensure prompt instructs omission of missing data/categories
-- [ ] Extend unit tests to validate canonical taxonomy presence in the prompt
-- [ ] Confirm prompt guidance supports grounding (`source_text` + `document_location`) without forcing unavailable fields
+- [x] Define canonical `entity_group_name` constants for the 10 core categories
+- [x] Define recommended `entity_name` keys per category aligned to FR-039..FR-048
+- [x] Update `prompt_builder` to embed the canonical taxonomy and output constraints
+- [x] Ensure prompt instructs omission of missing data/categories
+- [x] Extend unit tests to validate canonical taxonomy presence in the prompt
+- [x] Confirm prompt guidance supports grounding (`source_text` + `document_location`) without forcing unavailable fields

@@ -69,7 +69,7 @@ This task focuses on:
 - [Edge Case] For a deleted/missing document, confirm endpoint returns `404` with standardized error response.
 
 ## Implementation Checklist
-- [ ] Implement `DocumentContentReader` to load document metadata and open a stream safely
-- [ ] Add `GET /api/v1/documents/{documentId}/content` endpoint with authorization
-- [ ] Return `404` for missing/deleted documents with standardized error shape
-- [ ] Add tests for success and failure cases
+- [x] Implement `DocumentContentReader` to load document metadata and open a stream safely
+- [x] Add `GET /api/v1/documents/{documentId}/content` endpoint with authorization
+- [x] Return `404` for missing/deleted documents with standardized error shape
+- [x] Add tests for success and failure cases

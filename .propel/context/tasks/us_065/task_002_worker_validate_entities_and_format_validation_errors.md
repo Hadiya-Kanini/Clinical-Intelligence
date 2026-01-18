@@ -79,8 +79,8 @@ This task covers:
 - [Unit] Payload with one invalid entity fails validation deterministically (no partial accept).
 
 ## Implementation Checklist
-- [ ] Implement Pydantic-based entity payload validation using schema registry
-- [ ] Normalize `ValidationError` into persistence-friendly `error_message` + `error_details[]`
-- [ ] Enforce deterministic partial-validation behavior (fail whole payload on any schema violation)
-- [ ] Wire validation call into `worker/main.py` after parsing
-- [ ] Add unit tests for success + failure + schema version mismatch
+- [x] Implement Pydantic-based entity payload validation using schema registry
+- [x] Normalize `ValidationError` into persistence-friendly `error_message` + `error_details[]`
+- [x] Enforce deterministic partial-validation behavior (fail whole payload on any schema violation)
+- [x] Wire validation call into `worker/main.py` after parsing
+- [x] Add unit tests for success + failure + schema version mismatch

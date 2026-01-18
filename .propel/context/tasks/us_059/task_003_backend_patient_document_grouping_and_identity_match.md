@@ -63,9 +63,9 @@ Implement Backend API services to (1) deterministically select the set of docume
   - Ordering is deterministic
 
 ## Implementation Checklist
-- [ ] Create `IPatientIdentityMatcher` abstraction
-- [ ] Implement `PatientIdentityMatcher` with MRN and name+DOB matching and ambiguity handling
-- [ ] Create `IPatientDocumentMergePlanner` abstraction
-- [ ] Implement `PatientDocumentMergePlanner` querying documents and producing stable ordered document IDs
-- [ ] Register both services in `Program.cs`
-- [ ] Ensure no PHI is written to logs during matching/selection failures
+- [x] Create `IPatientIdentityMatcher` abstraction
+- [x] Implement `PatientIdentityMatcher` with MRN and name+DOB matching and ambiguity handling
+- [x] Create `IPatientDocumentMergePlanner` abstraction
+- [x] Implement `PatientDocumentMergePlanner` querying documents and producing stable ordered document IDs
+- [x] Register both services in `Program.cs`
+- [x] Ensure no PHI is written to logs during matching/selection failures

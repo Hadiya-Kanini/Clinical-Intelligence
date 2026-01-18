@@ -75,9 +75,9 @@ This task focuses on:
 - Validate adding a new category in the registry (no code changes) results in prompt including that category.
 
 ## Implementation Checklist
-- [ ] Add worker config for registry path with safe default
-- [ ] Implement registry loader + schema validation
-- [ ] Implement alias resolution and deterministic ordering
-- [ ] Update prompt builder to use registry-driven categories
-- [ ] Add/update unit tests for registry behavior and prompt generation
-- [ ] Confirm existing categories remain unchanged when new categories are added
+- [x] Add worker config for registry path with safe default
+- [x] Implement registry loader + schema validation
+- [x] Implement alias resolution and deterministic ordering
+- [x] Update prompt builder to use registry-driven categories
+- [x] Add/update unit tests for registry behavior and prompt generation
+- [x] Confirm existing categories remain unchanged when new categories are added

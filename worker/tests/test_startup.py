@@ -12,6 +12,7 @@ class WorkerStartupIntegrationTests(unittest.TestCase):
         env = dict(os.environ)
         env.pop("GEMINI_API_KEY", None)
         env["PYTHONPATH"] = repo_root
+        env["SKIP_DOTENV_LOADING"] = "1"
 
         result = subprocess.run(
             [sys.executable, worker_main],

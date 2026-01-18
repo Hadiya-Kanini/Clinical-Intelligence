@@ -19,6 +19,9 @@ public class LocalFileStorageService : IDocumentStorageService
         _options = options;
         _logger = logger;
 
+        Console.WriteLine($"[STORAGE] BasePath: {_options.BasePath}");
+        Console.WriteLine($"[STORAGE] Full BasePath: {Path.GetFullPath(_options.BasePath)}");
+
         // Ensure base directories exist on startup
         EnsureDirectoryExists(_options.BasePath);
         EnsureDirectoryExists(_options.TempPath);
@@ -27,16 +30,22 @@ public class LocalFileStorageService : IDocumentStorageService
     public async Task<DocumentStorageResult> StoreAsync(
         Stream fileStream,
         string fileName,
-        Guid patientId,
+        Guid? patientId,
         Guid documentId,
         CancellationToken ct)
     {
         try
         {
             // Build storage path: {tenant_id}/{patient_id}/{document_id}/original.{ext}
+            // If patientId is null, store in pending folder until patient is extracted
             var extension = Path.GetExtension(fileName);
             var relativePath = BuildStoragePath(patientId, documentId, extension);
             var absolutePath = Path.GetFullPath(Path.Combine(_options.BasePath, relativePath));
+            
+            Console.WriteLine($"[STORAGE] Storing file: {fileName}");
+            Console.WriteLine($"[STORAGE] Relative path: {relativePath}");
+            Console.WriteLine($"[STORAGE] Absolute path: {absolutePath}");
+            Console.WriteLine($"[STORAGE] File stream length: {fileStream.Length}");
 
             // Security: Ensure path is within base path (prevent directory traversal)
             var normalizedBasePath = Path.GetFullPath(_options.BasePath);
@@ -192,12 +201,14 @@ public class LocalFileStorageService : IDocumentStorageService
         }
     }
 
-    private string BuildStoragePath(Guid patientId, Guid documentId, string extension)
+    private string BuildStoragePath(Guid? patientId, Guid documentId, string extension)
     {
         // Pattern: {tenant_id}/{patient_id}/{document_id}/original.{ext}
+        // If patientId is null, store in "pending" folder until patient is extracted
+        var patientFolder = patientId?.ToString() ?? "pending";
         return Path.Combine(
             _options.DefaultTenantId,
-            patientId.ToString(),
+            patientFolder,
             documentId.ToString(),
             $"original{extension}");
     }

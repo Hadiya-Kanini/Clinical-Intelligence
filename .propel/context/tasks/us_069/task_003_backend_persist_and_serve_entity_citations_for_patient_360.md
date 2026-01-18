@@ -85,8 +85,8 @@ Introduce a backend persistence and retrieval boundary for entity citations so t
 - [Unit/DB] Attempting to persist an entity citation with missing/invalid chunk reference fails deterministically.
 
 ## Implementation Checklist
-- [ ] Enable `EntityCitations` DbSet and EF model configuration
-- [ ] Re-enable `ExtractedEntity.EntityCitations` navigation
-- [ ] Extend extracted entity writer to persist citations atomically
-- [ ] Add DTOs and query helpers to retrieve citations for patient 360 usage
-- [ ] Add tests for persistence and invalid-reference failure modes
+- [x] Enable `EntityCitations` DbSet and EF model configuration
+- [x] Re-enable `ExtractedEntity.EntityCitations` navigation
+- [x] Extend extracted entity writer to persist citations atomically
+- [x] Add DTOs and query helpers to retrieve citations for patient 360 usage
+- [x] Add tests for persistence and invalid-reference failure modes

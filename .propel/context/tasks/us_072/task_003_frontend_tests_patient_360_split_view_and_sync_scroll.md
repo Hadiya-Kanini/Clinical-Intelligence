@@ -67,8 +67,8 @@ This task focuses on tests only (no feature work):
 - [E2E] Playwright test should confirm deterministic scroll linking behavior when sync is enabled.
 
 ## Implementation Checklist
-- [ ] Add component-level tests for split view panes and basic rendering
-- [ ] Add component-level test verifying sync-scroll toggle enables/disables synchronization
-- [ ] Add component-level test for viewer error state disables sync-scroll
-- [ ] Add Playwright test for split view presence and sync-scroll behavior
-- [ ] Ensure tests are stable (no timing flakiness)
+- [x] Add component-level tests for split view panes and basic rendering
+- [x] Add component-level test verifying sync-scroll toggle enables/disables synchronization
+- [x] Add component-level test for viewer error state disables sync-scroll
+- [x] Add Playwright test for split view presence and sync-scroll behavior
+- [x] Ensure tests are stable (no timing flakiness)

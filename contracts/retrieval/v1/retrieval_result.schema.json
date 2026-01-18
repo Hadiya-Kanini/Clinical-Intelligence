@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RetrievalResult",
+  "description": "Schema for top-K chunk retrieval results from pgvector cosine similarity search.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "description": "The version of this retrieval result schema.",
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "query_embedding_dimensions": {
+      "description": "Dimensionality of the query embedding (must be 768).",
+      "type": "integer",
+      "const": 768
+    },
+    "k_requested": {
+      "description": "Number of results originally requested.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "k_returned": {
+      "description": "Number of results actually returned (may be less than requested if fewer chunks exist).",
+      "type": "integer",
+      "minimum": 0
+    },
+    "query_hash": {
+      "description": "Optional SHA-256 hash of the query text for auditability (without storing raw query).",
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "results": {
+      "description": "Array of retrieved chunks ordered by similarity (most similar first).",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/RetrievedChunk"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "query_embedding_dimensions",
+    "k_requested",
+    "k_returned",
+    "results"
+  ],
+  "definitions": {
+    "RetrievedChunk": {
+      "type": "object",
+      "properties": {
+        "chunk_id": {
+          "description": "Unique identifier of the chunk.",
+          "type": "string",
+          "format": "uuid"
+        },
+        "document_id": {
+          "description": "Identifier of the source document.",
+          "type": "string",
+          "format": "uuid"
+        },
+        "text_content": {
+          "description": "The text content of the chunk.",
+          "type": "string"
+        },
+        "page": {
+          "description": "Page number in the source document (1-indexed).",
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "section": {
+          "description": "Section identifier within the document.",
+          "type": ["string", "null"]
+        },
+        "coordinates": {
+          "description": "Positional coordinates within the page.",
+          "type": ["string", "null"]
+        },
+        "rank": {
+          "description": "Rank position in the result set (1-indexed, 1 = most similar).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "score": {
+          "description": "Cosine similarity score (1 - distance). Range 0.0 to 1.0 where 1.0 is identical.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "chunk_id",
+        "document_id",
+        "text_content",
+        "rank",
+        "score"
+      ]
+    }
+  }
+}

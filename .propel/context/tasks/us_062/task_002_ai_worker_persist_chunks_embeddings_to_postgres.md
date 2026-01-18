@@ -67,9 +67,9 @@ Extend the Python AI worker to persist chunk records (text + metadata + 768-d em
 - [Failure] Force an error mid-batch (e.g., invalid vector length) and confirm the transaction rolls back.
 
 ## Implementation Checklist
-- [ ] Add PostgreSQL driver dependency to `worker/requirements.txt`
-- [ ] Add worker configuration for `DATABASE_CONNECTION_STRING` loading and validation
-- [ ] Implement chunk insert/upsert with dedupe via `(DocumentId, ChunkHash)`
-- [ ] Insert embeddings into `vector(768)` safely (cast/adaptation)
-- [ ] Wrap per-document batch writes in a transaction and rollback on failure
-- [ ] Add unit tests covering dedupe and rollback/error propagation
+- [x] Add PostgreSQL driver dependency to `worker/requirements.txt`
+- [x] Add worker configuration for `DATABASE_CONNECTION_STRING` loading and validation
+- [x] Implement chunk insert/upsert with dedupe via `(DocumentId, ChunkHash)`
+- [x] Insert embeddings into `vector(768)` safely (cast/adaptation)
+- [x] Wrap per-document batch writes in a transaction and rollback on failure
+- [x] Add unit tests covering dedupe and rollback/error propagation

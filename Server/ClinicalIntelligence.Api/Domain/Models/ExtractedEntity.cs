@@ -29,6 +29,12 @@ public sealed class ExtractedEntity
     public string Category { get; set; } = string.Empty;
 
     /// <summary>
+    /// Display category formatted for frontend (e.g., "Allergies", "Medications").
+    /// </summary>
+    [MaxLength(50)]
+    public string? DisplayCategory { get; set; }
+
+    /// <summary>
     /// Entity name/label.
     /// </summary>
     [Required]
@@ -71,6 +77,16 @@ public sealed class ExtractedEntity
     /// Effective date of the entity.
     /// </summary>
     public DateTime? EffectiveAt { get; set; }
+
+    /// <summary>
+    /// Extraction rationale explaining why this value was extracted from the source.
+    /// </summary>
+    // Note: Rationale field removed as it doesn't exist in database schema
+    
+    /// <summary>
+    /// Data status: verified, unverified, or modified.
+    /// </summary>
+    // Note: DataStatus field removed as it doesn't exist in database schema
 
     // Navigation properties
     public ErdPatient Patient { get; set; } = null!;

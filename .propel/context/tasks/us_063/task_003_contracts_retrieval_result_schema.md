@@ -69,7 +69,7 @@ Define a versioned contract for retrieval output (top-K chunks) so the AI worker
   - Deterministic `rank` assignment with explicit score semantics
 
 ## Implementation Checklist
-- [ ] Create `contracts/retrieval/v1/retrieval_result.schema.json`
-- [ ] Create `contracts/retrieval/v1/README.md` clarifying score semantics and K bounds
-- [ ] Create `contracts/migrations/retrieval_v1.md` documenting initial release
-- [ ] Confirm contract aligns with `document_chunks` metadata fields used downstream
+- [x] Create `contracts/retrieval/v1/retrieval_result.schema.json`
+- [x] Create `contracts/retrieval/v1/README.md` clarifying score semantics and K bounds
+- [x] Create `contracts/migrations/retrieval_v1.md` documenting initial release
+- [x] Confirm contract aligns with `document_chunks` metadata fields used downstream

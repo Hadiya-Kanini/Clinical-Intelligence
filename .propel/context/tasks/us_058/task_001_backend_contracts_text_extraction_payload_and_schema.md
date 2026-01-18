@@ -66,7 +66,7 @@ Define and version the integration contract(s) required to pass extracted text w
 - Validate the extracted-text schema represents page/section/coordinates in a way that can be mapped to backend `DocumentChunk.Page`, `DocumentChunk.Section`, and `DocumentChunk.Coordinates`.
 
 ## Implementation Checklist
-- [ ] Extend `contracts/jobs/v1/job.schema.json` with optional `payload.storage_path` and `payload.mime_type`
-- [ ] Create `contracts/text_extraction/v1/extracted_text.schema.json` with segment + positional metadata structure
-- [ ] Add a migration note documenting the schema/version change and upgrade guidance
-- [ ] Update worker schema validation fixtures/tests to cover the new payload fields
+- [x] Extend `contracts/jobs/v1/job.schema.json` with optional `payload.storage_path` and `payload.mime_type`
+- [x] Create `contracts/text_extraction/v1/extracted_text.schema.json` with segment + positional metadata structure
+- [x] Add a migration note documenting the schema/version change and upgrade guidance
+- [x] Update worker schema validation fixtures/tests to cover the new payload fields

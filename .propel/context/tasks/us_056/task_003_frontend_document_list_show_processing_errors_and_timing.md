@@ -70,11 +70,11 @@ This task focuses on:
 - [Accessibility] Confirm error message/timing text does not interfere with keyboard navigation and table semantics.
 
 ## Implementation Checklist
-- [ ] Create `documentsApi` wrapper for `GET /api/v1/documents` with typed response
-- [ ] Replace hardcoded rows in `DocumentListPage` with API-backed list + loading/error states
-- [ ] Display `errorMessage` for failed documents in the list
-- [ ] Display `processingTimeMs` and/or `startedAt`/`completedAt` timing metadata in the list
-- [ ] Handle long error messages without breaking table layout
+- [x] Create `documentsApi` wrapper for `GET /api/v1/documents` with typed response
+- [x] Replace hardcoded rows in `DocumentListPage` with API-backed list + loading/error states
+- [x] Display `errorMessage` for failed documents in the list
+- [x] Display `processingTimeMs` and/or `startedAt`/`completedAt` timing metadata in the list
+- [x] Handle long error messages without breaking table layout
 
 ---
 

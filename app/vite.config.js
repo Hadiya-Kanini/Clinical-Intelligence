@@ -38,7 +38,7 @@ export default defineConfig({
             }
             // Add CORS headers for credentials
             proxyRes.headers['access-control-allow-credentials'] = 'true';
-            proxyRes.headers['access-control-allow-origin'] = req.headers.origin || 'http://localhost:5173';
+            proxyRes.headers['access-control-allow-origin'] = req.headers.origin || 'http://localhost:5174';
           });
         }
       },

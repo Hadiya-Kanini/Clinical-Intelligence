@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChunkedText",
+  "description": "Schema for chunked text output from semantic chunking, preserving per-chunk provenance for downstream embedding and storage.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "description": "The version of this chunked text schema.",
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "patient_id": {
+      "description": "UUID of the patient whose documents were chunked.",
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "chunking_timestamp": {
+      "description": "ISO 8601 timestamp when chunking was performed.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "chunking_config": {
+      "description": "Configuration used for chunking.",
+      "type": "object",
+      "properties": {
+        "chunk_size_target_tokens": {
+          "description": "Target maximum tokens per chunk (e.g., 1000).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "chunk_size_min_tokens": {
+          "description": "Minimum tokens per chunk (e.g., 500).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "chunk_overlap_tokens": {
+          "description": "Token overlap between adjacent chunks (e.g., 100).",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "source_documents": {
+      "description": "List of source document IDs that contributed to the chunks.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "chunks": {
+      "description": "Array of text chunks with provenance metadata.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Chunk"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "patient_id",
+    "chunks"
+  ],
+  "definitions": {
+    "Chunk": {
+      "type": "object",
+      "description": "A single text chunk with sizing and provenance metadata.",
+      "properties": {
+        "chunk_index": {
+          "description": "Zero-based index of this chunk in the sequence.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "description": "The text content of this chunk.",
+          "type": "string"
+        },
+        "token_count": {
+          "description": "Number of tokens in this chunk.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "chunk_hash": {
+          "description": "Hash of the chunk text for deduplication/integrity.",
+          "type": "string"
+        },
+        "provenance": {
+          "description": "Source provenance entries for this chunk. Multiple entries indicate the chunk spans document boundaries.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProvenanceEntry"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "chunk_index",
+        "text",
+        "provenance"
+      ]
+    },
+    "ProvenanceEntry": {
+      "type": "object",
+      "description": "Provenance metadata linking chunk content to source document location.",
+      "properties": {
+        "document_id": {
+          "description": "Source document identifier.",
+          "type": "string"
+        },
+        "page": {
+          "description": "Page number (1-indexed) in the source document.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "section": {
+          "description": "Section identifier or heading name.",
+          "type": "string"
+        },
+        "coordinates": {
+          "description": "Bounding box coordinates from source document.",
+          "type": "object",
+          "properties": {
+            "x0": { "type": "number" },
+            "y0": { "type": "number" },
+            "x1": { "type": "number" },
+            "y1": { "type": "number" }
+          }
+        },
+        "start_offset": {
+          "description": "Character offset where this provenance entry starts within the chunk text.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_offset": {
+          "description": "Character offset where this provenance entry ends within the chunk text.",
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "document_id"
+      ]
+    }
+  }
+}

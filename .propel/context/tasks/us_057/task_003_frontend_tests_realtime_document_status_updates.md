@@ -61,9 +61,9 @@ Estimated Effort: 4 hours
 - Ensure the 5-second requirement is encoded in tests to prevent regression.
 
 ## Implementation Checklist
-- [ ] Add hook tests for 5s polling interval and cleanup
-- [ ] Add hook tests for non-overlapping requests
-- [ ] Add hook tests for error handling preserving last data
-- [ ] Add page tests for status badge updating after a polling tick
-- [ ] Add page tests for manual Refresh button
-- [ ] Run `npm --prefix .\app run test` and confirm green
+- [x] Add hook tests for 5s polling interval and cleanup
+- [x] Add hook tests for non-overlapping requests
+- [x] Add hook tests for error handling preserving last data
+- [x] Add page tests for status badge updating after a polling tick
+- [x] Add page tests for manual Refresh button
+- [x] Run `npm --prefix .\app run test` and confirm green

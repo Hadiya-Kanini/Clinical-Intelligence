@@ -63,7 +63,7 @@ Implement DOCX text extraction in the AI worker using LangChain `Docx2txtLoader`
 - Verify the extractor produces output aligned to the extracted-text contract.
 
 ## Implementation Checklist
-- [ ] Add/verify worker dependencies for LangChain DOCX loading
-- [ ] Implement DOCX extraction and normalization into segments (best-effort section/page/coordinates)
-- [ ] Wire extraction routing in `worker/main.py` based on `payload.mime_type`
-- [ ] Add unit tests for DOCX extraction behavior and metadata preservation
+- [x] Add/verify worker dependencies for LangChain DOCX loading
+- [x] Implement DOCX extraction and normalization into segments (best-effort section/page/coordinates)
+- [x] Wire extraction routing in `worker/main.py` based on `payload.mime_type`
+- [x] Add unit tests for DOCX extraction behavior and metadata preservation

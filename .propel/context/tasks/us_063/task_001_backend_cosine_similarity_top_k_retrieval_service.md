@@ -72,9 +72,9 @@ Implement a backend retrieval service that queries `document_chunks` using pgvec
 - [Edge case] Validate “no relevant chunks” returns an empty list and caller can proceed safely.
 
 ## Implementation Checklist
-- [ ] Add retrieval DTO for returned chunk payload
-- [ ] Add `IDocumentChunkRetrievalService` abstraction (async)
-- [ ] Implement cosine similarity query with deterministic ordering and K clamping (10-15)
-- [ ] Ensure query is parameterized and relies on DR-005/RLS for access control
-- [ ] Add Postgres-only integration tests for ranking, clamping, and empty results
-- [ ] Register retrieval service in `Program.cs`
+- [x] Add retrieval DTO for returned chunk payload
+- [x] Add `IDocumentChunkRetrievalService` abstraction (async)
+- [x] Implement cosine similarity query with deterministic ordering and K clamping (10-15)
+- [x] Ensure query is parameterized and relies on DR-005/RLS for access control
+- [x] Add Postgres-only integration tests for ranking, clamping, and empty results
+- [x] Register retrieval service in `Program.cs`

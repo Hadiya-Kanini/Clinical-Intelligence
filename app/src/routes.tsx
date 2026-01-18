@@ -10,6 +10,7 @@ import ProtectedLayout from './components/ProtectedLayout.tsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.tsx'
 import DocumentUploadPage from './pages/DocumentUploadPage.tsx'
 import DocumentListPage from './pages/DocumentListPage.tsx'
+import PatientsPage from './pages/PatientsPage.tsx'
 import Patient360Page from './pages/Patient360Page.tsx'
 import ExportPage from './pages/ExportPage.tsx'
 import AdminDashboardPage from './pages/AdminDashboardPage.tsx'
@@ -140,6 +141,10 @@ const router = createBrowserRouter([
           {
             path: 'documents',
             element: <DocumentListPage />,
+          },
+          {
+            path: 'patients',
+            element: <PatientsPage />,
           },
           {
             path: 'patients/:patientId',

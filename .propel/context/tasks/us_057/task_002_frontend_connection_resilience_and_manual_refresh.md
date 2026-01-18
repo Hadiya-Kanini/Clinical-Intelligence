@@ -67,12 +67,12 @@ Estimated Effort: 5 hours
 - [Manual/UI] Navigate away from /documents and return; confirm polling resumes and no duplicate intervals are created.
 
 ## Implementation Checklist
-- [ ] Add `refreshNow()` API to polling hook
-- [ ] Add `lastUpdatedAt` and `isRefreshing` state to polling hook
-- [ ] Add Refresh button to Document List header actions
-- [ ] Display "Last updated" timestamp (secondary text) in the header
-- [ ] On polling error, show safe `Alert` without clearing table
-- [ ] Confirm polling cleanup on unmount to prevent duplicate intervals
+- [x] Add `refreshNow()` API to polling hook
+- [x] Add `lastUpdatedAt` and `isRefreshing` state to polling hook
+- [x] Add Refresh button to Document List header actions
+- [x] Display "Last updated" timestamp (secondary text) in the header
+- [x] On polling error, show safe `Alert` without clearing table
+- [x] Confirm polling cleanup on unmount to prevent duplicate intervals
 
 ---
 

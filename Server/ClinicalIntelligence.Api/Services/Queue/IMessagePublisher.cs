@@ -18,4 +18,9 @@ public interface IMessagePublisher
     /// Checks if the queue connection is healthy.
     /// </summary>
     bool IsConnected { get; }
+    
+    /// <summary>
+    /// Tests the queue connection asynchronously.
+    /// </summary>
+    Task<bool> TestConnectionAsync();
 }

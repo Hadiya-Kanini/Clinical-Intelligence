@@ -51,7 +51,7 @@ Add automated tests validating patient identity matching and document selection 
 - Ensure synthetic/non-PHI test data is used for all patient identity examples.
 
 ## Implementation Checklist
-- [ ] Add `PatientIdentityMatcherTests` for MRN and name+DOB scenarios
-- [ ] Add `PatientDocumentMergePlannerTests` for document scoping and ordering
-- [ ] Update worker job schema validation tests to cover patient-merge job payload shape
-- [ ] Ensure all test fixtures are synthetic and contain no PHI
+- [x] Add `PatientIdentityMatcherTests` for MRN and name+DOB scenarios
+- [x] Add `PatientDocumentMergePlannerTests` for document scoping and ordering
+- [x] Update worker job schema validation tests to cover patient-merge job payload shape
+- [x] Ensure all test fixtures are synthetic and contain no PHI

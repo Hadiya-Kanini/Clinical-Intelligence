@@ -55,7 +55,7 @@ Because the current UI test setup focuses on security/visual specs, this task us
 - [Regression] Ensure tests do not rely on hard-coded colors; assert against variant classes and label text.
 
 ## Implementation Checklist
-- [ ] Create Patient 360 test folder and add `dataStatusIndicators.test.tsx`
-- [ ] Add unit tests for `DataStatusBadge` for all status values
-- [ ] Add optional integration-level assertion for Patient 360 extracted-data UI once available
-- [ ] Ensure tests assert label text (not color-only)
+- [x] Create Patient 360 test folder and add `dataStatusIndicators.test.tsx`
+- [x] Add unit tests for `DataStatusBadge` for all status values
+- [x] Add optional integration-level assertion for Patient 360 extracted-data UI once available
+- [x] Ensure tests assert label text (not color-only)

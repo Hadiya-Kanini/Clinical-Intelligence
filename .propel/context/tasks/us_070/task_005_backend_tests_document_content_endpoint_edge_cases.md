@@ -51,7 +51,7 @@ This task focuses on tests only (no feature work):
 - [Tests] All endpoint edge-case tests pass and prevent regressions on error codes.
 
 ## Implementation Checklist
-- [ ] Add unauthenticated (401) coverage for document content endpoint
-- [ ] Add missing document (404) coverage
-- [ ] Add deleted document (404) coverage
-- [ ] Add success response header assertions (content-type, filename)
+- [x] Add unauthenticated (401) coverage for document content endpoint
+- [x] Add missing document (404) coverage
+- [x] Add deleted document (404) coverage
+- [x] Add success response header assertions (content-type, filename)

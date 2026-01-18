@@ -75,9 +75,9 @@ Enable chunk+embedding persistence in PostgreSQL using pgvector by wiring up the
 - [Regression] Run `BaselineSchemaMigrationValidationTests` to confirm schema contracts.
 
 ## Implementation Checklist
-- [ ] Re-enable pgvector extension usage in EF model (`HasPostgresExtension("vector")`)
-- [ ] Re-enable `DocumentChunk` DbSet + mapping and validate column types and max lengths
-- [ ] Add dedupe constraint on `(DocumentId, ChunkHash)`
-- [ ] Create a migration that adds `document_chunks` and required indexes
-- [ ] Add HNSW index for `Embedding` using cosine ops with recommended parameters
-- [ ] Validate schema via test suite + `scripts/db/validate_pgvector_hnsw.sql`
+- [x] Re-enable pgvector extension usage in EF model (`HasPostgresExtension("vector")`)
+- [x] Re-enable `DocumentChunk` DbSet + mapping and validate column types and max lengths
+- [x] Add dedupe constraint on `(DocumentId, ChunkHash)`
+- [x] Create a migration that adds `document_chunks` and required indexes
+- [x] Add HNSW index for `Embedding` using cosine ops with recommended parameters
+- [x] Validate schema via test suite + `scripts/db/validate_pgvector_hnsw.sql`

@@ -63,7 +63,7 @@ Implement backend retrieval semantics for Patient 360 so that the API only retur
 - [API/Unit] Citation fields in response match persisted values.
 
 ## Implementation Checklist
-- [ ] Define Patient 360 response contract including entity citations
-- [ ] Implement query aggregation and grounding filter in backend
-- [ ] Add endpoint wiring and authorization as appropriate
-- [ ] Add tests for grounded-only response behavior
+- [x] Define Patient 360 response contract including entity citations
+- [x] Implement query aggregation and grounding filter in backend
+- [x] Add endpoint wiring and authorization as appropriate
+- [x] Add tests for grounded-only response behavior

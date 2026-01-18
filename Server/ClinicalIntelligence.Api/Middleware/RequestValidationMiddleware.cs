@@ -33,9 +33,10 @@ public class RequestValidationMiddleware
     /// <returns>A task representing the middleware execution.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
-        // Skip validation for health checks and Swagger
+        // Skip validation for health checks, Swagger, and upload endpoints
         if (context.Request.Path.StartsWithSegments("/health") || 
-            context.Request.Path.StartsWithSegments("/swagger"))
+            context.Request.Path.StartsWithSegments("/swagger") ||
+            context.Request.Path.StartsWithSegments("/api/v1/documents/upload"))
         {
             await _next(context);
             return;

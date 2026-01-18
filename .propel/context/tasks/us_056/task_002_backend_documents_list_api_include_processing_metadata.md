@@ -70,8 +70,8 @@ Because the API currently uses minimal endpoints in `Program.cs`, this task focu
 - Validate query does not issue per-document queries (review SQL logging or use EF query inspection)
 
 ## Implementation Checklist
-- [ ] Add typed response contracts for document list + processing metadata
-- [ ] Implement `GET /api/v1/documents` minimal API endpoint
-- [ ] Join latest `ProcessingJob` per document and map to response DTOs
-- [ ] Ensure failed jobs surface a safe `errorMessage` and long messages are truncated
-- [ ] Add basic automated test coverage (or defer to dedicated test task if preferred)
+- [x] Add typed response contracts for document list + processing metadata
+- [x] Implement `GET /api/v1/documents` minimal API endpoint
+- [x] Join latest `ProcessingJob` per document and map to response DTOs
+- [x] Ensure failed jobs surface a safe `errorMessage` and long messages are truncated
+- [x] Add basic automated test coverage (or defer to dedicated test task if preferred)

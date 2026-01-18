@@ -67,7 +67,7 @@ This task focuses on validating:
 - Confirm tests validate both data persistence and API response behavior.
 
 ## Implementation Checklist
-- [ ] Add writer persistence tests for start/complete/fail flows
-- [ ] Add endpoint integration tests for `GET /api/v1/documents`
-- [ ] Seed failed+completed cases and assert error surfacing rules
-- [ ] Ensure tests do not require external services beyond PostgreSQL (skip if not configured)
+- [x] Add writer persistence tests for start/complete/fail flows
+- [x] Add endpoint integration tests for `GET /api/v1/documents`
+- [x] Seed failed+completed cases and assert error surfacing rules
+- [x] Ensure tests do not require external services beyond PostgreSQL (skip if not configured)

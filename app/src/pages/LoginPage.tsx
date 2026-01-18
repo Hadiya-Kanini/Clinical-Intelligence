@@ -8,7 +8,7 @@ import type { AppDispatch, RootState } from '../store'
 
 export default function LoginPage(): JSX.Element {
   const dispatch = useDispatch<AppDispatch>()
-  const { isAuthenticated, isLoading: authLoading } = useSelector((state: RootState) => state.auth)
+  const { isAuthenticated, user, isLoading: authLoading } = useSelector((state: RootState) => state.auth)
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,12 +35,19 @@ export default function LoginPage(): JSX.Element {
   const lockoutTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Redirect to dashboard if already authenticated via Redux state
+    // Redirect based on user role if already authenticated via Redux state
     if (isAuthenticated) {
-      const from = location.state?.from?.pathname || '/dashboard'
+      let targetRoute = '/dashboard'
+      
+      // If user is admin, redirect to admin dashboard
+      if (user?.role === 'admin') {
+        targetRoute = '/admin'
+      }
+      
+      const from = location.state?.from?.pathname || targetRoute
       navigate(from, { replace: true })
     }
-  }, [isAuthenticated, navigate, location])
+  }, [isAuthenticated, user, navigate, location])
 
   // Check for logout redirect state (success or expired)
   useEffect(() => {
@@ -210,11 +217,17 @@ export default function LoginPage(): JSX.Element {
     setAccountDeactivatedMessage('')
     
     try {
-      await dispatch(loginAsync({ email, password })).unwrap()
+      const result = await dispatch(loginAsync({ email, password })).unwrap()
       
-      // Login successful - Redux state will be updated automatically
-      // The useEffect hook will handle navigation
-      const from = location.state?.from?.pathname || '/dashboard'
+      // Login successful - implement role-based redirection
+      let targetRoute = '/dashboard'
+      
+      // Check if user is admin and redirect accordingly
+      if (result.user?.role === 'admin') {
+        targetRoute = '/admin'
+      }
+      
+      const from = location.state?.from?.pathname || targetRoute
       navigate(from, { replace: true })
       
     } catch (err: any) {

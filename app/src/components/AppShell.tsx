@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import type { RootState } from '../store'
-import { api } from '../lib/apiClient'
+import { useDispatch, useSelector } from 'react-redux'
+import { logoutAsync } from '../store/slices/authSlice'
+import type { RootState, AppDispatch } from '../store'
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout'
 import Button from './ui/Button'
 import Modal from './ui/Modal'
@@ -24,6 +24,7 @@ function getTitle(pathname: string): string {
 }
 
 export default function AppShell({ children }: AppShellProps): JSX.Element {
+  const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useSelector((state: RootState) => state.auth)
@@ -73,46 +74,20 @@ export default function AppShell({ children }: AppShellProps): JSX.Element {
     setIsLoggingOut(true)
 
     try {
-      console.log('Attempting logout...')
-      const result = await api.post('/api/v1/auth/logout')
-      console.log('Logout result:', result)
+      // Use Redux logout action for proper state management
+      await dispatch(logoutAsync()).unwrap()
       
-      // Immediate redirect test
-      console.log('Logout successful - redirecting immediately...')
-      window.location.href = '/login'
-      return
+      // Close modal and navigate to login
+      setConfirmLogoutOpen(false)
+      navigate('/login', { replace: true, state: { logout: 'success' } })
       
     } catch (error) {
       console.error('Logout error:', error)
-      // Even if API call fails, continue with local cleanup
-    } finally {
-      console.log('Starting cleanup and navigation...')
-      try {
-        console.log('Clearing localStorage...')
-        window.localStorage.removeItem('ci_auth')
-        window.localStorage.removeItem('ci_token')
-        window.localStorage.removeItem('ci_user_role')
-        console.log('LocalStorage cleared')
-      } catch (error) {
-        console.error('Error clearing localStorage:', error)
-      }
-
-      console.log('Setting loading state to false...')
-      setIsLoggingOut(false)
-      
-      console.log('Closing logout modal...')
+      // Even if logout fails, still navigate to login
       setConfirmLogoutOpen(false)
-      
-      console.log('Navigating to login page...')
-      try {
-        navigate('/login', { replace: true, state: { logout: 'success' } })
-        console.log('Navigation called successfully')
-      } catch (error) {
-        console.error('Navigation error:', error)
-        // Fallback: use window.location
-        console.log('Using fallback navigation...')
-        window.location.href = '/login'
-      }
+      navigate('/login', { replace: true, state: { logout: 'success' } })
+    } finally {
+      setIsLoggingOut(false)
     }
   }
 
@@ -144,10 +119,10 @@ export default function AppShell({ children }: AppShellProps): JSX.Element {
             Document list
           </NavLink>
           <NavLink
-            to="/patients/demo"
+            to="/patients"
             className={({ isActive }) => `ui-shell__navLink${isActive ? ' is-active' : ''}`}
           >
-            Patient 360 view
+            Patients
           </NavLink>
           <NavLink to="/export" className={({ isActive }) => `ui-shell__navLink${isActive ? ' is-active' : ''}`}>
             Export

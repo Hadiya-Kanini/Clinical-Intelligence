@@ -71,8 +71,8 @@ Implement PDF text extraction in the AI worker using LangChain `PyPDFLoader`, pr
 - Verify missing `coordinates` does not fail extraction and is represented as null/absent.
 
 ## Implementation Checklist
-- [ ] Add/verify worker dependencies for LangChain PDF loading
-- [ ] Implement `ExtractedTextResult` + `ExtractedTextSegment` models (page/section/coordinates)
-- [ ] Implement `PyPDFLoader` extraction and normalization into segments
-- [ ] Wire extraction routing in `worker/main.py` based on `payload.mime_type`
-- [ ] Add unit tests for PDF extraction behavior and metadata preservation
+- [x] Add/verify worker dependencies for LangChain PDF loading
+- [x] Implement `ExtractedTextResult` + `ExtractedTextSegment` models (page/section/coordinates)
+- [x] Implement `PyPDFLoader` extraction and normalization into segments
+- [x] Wire extraction routing in `worker/main.py` based on `payload.mime_type`
+- [x] Add unit tests for PDF extraction behavior and metadata preservation

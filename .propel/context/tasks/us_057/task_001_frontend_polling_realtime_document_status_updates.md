@@ -66,12 +66,12 @@ Estimated Effort: 6 hours
 - [Manual/UI] Confirm filtering/search continues to work while polling is active.
 
 ## Implementation Checklist
-- [ ] Create `useDocumentListPolling` hook with 5s interval and effect cleanup
-- [ ] Ensure polling does not overlap requests (single in-flight request guard)
-- [ ] Enable polling only when any document is `Pending`/`Processing`
-- [ ] Wire `DocumentListPage` to render from the latest polled API data
-- [ ] Verify status badge updates in-place without page reload
-- [ ] Verify polling stops when all documents are terminal
+- [x] Create `useDocumentListPolling` hook with 5s interval and effect cleanup
+- [x] Ensure polling does not overlap requests (single in-flight request guard)
+- [x] Enable polling only when any document is `Pending`/`Processing`
+- [x] Wire `DocumentListPage` to render from the latest polled API data
+- [x] Verify status badge updates in-place without page reload
+- [x] Verify polling stops when all documents are terminal
 
 ---
 

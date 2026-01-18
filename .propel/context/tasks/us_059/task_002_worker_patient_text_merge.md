@@ -62,9 +62,9 @@ Implement patient-level multi-document text merge logic in the AI Worker. The me
 - Verify merge logic scales linearly with number of segments (no repeated string concatenation in loops).
 
 ## Implementation Checklist
-- [ ] Create `worker/pipeline/patient_text_merge.py` with a merge function returning a merged segment stream
-- [ ] Define and enforce deterministic ordering rules across documents
-- [ ] Preserve per-segment provenance fields required for citations
-- [ ] Add boundary representation that downstream chunking can use to maintain source references
-- [ ] Add unit tests for multi-document merge behavior
-- [ ] Add unit tests for large input handling (performance-focused, non-flaky)
+- [x] Create `worker/pipeline/patient_text_merge.py` with a merge function returning a merged segment stream
+- [x] Define and enforce deterministic ordering rules across documents
+- [x] Preserve per-segment provenance fields required for citations
+- [x] Add boundary representation that downstream chunking can use to maintain source references
+- [x] Add unit tests for multi-document merge behavior
+- [x] Add unit tests for large input handling (performance-focused, non-flaky)

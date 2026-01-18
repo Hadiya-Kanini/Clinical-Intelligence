@@ -69,8 +69,8 @@ This task focuses on creating a clean application boundary (interface + implemen
 - Validate that updates use UTC and do not throw when `StartedAt` is missing (compute duration safely)
 
 ## Implementation Checklist
-- [ ] Create `IProcessingJobMetadataWriter` interface covering start/complete/fail + retry updates
-- [ ] Implement `DbProcessingJobMetadataWriter` with consistent status/timestamp handling
-- [ ] Register writer in DI (`Program.cs`)
-- [ ] Add defensive handling for missing start times and very long error messages
-- [ ] Ensure error persistence does not store sensitive data by default
+- [x] Create `IProcessingJobMetadataWriter` interface covering start/complete/fail + retry updates
+- [x] Implement `DbProcessingJobMetadataWriter` with consistent status/timestamp handling
+- [x] Register writer in DI (`Program.cs`)
+- [x] Add defensive handling for missing start times and very long error messages
+- [x] Ensure error persistence does not store sensitive data by default

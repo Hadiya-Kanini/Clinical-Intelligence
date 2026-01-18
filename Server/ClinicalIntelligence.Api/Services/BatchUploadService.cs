@@ -14,7 +14,7 @@ public interface IBatchUploadService
     /// </summary>
     Task<BatchUploadResponse> ProcessBatchAsync(
         IFormFileCollection files,
-        Guid patientId,
+        Guid? patientId,
         Guid uploadedByUserId,
         CancellationToken ct);
 }
@@ -43,7 +43,7 @@ public class BatchUploadService : IBatchUploadService
 
     public async Task<BatchUploadResponse> ProcessBatchAsync(
         IFormFileCollection files,
-        Guid patientId,
+        Guid? patientId,
         Guid uploadedByUserId,
         CancellationToken ct)
     {

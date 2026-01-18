@@ -33,9 +33,11 @@ public class SessionTrackingMiddleware
     {
         _logger.LogInformation("SessionTracking: Middleware invoked for path: {Path}", context.Request.Path);
         
-        // Skip session tracking for Swagger endpoints, health checks, and auth endpoints
+        // Skip session tracking for Swagger endpoints, health checks, and specific auth endpoints
         var path = context.Request.Path.Value?.ToLowerInvariant();
-        if (path != null && (path.StartsWith("/swagger") || path.StartsWith("/health") || path == "/" || path.StartsWith("/api/v1/auth")))
+        if (path != null && (path.StartsWith("/swagger") || path.StartsWith("/health") || path == "/" || 
+            path == "/api/v1/auth/login" || path == "/api/v1/auth/forgot-password" || 
+            path.StartsWith("/api/v1/auth/reset-password")))
         {
             _logger.LogDebug("SessionTracking: Skipping - path excluded: {Path}", context.Request.Path);
             await _next(context);
@@ -117,6 +119,11 @@ public class SessionTrackingMiddleware
                 _logger.LogInformation(
                     "Session inactivity timeout: {SessionId}, LastActivity: {LastActivity}, Threshold: {Threshold}",
                     sessionId, lastActivity, inactivityThreshold);
+                
+                // Mark session as revoked instead of immediately returning 401
+                session.IsRevoked = true;
+                await dbContext.SaveChangesAsync();
+                
                 await ApiErrorResults.Unauthorized(
                     code: "session_expired",
                     message: "Session expired due to inactivity. Please log in again."
@@ -176,8 +183,12 @@ public class SessionTrackingMiddleware
             // Update LastActivityAt for valid session (sliding window)
             session.LastActivityAt = DateTime.UtcNow;
             
-            // Optionally slide ExpiresAt forward to maintain inactivity timeout window
-            session.ExpiresAt = DateTime.UtcNow.AddMinutes(SessionInactivityTimeoutMinutes);
+            // Don't modify ExpiresAt - let JWT handle its own expiration
+            // Only update if we're close to expiration to extend the session
+            if (session.ExpiresAt.ToUniversalTime() <= DateTime.UtcNow.AddMinutes(5))
+            {
+                session.ExpiresAt = DateTime.UtcNow.AddMinutes(SessionInactivityTimeoutMinutes);
+            }
             
             await dbContext.SaveChangesAsync();
 

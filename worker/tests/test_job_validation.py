@@ -22,7 +22,12 @@ from tests.fixtures.job_payloads import (
     JOB_PAYLOAD_MALFORMED_UUID,
     JOB_PAYLOAD_EMPTY_DOCUMENT_ID,
     JOB_PAYLOAD_WITH_EXTRA_FIELDS,
-    JOB_PAYLOAD_WITH_NESTED_PAYLOAD
+    JOB_PAYLOAD_WITH_NESTED_PAYLOAD,
+    VALID_JOB_PAYLOAD_V11_PDF_EXTRACTION,
+    VALID_JOB_PAYLOAD_V11_DOCX_EXTRACTION,
+    VALID_JOB_PAYLOAD_V11_PATIENT_MERGE,
+    VALID_JOB_PAYLOAD_V11_PATIENT_MERGE_WITH_IDENTIFIERS,
+    VALID_JOB_PAYLOAD_V11_FULL
 )
 
 
@@ -191,6 +196,51 @@ class TestJobValidation:
         Then: No exception raised
         """
         validate_job_payload(JOB_PAYLOAD_WITH_NESTED_PAYLOAD)
+
+    def test_v11_pdf_extraction_payload_passes_validation(self):
+        """V1.1: Job payload with PDF extraction fields passes validation.
+        
+        Given: Worker initialized with v1.1 schema
+        When: validate_job_payload with storage_path and mime_type for PDF
+        Then: No exception raised
+        """
+        validate_job_payload(VALID_JOB_PAYLOAD_V11_PDF_EXTRACTION)
+
+    def test_v11_docx_extraction_payload_passes_validation(self):
+        """V1.1: Job payload with DOCX extraction fields passes validation.
+        
+        Given: Worker initialized with v1.1 schema
+        When: validate_job_payload with storage_path and mime_type for DOCX
+        Then: No exception raised
+        """
+        validate_job_payload(VALID_JOB_PAYLOAD_V11_DOCX_EXTRACTION)
+
+    def test_v11_patient_merge_payload_passes_validation(self):
+        """V1.1: Job payload with patient merge fields passes validation.
+        
+        Given: Worker initialized with v1.1 schema
+        When: validate_job_payload with patient_id and document_ids
+        Then: No exception raised
+        """
+        validate_job_payload(VALID_JOB_PAYLOAD_V11_PATIENT_MERGE)
+
+    def test_v11_patient_merge_with_identifiers_passes_validation(self):
+        """V1.1: Job payload with patient identifiers passes validation.
+        
+        Given: Worker initialized with v1.1 schema
+        When: validate_job_payload with patient_identifiers (mrn, name, dob)
+        Then: No exception raised
+        """
+        validate_job_payload(VALID_JOB_PAYLOAD_V11_PATIENT_MERGE_WITH_IDENTIFIERS)
+
+    def test_v11_full_payload_passes_validation(self):
+        """V1.1: Job payload with all v1.1 fields passes validation.
+        
+        Given: Worker initialized with v1.1 schema
+        When: validate_job_payload with all extraction and merge fields
+        Then: No exception raised
+        """
+        validate_job_payload(VALID_JOB_PAYLOAD_V11_FULL)
 
 
 if __name__ == "__main__":

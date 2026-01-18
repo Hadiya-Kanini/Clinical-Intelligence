@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EntityCategoryRegistry",
+  "description": "Schema for the entity category registry defining extraction categories as data.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "description": "Version of the category registry schema.",
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "categories": {
+      "description": "List of entity categories for extraction.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/Category" },
+      "minItems": 1
+    }
+  },
+  "required": ["schema_version", "categories"],
+  "definitions": {
+    "Category": {
+      "type": "object",
+      "properties": {
+        "category_id": {
+          "description": "Stable identifier used as entity_group_name. Must be unique.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "display_name": {
+          "description": "Human-readable display name for the category.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "description": {
+          "description": "Description of what entities belong to this category.",
+          "type": "string",
+          "maxLength": 500
+        },
+        "status": {
+          "description": "Category status: active or deprecated.",
+          "type": "string",
+          "enum": ["active", "deprecated"],
+          "default": "active"
+        },
+        "aliases": {
+          "description": "Optional alternate IDs that map to this canonical category.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "default": []
+        },
+        "recommended_entity_names": {
+          "description": "Recommended entity_name values for this category.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "default": []
+        }
+      },
+      "required": ["category_id", "display_name", "status"]
+    }
+  }
+}

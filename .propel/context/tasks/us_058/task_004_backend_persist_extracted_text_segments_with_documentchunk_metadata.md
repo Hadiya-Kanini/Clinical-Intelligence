@@ -68,8 +68,8 @@ Implement a backend persistence boundary for extracted text segments so the syst
 - Verify that extracted text is persisted without requiring embeddings.
 
 ## Implementation Checklist
-- [ ] Define `IExtractedTextSegmentWriter` interface for persisting extracted segments
-- [ ] Implement `DbExtractedTextSegmentWriter` using EF Core
-- [ ] Enable/confirm `DocumentChunk` persistence path in `ApplicationDbContext`
-- [ ] Register writer in DI (`Program.cs`)
-- [ ] Add tests validating metadata preservation and safe handling of missing coordinates
+- [x] Define `IExtractedTextSegmentWriter` interface for persisting extracted segments
+- [x] Implement `DbExtractedTextSegmentWriter` using EF Core
+- [x] Enable/confirm `DocumentChunk` persistence path in `ApplicationDbContext`
+- [x] Register writer in DI (`Program.cs`)
+- [x] Add tests validating metadata preservation and safe handling of missing coordinates

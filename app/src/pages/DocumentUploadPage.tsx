@@ -5,7 +5,7 @@ import Button from '../components/ui/Button'
 import ProgressBar from '../components/ui/ProgressBar'
 import Card from '../components/ui/Card'
 import ValidationError, { type ValidationErrorInfo, type ValidationErrorType, getValidationError } from '../components/ui/ValidationError'
-import { uploadDocumentBatch } from '../lib/documentApi'
+import { uploadDocumentBatch, uploadDocument } from '../lib/documentApi'
 
 type UploadItem = {
   id: string
@@ -34,16 +34,15 @@ export default function DocumentUploadPage(): JSX.Element {
   const [items, setItems] = useState<UploadItem[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [globalError, setGlobalError] = useState('')
-  const [selectedPatientId, setSelectedPatientId] = useState<string>('')
   const dragCounter = useRef(0)
 
   const totalCount = items.length
 
   const canUpload = useMemo(() => {
-    const hasValidItems = items.some((i) => i.status === 'queued' || i.status === 'error' || i.status === 'cancelled')
-    const hasPatientId = selectedPatientId !== ''
-    return hasValidItems && hasPatientId
-  }, [items, selectedPatientId])
+    // Allow upload as long as there are valid items queued
+    // Patient information will be extracted from documents automatically
+    return items.some((i) => i.status === 'queued' || i.status === 'error' || i.status === 'cancelled')
+  }, [items])
 
   const invalidItemsCount = useMemo(() => items.filter((i) => i.status === 'validation_failed').length, [items])
 
@@ -193,12 +192,12 @@ export default function DocumentUploadPage(): JSX.Element {
     setGlobalError('')
 
     const queue = items.filter((i) => i.status === 'queued' || i.status === 'error' || i.status === 'cancelled')
-    if (queue.length === 0 || !selectedPatientId) return
-
-    // Get all valid files for batch upload
-    const validFiles = queue.map(item => item.file)
+    if (queue.length === 0) return
     
-    // Create abort controller for the batch
+    // Use empty string for patient ID (backend will extract patient from document)
+    const patientIdForUpload = ''
+
+    // Create abort controller for the upload(s)
     const abortController = new AbortController()
     const startTime = Date.now()
 
@@ -211,75 +210,98 @@ export default function DocumentUploadPage(): JSX.Element {
       )
     )
 
-    // Simulate progress during upload (since batch API doesn't provide progress)
-    const progressInterval = setInterval(() => {
-      setItems((current) =>
-        current.map((i) => {
-          if (i.status === 'uploading' && i.progress < 90) {
-            return { ...i, progress: Math.min(i.progress + 10, 90), lastProgressTime: Date.now() }
-          }
-          return i
-        })
-      )
-    }, 200)
-
     try {
-      // Use batch upload API
-      const result = await uploadDocumentBatch(selectedPatientId, validFiles, abortController.signal)
-      
-      // Clear progress simulation
-      clearInterval(progressInterval)
-      
-      if (result.success) {
-        const batchResponse = result.data
+      if (queue.length === 1) {
+        // Single file upload
+        const file = queue[0].file
+        const result = await uploadDocument(patientIdForUpload, file, abortController.signal)
         
-        // Update items based on batch response
-        setItems((current) =>
-          current.map((i) => {
-            const queueItem = queue.find(q => q.id === i.id)
-            if (!queueItem) return i
-            
-            const fileResult = batchResponse.fileResults.find(fr => fr.fileName === queueItem.file.name)
-            
-            if (fileResult) {
-              if (fileResult.isAccepted) {
-                return { 
-                  ...i, 
-                  status: 'success', 
-                  progress: 100, 
-                  abortController: undefined, 
-                  isStalled: false,
-                  documentId: fileResult.documentId,
-                  uploadResponse: fileResult
-                }
-              } else {
-                return { 
-                  ...i, 
-                  status: 'error', 
-                  error: fileResult.rejectionReason || fileResult.validationErrors.join(', ') || 'Upload failed',
-                  abortController: undefined, 
-                  isStalled: false 
+        if (result.success) {
+          setItems((current) =>
+            current.map((i) =>
+              i.id === queue[0].id
+                ? { ...i, status: 'success', progress: 100, abortController: undefined, isStalled: false, uploadResponse: result.data }
+                : i
+            )
+          )
+        } else {
+          setItems((current) =>
+            current.map((i) =>
+              i.id === queue[0].id
+                ? { ...i, status: 'error', error: result.error, abortController: undefined, isStalled: false }
+                : i
+            )
+          )
+        }
+      } else {
+        // Multiple files - use batch upload
+        const validFiles = queue.map(item => item.file)
+        
+        // Simulate progress during upload (since batch API doesn't provide progress)
+        const progressInterval = setInterval(() => {
+          setItems((current) =>
+            current.map((i) => {
+              if (i.status === 'uploading' && i.progress < 90) {
+                return { ...i, progress: Math.min(i.progress + 10, 90), lastProgressTime: Date.now() }
+              }
+              return i
+            })
+          )
+        }, 200)
+
+        const result = await uploadDocumentBatch(patientIdForUpload, validFiles, abortController.signal)
+        
+        // Clear progress simulation
+        clearInterval(progressInterval)
+        
+        if (result.success) {
+          const batchResponse = result.data
+          
+          // Update items based on batch response
+          setItems((current) =>
+            current.map((i) => {
+              const queueItem = queue.find(q => q.id === i.id)
+              if (!queueItem) return i
+              
+              const fileResult = batchResponse.fileResults.find(fr => fr.fileName === queueItem.file.name)
+              
+              if (fileResult) {
+                if (fileResult.isAccepted) {
+                  return { 
+                    ...i, 
+                    status: 'success', 
+                    progress: 100, 
+                    abortController: undefined, 
+                    isStalled: false,
+                    documentId: fileResult.documentId,
+                    uploadResponse: fileResult
+                  }
+                } else {
+                  return { 
+                    ...i, 
+                    status: 'error', 
+                    error: fileResult.rejectionReason || fileResult.validationErrors.join(', ') || 'Upload failed',
+                    abortController: undefined, 
+                    isStalled: false 
+                  }
                 }
               }
-            }
-            
-            return { ...i, status: 'error', error: 'File not found in batch response', abortController: undefined, isStalled: false }
-          })
-        )
-      } else {
-        // Handle API error
-        setItems((current) =>
-          current.map((i) =>
-            queue.some(q => q.id === i.id)
-              ? { ...i, status: 'error', error: result.error, abortController: undefined, isStalled: false }
-              : i
+              
+              return { ...i, status: 'error', error: 'File not found in batch response', abortController: undefined, isStalled: false }
+            })
           )
-        )
+        } else {
+          // Handle API error
+          setItems((current) =>
+            current.map((i) =>
+              queue.some(q => q.id === i.id)
+                ? { ...i, status: 'error', error: result.error, abortController: undefined, isStalled: false }
+                : i
+            )
+          )
+        }
       }
     } catch (err) {
-      // Clear progress simulation
-      clearInterval(progressInterval)
-      
       const isCancelled = abortController.signal.aborted
       
       if (!isCancelled) {
@@ -313,24 +335,22 @@ export default function DocumentUploadPage(): JSX.Element {
         headerRight={<div style={{ color: 'var(--color-text-muted)' }}>{totalCount} selected</div>}
       >
         <div style={{ marginBottom: 'var(--space-4)' }}>
-          <label htmlFor="patient-id" style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
-            Patient ID *
-          </label>
-          <input
-            id="patient-id"
-            type="text"
-            value={selectedPatientId}
-            onChange={(e) => setSelectedPatientId(e.target.value)}
-            placeholder="Enter patient ID"
-            style={{
-              width: '100%',
-              padding: 'var(--space-2)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: 'var(--font-size-body)',
-            }}
-            required
-          />
+          <div style={{ 
+            padding: 'var(--space-3)', 
+            background: 'var(--color-primary-50)', 
+            borderRadius: 'var(--radius-md)',
+            marginBottom: 'var(--space-3)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="var(--color-primary-500)">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <span style={{ fontWeight: 600, color: 'var(--color-primary-700)' }}>Patient Information Extraction</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 'var(--font-size-body-small)', color: 'var(--color-primary-700)' }}>
+              Patient information will be automatically extracted from your documents. No need to enter patient ID manually.
+            </p>
+          </div>
         </div>
         <div
           data-testid="drop-zone"
@@ -380,7 +400,6 @@ export default function DocumentUploadPage(): JSX.Element {
             onClick={() => {
               setItems([])
               setGlobalError('')
-              setSelectedPatientId('')
             }}
             disabled={items.length === 0}
           >

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Alert from '../components/ui/Alert'
 import Badge from '../components/ui/Badge'
@@ -6,6 +6,8 @@ import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import Modal from '../components/ui/Modal'
 import Table from '../components/ui/Table'
+import { getPatient360, type Patient360Response } from '../lib/patientApi'
+import Patient360View from '../components/Patient360View'
 
 type SourceCitation = {
   documentId: string
@@ -36,66 +38,45 @@ export default function Patient360Page(): JSX.Element {
   const { patientId } = useParams()
 
   const [activeTab, setActiveTab] = useState<'overview' | 'codes'>('overview')
-  const [conflicts, setConflicts] = useState<Conflict[]>([
-    {
-      id: 'C-01',
-      field: 'Allergy: Penicillin',
-      leftValue: 'No',
-      rightValue: 'Yes (rash)',
-      leftCitation: {
-        documentId: 'DOC-001',
-        documentName: 'Admission_Note.pdf',
-        pageNumber: 2,
-        section: 'Allergies',
-        sourceText: 'No known drug allergies.',
-      },
-      rightCitation: {
-        documentId: 'DOC-002',
-        documentName: 'Discharge_Summary.pdf',
-        pageNumber: 1,
-        section: 'Allergies',
-        sourceText: 'Penicillin allergy - rash reported.',
-      },
-    },
-  ])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [patientData, setPatientData] = useState<Patient360Response | null>(null)
+  const [conflicts, setConflicts] = useState<Conflict[]>([])
 
-  const [codes, setCodes] = useState<CodeSuggestion[]>([
-    {
-      id: 'S-01',
-      code: 'I10',
-      description: 'Essential (primary) hypertension',
-      status: 'pending',
-      citation: {
-        documentId: 'DOC-001',
-        documentName: 'Admission_Note.pdf',
-        pageNumber: 3,
-        section: 'Diagnoses',
-        sourceText: 'Patient has history of hypertension, currently on lisinopril.',
-      },
-    },
-    {
-      id: 'S-02',
-      code: 'E11.9',
-      description: 'Type 2 diabetes mellitus without complications',
-      status: 'pending',
-      citation: {
-        documentId: 'DOC-002',
-        documentName: 'Discharge_Summary.pdf',
-        pageNumber: 2,
-        section: 'Medical History',
-        sourceText: 'Type 2 diabetes mellitus, well-controlled on metformin.',
-      },
-    },
-  ])
+  const [codes, setCodes] = useState<CodeSuggestion[]>([])
+
+  // Fetch patient data on mount
+  useEffect(() => {
+    async function fetchPatientData() {
+      if (!patientId) {
+        setError('No patient ID provided')
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError(null)
+
+      const result = await getPatient360(patientId)
+
+      if (result.success) {
+        setPatientData(result.data)
+        setLoading(false)
+      } else {
+        setError(result.error.message)
+        setLoading(false)
+      }
+    }
+
+    fetchPatientData()
+  }, [patientId])
 
   const [conflictModalOpen, setConflictModalOpen] = useState(false)
   const [selectedConflict, setSelectedConflict] = useState<Conflict | null>(null)
   const [selectedResolution, setSelectedResolution] = useState<'left' | 'right' | ''>('')
 
   const exportBlocked = conflicts.length > 0
-
   const conflictCount = conflicts.length
-
   const pendingCodeCount = useMemo(() => codes.filter((c) => c.status === 'pending').length, [codes])
 
   function openResolve(conflict: Conflict): void {
@@ -112,87 +93,123 @@ export default function Patient360Page(): JSX.Element {
     setConflictModalOpen(false)
   }
 
-  return (
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <div>Loading patient data...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+        <Alert variant="error">{error}</Alert>
+      </div>
+    )
+  }
+
+  if (!patientData) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+        <Alert variant="error">Patient not found</Alert>
+      </div>
+    )
+  }
+
+  const renderRightPane = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-      {exportBlocked ? (
-        <Alert variant="warning">{conflictCount} conflict(s) must be resolved before export.</Alert>
-      ) : (
-        <Alert variant="success">All conflicts resolved. You can finalize and export.</Alert>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+          {exportBlocked ? (
+            <Badge variant="warning">{conflictCount} conflict(s) must be resolved</Badge>
+          ) : (
+            <Badge variant="success">All conflicts resolved</Badge>
+          )}
+        </div>
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
-        <Card title="Source document">
-          <div
-            style={{
-              height: 520,
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--color-neutral-50)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-text-muted)',
-            }}
-          >
-            PDF Viewer Placeholder (patient {patientId || 'unknown'})
+      <Card
+        title="Patient profile"
+        headerRight={
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <Badge variant={exportBlocked ? 'warning' : 'success'}>{exportBlocked ? 'Conflicts' : 'Verified'}</Badge>
+            <Badge variant="info">Pending codes: {pendingCodeCount}</Badge>
           </div>
-        </Card>
+        }
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+          <div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-body-small)' }}>MRN</div>
+            <div style={{ fontWeight: 600 }}>{patientData.mrn || 'N/A'}</div>
+          </div>
+          <div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-body-small)' }}>DOB</div>
+            <div style={{ fontWeight: 600 }}>{patientData.dob || 'N/A'}</div>
+          </div>
+          <div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-body-small)' }}>Name</div>
+            <div style={{ fontWeight: 600 }}>{patientData.name || 'N/A'}</div>
+          </div>
+          <div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-body-small)' }}>Gender</div>
+            <div style={{ fontWeight: 600 }}>{'N/A'}</div>
+          </div>
+        </div>
+      </Card>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-          <Card
-            title="Patient profile"
-            headerRight={
-              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                <Badge variant={exportBlocked ? 'warning' : 'success'}>{exportBlocked ? 'Conflicts' : 'Verified'}</Badge>
-                <Badge variant="info">Pending codes: {pendingCodeCount}</Badge>
-              </div>
-            }
-          >
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-              <div>
-                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-body-small)' }}>MRN</div>
-                <div style={{ fontWeight: 600 }}>MRN-0001</div>
-              </div>
-              <div>
-                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-body-small)' }}>DOB</div>
-                <div style={{ fontWeight: 600 }}>1978-05-04</div>
-              </div>
-              <div>
-                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-body-small)' }}>Name</div>
-                <div style={{ fontWeight: 600 }}>Demo Patient</div>
-              </div>
-              <div>
-                <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-body-small)' }}>Sex</div>
-                <div style={{ fontWeight: 600 }}>F</div>
-              </div>
-            </div>
-          </Card>
-
-          <Card
-            title="Review"
-            headerRight={
-              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                <button
-                  type="button"
-                  className={`ui-shell__navLink${activeTab === 'overview' ? ' is-active' : ''}`}
-                  style={{ border: 0, background: 'transparent', cursor: 'pointer' }}
-                  onClick={() => setActiveTab('overview')}
-                >
-                  Data
-                </button>
-                <button
-                  type="button"
-                  className={`ui-shell__navLink${activeTab === 'codes' ? ' is-active' : ''}`}
-                  style={{ border: 0, background: 'transparent', cursor: 'pointer' }}
-                  onClick={() => setActiveTab('codes')}
-                >
-                  Codes
-                </button>
-              </div>
-            }
-          >
+      <Card
+        title="Review"
+        headerRight={
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <button
+              type="button"
+              className={`ui-shell__navLink${activeTab === 'overview' ? ' is-active' : ''}`}
+              style={{ border: 0, background: 'transparent', cursor: 'pointer' }}
+              onClick={() => setActiveTab('overview')}
+            >
+              Data
+            </button>
+            <button
+              type="button"
+              className={`ui-shell__navLink${activeTab === 'codes' ? ' is-active' : ''}`}
+              style={{ border: 0, background: 'transparent', cursor: 'pointer' }}
+              onClick={() => setActiveTab('codes')}
+            >
+              Codes
+            </button>
+          </div>
+        }
+      >
             {activeTab === 'overview' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                {/* Patient Profile Section */}
+                <Card title="Patient Profile">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-4)' }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 var(--space-2) 0', fontSize: 'var(--font-size-body-large)', fontWeight: 600 }}>Demographics</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                        <div><strong>Name:</strong> {patientData.name || 'N/A'}</div>
+                        <div><strong>MRN:</strong> {patientData.mrn || 'N/A'}</div>
+                        <div><strong>DOB:</strong> {patientData.dob || 'N/A'}</div>
+                        <div><strong>Contact:</strong> {patientData.contact || 'N/A'}</div>
+                        <div><strong>Address:</strong> {patientData.address || 'N/A'}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 var(--space-2) 0', fontSize: 'var(--font-size-body-large)', fontWeight: 600 }}>Document Information</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                        <div><strong>Total Documents:</strong> {patientData.documents.length}</div>
+                        <div><strong>Last Upload:</strong> {patientData.documents.length > 0 ? new Date(patientData.documents[0].uploadedAt).toLocaleDateString() : 'N/A'}</div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Clinical Content Sections - Using our new Patient360View component */}
+                <Patient360View patientId={patientId} />
+
+                {/* Conflicts Section */}
                 <Card title="Conflicts">
                   {conflicts.length === 0 ? (
                     <Alert variant="success">No conflicts detected.</Alert>
@@ -315,9 +332,12 @@ export default function Patient360Page(): JSX.Element {
               </div>
             )}
           </Card>
-        </div>
-      </div>
+    </div>
+  )
 
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      {renderRightPane()}
       <Modal
         open={conflictModalOpen}
         title="Resolve conflict"

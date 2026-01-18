@@ -5,9 +5,9 @@
   "type": "object",
   "properties": {
     "schema_version": {
-      "description": "The version of this entity output schema.",
+      "description": "The version of this entity output schema. Use '1.1' for grounded entities with required citations.",
       "type": "string",
-      "enum": ["1.0"]
+      "enum": ["1.0", "1.1"]
     },
     "document_id": {
       "description": "Identifier for the document processed.",
@@ -28,12 +28,29 @@
     "document_id",
     "extracted_entities"
   ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": { "const": "1.1" }
+        }
+      },
+      "then": {
+        "properties": {
+          "extracted_entities": {
+            "items": { "$ref": "#/definitions/GroundedExtractedEntity" }
+          }
+        }
+      }
+    }
+  ],
   "definitions": {
     "DocumentLocation": {
       "type": "object",
+      "description": "Location metadata for source citation.",
       "properties": {
         "page": { "type": "integer", "minimum": 1 },
-        "section": { "type": "string" },
+        "section": { "type": "string", "minLength": 1 },
         "coordinates": {
           "type": "object",
           "properties": {
@@ -46,6 +63,25 @@
         }
       }
     },
+    "GroundedDocumentLocation": {
+      "type": "object",
+      "description": "Required location metadata for grounded entities (schema_version 1.1).",
+      "properties": {
+        "page": { "type": "integer", "minimum": 1 },
+        "section": { "type": "string", "minLength": 1 },
+        "coordinates": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          },
+          "required": ["x", "y", "width", "height"]
+        }
+      },
+      "required": ["page", "section", "coordinates"]
+    },
     "Conflict": {
       "type": "object",
       "properties": {
@@ -57,6 +93,7 @@
     },
     "ExtractedEntity": {
       "type": "object",
+      "description": "Extracted entity for schema_version 1.0 (citations optional).",
       "properties": {
         "entity_group_name": { "type": "string" },
         "entity_name": { "type": "string" },
@@ -70,6 +107,27 @@
         }
       },
       "required": ["entity_group_name", "entity_name", "entity_value"]
+    },
+    "GroundedExtractedEntity": {
+      "type": "object",
+      "description": "Grounded extracted entity for schema_version 1.1 (citations required per FR-051, FR-056, TR-008).",
+      "properties": {
+        "entity_group_name": { "type": "string" },
+        "entity_name": { "type": "string" },
+        "entity_value": { "type": "string" },
+        "rationale": { "type": "string" },
+        "document_location": { "$ref": "#/definitions/GroundedDocumentLocation" },
+        "source_text": { 
+          "type": "string",
+          "minLength": 1,
+          "description": "Cited text from the source document. Required for grounded entities."
+        },
+        "conflicts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Conflict" }
+        }
+      },
+      "required": ["entity_group_name", "entity_name", "entity_value", "document_location", "source_text"]
     }
   }
 }

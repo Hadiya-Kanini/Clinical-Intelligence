@@ -62,8 +62,8 @@ Wire the chunking step into the worker processing pipeline so patient-level merg
 - Validate determinism and edge cases via repeatable unit tests.
 
 ## Implementation Checklist
-- [ ] Add pipeline wiring in `worker/main.py` to invoke merge + chunking
-- [ ] Implement JSON schema validation for chunking output (contract enforcement)
-- [ ] Add schema loader helper in worker test fixtures
-- [ ] Add unit tests for contract validation, determinism, and short-document behavior
-- [ ] Confirm no PHI is logged by default when validating/serializing chunk outputs
+- [X] Add pipeline wiring in `worker/main.py` to invoke merge + chunking
+- [X] Implement JSON schema validation for chunking output (contract enforcement)
+- [X] Add schema loader helper in worker test fixtures
+- [X] Add unit tests for contract validation, determinism, and short-document behavior
+- [X] Confirm no PHI is logged by default when validating/serializing chunk outputs

@@ -62,7 +62,7 @@ This task emphasizes the US_068 edge cases:
 - Confirm DOB parsing is robust and does not throw on invalid inputs.
 
 ## Implementation Checklist
-- [ ] Add edge-case tests for MRN conflict scenarios and expected conflict persistence behavior
-- [ ] Add edge-case tests for name formatting variations
-- [ ] Add edge-case tests for DOB format variations and invalid values
-- [ ] Ensure tests run reliably in CI/local without external dependencies
+- [x] Add edge-case tests for MRN conflict scenarios and expected conflict persistence behavior
+- [x] Add edge-case tests for name formatting variations
+- [x] Add edge-case tests for DOB format variations and invalid values
+- [x] Ensure tests run reliably in CI/local without external dependencies

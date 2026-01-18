@@ -76,9 +76,9 @@ Implement semantic chunking in the AI Worker using LangChain `RecursiveCharacter
 - Validate edge cases (short documents, unusual formatting, mid-sentence boundaries) produce stable, non-empty chunk outputs.
 
 ## Implementation Checklist
-- [ ] Update `worker/requirements.txt` with required dependencies for `RecursiveCharacterTextSplitter` and token counting
-- [ ] Implement `worker/pipeline/text_chunking.py` with token-aware chunk sizing and 100-token overlap
-- [ ] Preserve provenance metadata per chunk and support chunks spanning document boundaries
-- [ ] Export chunking entry point via `worker/pipeline/__init__.py`
-- [ ] Add unit tests for chunk sizing, overlap, determinism, and provenance preservation
-- [ ] Add unit tests for short-document and unusual-formatting edge cases
+- [X] Update `worker/requirements.txt` with required dependencies for `RecursiveCharacterTextSplitter` and token counting
+- [X] Implement `worker/pipeline/text_chunking.py` with token-aware chunk sizing and 100-token overlap
+- [X] Preserve provenance metadata per chunk and support chunks spanning document boundaries
+- [X] Export chunking entry point via `worker/pipeline/__init__.py`
+- [X] Add unit tests for chunk sizing, overlap, determinism, and provenance preservation
+- [X] Add unit tests for short-document and unusual-formatting edge cases

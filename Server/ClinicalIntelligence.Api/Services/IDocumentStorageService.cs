@@ -11,14 +11,14 @@ public interface IDocumentStorageService
     /// </summary>
     /// <param name="fileStream">The file stream to store.</param>
     /// <param name="fileName">Original file name with extension.</param>
-    /// <param name="patientId">Patient ID for path organization.</param>
+    /// <param name="patientId">Patient ID for path organization (nullable if not yet extracted).</param>
     /// <param name="documentId">Document ID for unique storage.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Storage result with path information.</returns>
     Task<DocumentStorageResult> StoreAsync(
         Stream fileStream,
         string fileName,
-        Guid patientId,
+        Guid? patientId,
         Guid documentId,
         CancellationToken ct);
 

@@ -64,7 +64,7 @@ This task establishes the minimal backend primitives needed to:
 - [Unit] `ErrorDetails` is persisted as JSON (string) and can round-trip.
 
 ## Implementation Checklist
-- [ ] Define/standardize the validation failure status string used by backend jobs
-- [ ] Implement job failure recorder service that persists `Status`, `ErrorMessage`, `ErrorDetails`
-- [ ] Register the service in DI container
-- [ ] Add unit tests covering success and missing-job error scenarios
+- [x] Define/standardize the validation failure status string used by backend jobs
+- [x] Implement job failure recorder service that persists `Status`, `ErrorMessage`, `ErrorDetails`
+- [x] Register the service in DI container
+- [x] Add unit tests covering success and missing-job error scenarios

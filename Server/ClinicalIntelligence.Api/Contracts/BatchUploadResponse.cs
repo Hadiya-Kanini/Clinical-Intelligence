@@ -12,7 +12,8 @@ public record BatchUploadResponse
     public Guid BatchId { get; init; }
 
     [JsonPropertyName("patientId")]
-    public Guid PatientId { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Guid? PatientId { get; init; }
 
     [JsonPropertyName("totalFilesReceived")]
     public int TotalFilesReceived { get; init; }

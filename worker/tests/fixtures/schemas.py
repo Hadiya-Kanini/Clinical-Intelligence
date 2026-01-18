@@ -1,5 +1,41 @@
 """Mock schema fixtures for testing."""
 
+import json
+import os
+
+
+def _repo_root() -> str:
+    """Get repository root directory."""
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+
+def load_chunking_schema() -> dict:
+    """Load the chunking contract schema from contracts/chunking/v1/chunked_text.schema.json."""
+    schema_path = os.path.join(
+        _repo_root(), "contracts", "chunking", "v1", "chunked_text.schema.json"
+    )
+    with open(schema_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_embeddings_schema() -> dict:
+    """Load the embeddings contract schema from contracts/embeddings/v1/embedding_result.schema.json."""
+    schema_path = os.path.join(
+        _repo_root(), "contracts", "embeddings", "v1", "embedding_result.schema.json"
+    )
+    with open(schema_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_merged_text_schema() -> dict:
+    """Load the merged text contract schema from contracts/text_merge/v1/merged_text.schema.json."""
+    schema_path = os.path.join(
+        _repo_root(), "contracts", "text_merge", "v1", "merged_text.schema.json"
+    )
+    with open(schema_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 MOCK_JOB_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Job",

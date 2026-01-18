@@ -74,8 +74,8 @@ This task establishes:
 - Validate that introducing a duplicate `category_id` or alias conflict fails schema/validation deterministically.
 
 ## Implementation Checklist
-- [ ] Add `entity_categories.schema.json` with required fields and conflict-avoidance constraints
-- [ ] Add initial `entity_categories.json` seeded with core categories and stable ids
-- [ ] Update `contracts/entities/v1/README.md` with extensibility + deprecation rules
-- [ ] Add a contract migration note documenting the new registry artifacts
-- [ ] Manually validate (or add a small validator harness if already present) that the JSON file conforms to the schema
+- [x] Add `entity_categories.schema.json` with required fields and conflict-avoidance constraints
+- [x] Add initial `entity_categories.json` seeded with core categories and stable ids
+- [x] Update `contracts/entities/v1/README.md` with extensibility + deprecation rules
+- [x] Add a contract migration note documenting the new registry artifacts
+- [x] Manually validate (or add a small validator harness if already present) that the JSON file conforms to the schema

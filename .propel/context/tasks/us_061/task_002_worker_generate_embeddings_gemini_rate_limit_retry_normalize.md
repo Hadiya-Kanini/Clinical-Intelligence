@@ -80,9 +80,9 @@ Implement embedding generation in the AI Worker using the Google Gemini Embeddin
 - Validate retry/backoff behavior produces successful results for transient failures and produces contract-level failed results for permanent failures.
 
 ## Implementation Checklist
-- [ ] Update `worker/requirements.txt` with the Gemini embeddings client dependency
-- [ ] Extend `worker/config.py` to include embedding model, dimensions (768), and RPM limit configuration
-- [ ] Implement `worker/embeddings/gemini_embeddings_client.py` wrapper around the embeddings endpoint
-- [ ] Implement `worker/embeddings/rate_limiter.py` to enforce 15 RPM (configurable)
-- [ ] Implement `worker/embeddings/embedding_generation.py` with normalization + retry/backoff
-- [ ] Add unit tests for success, rate limiting, retry behavior, and normalization
+- [X] Update `worker/requirements.txt` with the Gemini embeddings client dependency
+- [X] Extend `worker/config.py` to include embedding model, dimensions (768), and RPM limit configuration
+- [X] Implement `worker/embeddings/gemini_embeddings_client.py` wrapper around the embeddings endpoint
+- [X] Implement `worker/embeddings/rate_limiter.py` to enforce 15 RPM (configurable)
+- [X] Implement `worker/embeddings/embedding_generation.py` with normalization + retry/backoff
+- [X] Add unit tests for success, rate limiting, retry behavior, and normalization

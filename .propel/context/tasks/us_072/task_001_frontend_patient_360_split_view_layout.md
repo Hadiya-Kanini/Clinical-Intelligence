@@ -66,11 +66,11 @@ This task focuses on:
 - [Edge Case] Simulate viewer failure and confirm an error state appears in the left pane while the right pane remains usable.
 
 ## Implementation Checklist
-- [ ] Create `VerificationSplitView` layout component and define left/right pane structure
-- [ ] Update `Patient360Page` to use `VerificationSplitView` and keep existing content functional
-- [ ] Refactor right pane into grouped sections with clear headings and spacing
-- [ ] Ensure responsive behavior at 1280px+ (no overflow, readable min widths)
-- [ ] Add safe left-pane error state when viewer cannot load
+- [x] Create `VerificationSplitView` layout component and define left/right pane structure
+- [x] Update `Patient360Page` to use `VerificationSplitView` and keep existing content functional
+- [x] Refactor right pane into grouped sections with clear headings and spacing
+- [x] Ensure responsive behavior at 1280px+ (no overflow, readable min widths)
+- [x] Add safe left-pane error state when viewer cannot load
 
 ---
 

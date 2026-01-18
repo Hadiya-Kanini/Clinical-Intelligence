@@ -73,8 +73,8 @@ This task ensures extensibility is managed as configuration/data while preservin
 - Validate core categories from US_066 continue to pass without modifications.
 
 ## Implementation Checklist
-- [ ] Implement category normalization utility using the registry loader API
-- [ ] Apply normalization within the response parsing/validation pipeline
-- [ ] Add fixtures and unit tests for alias/unknown/deprecated category scenarios
-- [ ] Confirm normalization is PHI-safe (no raw values in exception messages)
-- [ ] Confirm existing category behavior remains unchanged when new categories are added
+- [x] Implement category normalization utility using the registry loader API
+- [x] Apply normalization within the response parsing/validation pipeline
+- [x] Add fixtures and unit tests for alias/unknown/deprecated category scenarios
+- [x] Confirm normalization is PHI-safe (no raw values in exception messages)
+- [x] Confirm existing category behavior remains unchanged when new categories are added

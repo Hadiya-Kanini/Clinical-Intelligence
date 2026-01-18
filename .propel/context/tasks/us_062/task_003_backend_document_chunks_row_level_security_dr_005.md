@@ -70,9 +70,9 @@ Implement row-level security (RLS) for `document_chunks` to ensure chunk and vec
 - [Security] Ensure queries remain parameterized and that missing `app.user_id` fails closed (no unintended access).
 
 ## Implementation Checklist
-- [ ] Create `scripts/db/enable_document_chunks_rls.sql` with idempotent RLS enable + policy creation
-- [ ] Implement API-to-Postgres identity propagation (`app.user_id`, `app.user_role`) via interceptor
-- [ ] Register required services (`IHttpContextAccessor`, interceptor wiring)
-- [ ] Add Postgres-only integration test validating cross-user reads are blocked
-- [ ] Add Admin bypass test path (role-based)
-- [ ] Document operational ordering: enable pgvector + migrations, then apply RLS script
+- [x] Create `scripts/db/enable_document_chunks_rls.sql` with idempotent RLS enable + policy creation
+- [x] Implement API-to-Postgres identity propagation (`app.user_id`, `app.user_role`) via interceptor
+- [x] Register required services (`IHttpContextAccessor`, interceptor wiring)
+- [x] Add Postgres-only integration test validating cross-user reads are blocked
+- [x] Add Admin bypass test path (role-based)
+- [x] Document operational ordering: enable pgvector + migrations, then apply RLS script

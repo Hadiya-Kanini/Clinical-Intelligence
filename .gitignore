@@ -55,3 +55,6 @@ __pycache__/
 !.propel/templates/design-reference-template.md
 .windsurf/*
 .propel/templates/*
+.propel/templates
+.windsurf
+.venv/

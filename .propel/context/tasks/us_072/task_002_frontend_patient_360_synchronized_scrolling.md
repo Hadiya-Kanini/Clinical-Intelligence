@@ -75,11 +75,11 @@ This task focuses on:
 - [Edge Case] Simulate viewer failure and confirm sync is disabled and the right pane remains usable.
 
 ## Implementation Checklist
-- [ ] Add sync-scroll toggle control and local state in Patient 360
-- [ ] Expose left/right scroll containers via `VerificationSplitView` so Patient 360 can wire scroll events
-- [ ] Implement normalized ratio-based scroll syncing with feedback-loop guards
-- [ ] Handle missing refs and viewer error state gracefully (no crashes)
-- [ ] Validate behavior with long document scenarios
+- [x] Add sync-scroll toggle control and local state in Patient 360
+- [x] Expose left/right scroll containers via `VerificationSplitView` so Patient 360 can wire scroll events
+- [x] Implement normalized ratio-based scroll syncing with feedback-loop guards
+- [x] Handle missing refs and viewer error state gracefully (no crashes)
+- [x] Validate behavior with long document scenarios
 
 ---
 

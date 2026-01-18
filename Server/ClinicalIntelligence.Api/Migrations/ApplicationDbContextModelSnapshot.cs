@@ -391,7 +391,7 @@ namespace ClinicalIntelligence.Api.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<Guid>("PatientId")
+                    b.Property<Guid?>("PatientId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("SizeBytes")
@@ -443,7 +443,7 @@ namespace ClinicalIntelligence.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("PatientId")
+                    b.Property<Guid?>("PatientId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("UploadedAt")
@@ -509,6 +509,10 @@ namespace ClinicalIntelligence.Api.Migrations
 
                     b.HasIndex("DocumentId")
                         .HasDatabaseName("ix_document_chunks_document_id");
+
+                    b.HasIndex("DocumentId", "ChunkHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_document_chunks_document_id_chunk_hash_unique");
 
                     b.ToTable("document_chunks", (string)null);
                 });
@@ -813,6 +817,10 @@ namespace ClinicalIntelligence.Api.Migrations
 
                     b.Property<float?>("ConfidenceScore")
                         .HasColumnType("real");
+
+                    b.Property<string>("DisplayCategory")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<Guid>("DocumentId")
                         .HasColumnType("uuid");
@@ -1600,7 +1608,6 @@ namespace ClinicalIntelligence.Api.Migrations
                         .WithMany("Documents")
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_documents_patient_id");
 
                     b.HasOne("ClinicalIntelligence.Api.Domain.Models.User", "UploadedByUser")
@@ -1622,7 +1629,6 @@ namespace ClinicalIntelligence.Api.Migrations
                         .WithMany("DocumentBatches")
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_document_batches_patient_id");
 
                     b.HasOne("ClinicalIntelligence.Api.Domain.Models.User", "UploadedByUser")

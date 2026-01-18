@@ -52,8 +52,8 @@ This task focuses on unit/integration tests at the React component level (and op
 - Ensure tests are stable (no timers unless necessary; prefer deterministic rendering).
 
 ## Implementation Checklist
-- [ ] Create `DocumentListPage` test file under `app/src/__tests__/pages/`
-- [ ] Mock API response containing failed + completed documents
-- [ ] Assert failed documents display `errorMessage`
-- [ ] Assert completed/failed documents display timing metadata
-- [ ] Add test for API error state rendering an `Alert`
+- [x] Create `DocumentListPage` test file under `app/src/__tests__/pages/`
+- [x] Mock API response containing failed + completed documents
+- [x] Assert failed documents display `errorMessage`
+- [x] Assert completed/failed documents display timing metadata
+- [x] Add test for API error state rendering an `Alert`

@@ -73,11 +73,11 @@ This task focuses on updating `Document.PatientId` / `DocumentBatch.PatientId` a
 - Validate that re-linking preserves referential integrity by updating patient-scoped records in the same transaction.
 
 ## Implementation Checklist
-- [ ] Define `IPatientLinkingService` entry point and inputs
-- [ ] Implement transactional `PatientLinkingService` that:
-  - [ ] Loads document + optional batch
-  - [ ] Finds/creates target patient via `IPatientMatcher`
-  - [ ] Reassigns `Document.PatientId` and batch/documents as needed
-  - [ ] Reassigns patient-scoped records (`ExtractedEntity`, `CodeSuggestion`, `ErdConflict`) for the document
-- [ ] Register service in DI (`Program.cs`)
-- [ ] Add unit/integration tests covering MRN match, fallback match, batch consistency, and reassignment
+- [x] Define `IPatientLinkingService` entry point and inputs
+- [x] Implement transactional `PatientLinkingService` that:
+  - [x] Loads document + optional batch
+  - [x] Finds/creates target patient via `IPatientMatcher`
+  - [x] Reassigns `Document.PatientId` and batch/documents as needed
+  - [x] Reassigns patient-scoped records (`ExtractedEntity`, `CodeSuggestion`, `ErdConflict`) for the document
+- [x] Register service in DI (`Program.cs`)
+- [x] Add unit/integration tests covering MRN match, fallback match, batch consistency, and reassignment

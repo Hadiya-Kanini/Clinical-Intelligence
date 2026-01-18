@@ -70,7 +70,7 @@ Define the canonical, versioned contract for chunked text produced by the AI Wor
 - Validate the schema can be used as an integration boundary for US_061/US_062 without requiring out-of-contract coupling.
 
 ## Implementation Checklist
-- [ ] Create `contracts/chunking/v1/chunked_text.schema.json` for chunked text output
-- [ ] Create `contracts/chunking/v1/README.md` with required fields and examples
-- [ ] Create `contracts/migrations/chunking_v1.md` for initial release documentation
-- [ ] Confirm schema supports chunks spanning document boundaries while preserving provenance for every chunk
+- [X] Create `contracts/chunking/v1/chunked_text.schema.json` for chunked text output
+- [X] Create `contracts/chunking/v1/README.md` with required fields and examples
+- [X] Create `contracts/migrations/chunking_v1.md` for initial release documentation
+- [X] Confirm schema supports chunks spanning document boundaries while preserving provenance for every chunk

@@ -72,8 +72,8 @@ This task intentionally limits scope to the API contract and mapping layer:
 - [Edge Case] When modified persistence is available, seed modified entity and confirm `dataStatus="modified"` takes precedence.
 
 ## Implementation Checklist
-- [ ] Add `dataStatus` field to Patient 360 response DTO at the entity/field level
-- [ ] Implement mapping logic in `Patient360Reader`
-- [ ] Ensure endpoint returns `dataStatus` for all items
-- [ ] Extend Patient 360 endpoint tests to cover verified/unverified mapping
-- [ ] Document precedence rule (modified > verified/unverified) in code via shared mapping helper
+- [x] Add `dataStatus` field to Patient 360 response DTO at the entity/field level
+- [x] Implement mapping logic in `Patient360Reader`
+- [x] Ensure endpoint returns `dataStatus` for all items
+- [x] Extend Patient 360 endpoint tests to cover verified/unverified mapping
+- [x] Document precedence rule (modified > verified/unverified) in code via shared mapping helper

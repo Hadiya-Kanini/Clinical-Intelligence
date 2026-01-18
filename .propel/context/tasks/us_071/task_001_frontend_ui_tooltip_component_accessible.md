@@ -59,11 +59,11 @@ This task focuses on the shared UI component only (not Patient 360 page wiring).
 - [Accessibility] Verify trigger remains keyboard reachable and tooltip content is announced via `aria-describedby`.
 
 ## Implementation Checklist
-- [ ] Create `Tooltip` component with hover/focus behaviors and touch toggle fallback
-- [ ] Ensure ARIA wiring (`aria-describedby`) and stable ids
-- [ ] Add outside-click handling for touch toggle mode
-- [ ] Ensure component behaves safely when tooltip content is empty/undefined
-- [ ] Validate behavior manually across mouse, keyboard, and touch interactions
+- [x] Create `Tooltip` component with hover/focus behaviors and touch toggle fallback
+- [x] Ensure ARIA wiring (`aria-describedby`) and stable ids
+- [x] Add outside-click handling for touch toggle mode
+- [x] Ensure component behaves safely when tooltip content is empty/undefined
+- [x] Validate behavior manually across mouse, keyboard, and touch interactions
 
 ---
 

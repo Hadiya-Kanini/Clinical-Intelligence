@@ -16,9 +16,9 @@ public record DocumentProcessingJob
     public Guid DocumentId { get; init; }
     
     /// <summary>
-    /// Patient associated with document.
+    /// Patient associated with document (nullable - will be extracted during processing).
     /// </summary>
-    public Guid PatientId { get; init; }
+    public Guid? PatientId { get; init; }
     
     /// <summary>
     /// User who uploaded the document.

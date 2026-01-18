@@ -72,9 +72,9 @@ Design and implement the single-call entity extraction prompt and output contrac
 - Validate prompt includes conflict detection instructions and grounding requirements for `source_text` + `document_location`.
 
 ## Implementation Checklist
-- [ ] Define the complete list of core entity categories to be extracted in a single call
-- [ ] Define the exact JSON response shape aligned to `contracts/entities/v1/entity.schema.json`
-- [ ] Implement `build_entity_extraction_prompt(...)` with bounded chunk formatting and provenance
-- [ ] Ensure prompt includes conflict detection and grounding requirements
-- [ ] Add unit tests validating prompt determinism and category coverage
-- [ ] Confirm prompt avoids leaking secrets (no API keys) and avoids logging PHI by default
+- [x] Define the complete list of core entity categories to be extracted in a single call
+- [x] Define the exact JSON response shape aligned to `contracts/entities/v1/entity.schema.json`
+- [x] Implement `build_entity_extraction_prompt(...)` with bounded chunk formatting and provenance
+- [x] Ensure prompt includes conflict detection and grounding requirements
+- [x] Add unit tests validating prompt determinism and category coverage
+- [x] Confirm prompt avoids leaking secrets (no API keys) and avoids logging PHI by default

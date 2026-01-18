@@ -84,9 +84,9 @@ This task focuses on worker-side output shaping and unit tests. It does not impl
 - [Unit] Given non-standard date formats, ensure best-effort normalization is applied only when unambiguous.
 
 ## Implementation Checklist
-- [ ] Define deterministic rules for missing categories, partial values, and non-standard formats
-- [ ] Implement normalization utilities with safe transforms only
-- [ ] Wire normalization into the parse/validate pipeline without changing schema versioning
-- [ ] Add fixtures for missing-category and non-standard format cases
-- [ ] Add unit tests validating deterministic behavior and no hallucinated placeholders
-- [ ] Confirm errors/logs remain PHI-safe (no raw document or long excerpts)
+- [x] Define deterministic rules for missing categories, partial values, and non-standard formats
+- [x] Implement normalization utilities with safe transforms only
+- [x] Wire normalization into the parse/validate pipeline without changing schema versioning
+- [x] Add fixtures for missing-category and non-standard format cases
+- [x] Add unit tests validating deterministic behavior and no hallucinated placeholders
+- [x] Confirm errors/logs remain PHI-safe (no raw document or long excerpts)

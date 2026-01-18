@@ -64,6 +64,7 @@ let csrfTokenFetchPromise: Promise<string | null> | null = null
 function clearAuthState(): void {
   csrfToken = null
   csrfTokenFetchPromise = null
+  clearToken()
   try {
     localStorage.removeItem('ci_auth')
     localStorage.removeItem('ci_token')
@@ -172,6 +173,39 @@ async function parseErrorResponse(response: Response): Promise<ApiErrorResponse[
 }
 
 /**
+ * Get stored JWT token from localStorage
+ */
+function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem('ci_jwt_token')
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Store JWT token in localStorage
+ */
+export function storeToken(token: string): void {
+  try {
+    localStorage.setItem('ci_jwt_token', token)
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+/**
+ * Clear stored JWT token
+ */
+export function clearToken(): void {
+  try {
+    localStorage.removeItem('ci_jwt_token')
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+/**
  * Internal request function without CSRF retry logic.
  */
 async function executeRequest<T = unknown>(
@@ -187,12 +221,18 @@ async function executeRequest<T = unknown>(
     ...customHeaders,
   }
 
+  // Add JWT token in Authorization header
+  const token = getStoredToken()
+  if (token) {
+    ;(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
+  }
+
   // Add CSRF token for state-changing methods (unless explicitly skipped)
   if (includeCsrf && !skipCsrf && STATE_CHANGING_METHODS.includes(method)) {
-    const token = await fetchCsrfToken()
-    console.log('CSRF token for request:', token ? token.substring(0, 10) + '...' : 'null')
-    if (token) {
-      ;(headers as Record<string, string>)[CSRF_HEADER_NAME] = token
+    const csrfToken = await fetchCsrfToken()
+    console.log('CSRF token for request:', csrfToken ? csrfToken.substring(0, 10) + '...' : 'null')
+    if (csrfToken) {
+      ;(headers as Record<string, string>)[CSRF_HEADER_NAME] = csrfToken
       console.log('CSRF token added to headers')
     } else {
       console.log('No CSRF token available - request may fail')
@@ -202,7 +242,7 @@ async function executeRequest<T = unknown>(
   const config: RequestInit = {
     ...restOptions,
     headers,
-    credentials: 'include', // Include cookies for authentication
+    credentials: 'include', // Include cookies for authentication (fallback)
   }
 
   if (body !== undefined) {

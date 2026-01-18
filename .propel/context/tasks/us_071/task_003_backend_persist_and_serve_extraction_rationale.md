@@ -66,8 +66,8 @@ This task focuses on the data layer + API contract surface needed for rationale 
 - [API/Unit] Seed an extracted entity without `Rationale` and verify response returns null/empty without errors.
 
 ## Implementation Checklist
-- [ ] Add `Rationale` property to `ExtractedEntity` domain model
-- [ ] Update EF mapping for `extracted_entities` to persist rationale
-- [ ] Create and validate EF migration adding nullable `rationale` column
-- [ ] Extend Patient 360 response DTO to include rationale per entity
-- [ ] Add/extend tests validating rationale round-trip and null handling
+- [x] Add `Rationale` property to `ExtractedEntity` domain model
+- [x] Update EF mapping for `extracted_entities` to persist rationale
+- [x] Create and validate EF migration adding nullable `rationale` column
+- [x] Extend Patient 360 response DTO to include rationale per entity
+- [x] Add/extend tests validating rationale round-trip and null handling

@@ -13,8 +13,9 @@ public sealed class Document
 
     /// <summary>
     /// Reference to the patient this document belongs to.
+    /// Nullable - will be populated after document processing extracts patient information.
     /// </summary>
-    public Guid PatientId { get; set; }
+    public Guid? PatientId { get; set; }
 
     /// <summary>
     /// Reference to the batch this document was uploaded in.
@@ -75,7 +76,7 @@ public sealed class Document
     public DateTime UploadedAt { get; set; }
 
     // Navigation properties
-    public ErdPatient Patient { get; set; } = null!;
+    public ErdPatient? Patient { get; set; }
     public DocumentBatch? DocumentBatch { get; set; }
     public User UploadedByUser { get; set; } = null!;
     public ICollection<ProcessingJob> ProcessingJobs { get; set; } = new List<ProcessingJob>();

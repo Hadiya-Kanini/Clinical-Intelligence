@@ -87,8 +87,8 @@ This task defines the matching rules for US_068:
 - Verify DOB parsing supports multiple formats and does not throw on invalid values.
 
 ## Implementation Checklist
-- [ ] Create `PatientIdentityNormalizer` with MRN normalization, name normalization, and DOB parsing
-- [ ] Define `IPatientMatcher` abstraction
-- [ ] Implement `PatientMatcher` with MRN-first, name+DOB fallback, and create-new behavior (including synthetic MRN when missing)
-- [ ] Register matcher in DI (`Program.cs`)
-- [ ] Add unit tests for normalization, DOB parsing, MRN match, fallback match, and creation behavior
+- [x] Create `PatientIdentityNormalizer` with MRN normalization, name normalization, and DOB parsing
+- [x] Define `IPatientMatcher` abstraction
+- [x] Implement `PatientMatcher` with MRN-first, name+DOB fallback, and create-new behavior (including synthetic MRN when missing)
+- [x] Register matcher in DI (`Program.cs`)
+- [x] Add unit tests for normalization, DOB parsing, MRN match, fallback match, and creation behavior

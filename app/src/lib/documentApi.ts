@@ -45,7 +45,13 @@ export interface DocumentListItem {
   patientId: string
   patientName?: string
   fileSize?: number
-  errorMessage?: string
+  // Processing metadata fields (US_056)
+  jobId?: string | null
+  retryCount?: number | null
+  startedAt?: string | null
+  completedAt?: string | null
+  processingTimeMs?: number | null
+  errorMessage?: string | null
 }
 
 export interface DocumentListResponse {
@@ -72,21 +78,12 @@ export async function uploadDocumentBatch(
       formData.append('files', file)
     })
 
-    // Fetch CSRF token first
-    const csrfResponse = await fetch('/api/v1/auth/csrf', {
-      method: 'GET',
-      credentials: 'include',
-    })
-
-    let csrfToken: string | null = null
-    if (csrfResponse.ok) {
-      const csrfData = await csrfResponse.json()
-      csrfToken = csrfData.token
-    }
-
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('ci_jwt_token')
+    
     const headers: HeadersInit = {}
-    if (csrfToken) {
-      headers['X-CSRF-TOKEN'] = csrfToken
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
     }
 
     const response = await fetch('/api/v1/documents/batch', {

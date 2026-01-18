@@ -1,10 +1,12 @@
 using ClinicalIntelligence.Api.Domain.Models;
+using ClinicalIntelligence.Api.Services.ExtractedEntities;
+using ClinicalIntelligence.Api.Services.ProcessingJobs;
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
 
 namespace ClinicalIntelligence.Api.Data;
 
-public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
+public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options), IProcessingJobFailureDbContext, IExtractedEntityDbContext
 {
     // Existing FHIR-aligned entities
     public DbSet<Patient> Patients => Set<Patient>();
@@ -544,6 +546,10 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
             entity.HasIndex(e => e.ChunkHash)
                 .HasDatabaseName("ix_document_chunks_chunk_hash");
+
+            entity.HasIndex(e => new { e.DocumentId, e.ChunkHash })
+                .IsUnique()
+                .HasDatabaseName("ix_document_chunks_document_id_chunk_hash_unique");
 
             entity.Property(e => e.Section).HasMaxLength(100);
             entity.Property(e => e.Coordinates).HasMaxLength(100);

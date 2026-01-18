@@ -76,12 +76,12 @@ This task focuses on:
 - [Accessibility] Confirm tooltip can be triggered via keyboard focus and content is associated via ARIA.
 
 ## Implementation Checklist
-- [ ] Identify the exact entity/value UI elements to use as tooltip triggers in Patient 360
-- [ ] Wrap trigger elements with `Tooltip` and render rationale + source text content
-- [ ] Ensure no network calls occur during hover/focus (preloaded data only)
-- [ ] Implement missing rationale fallback and long-text truncation/scroll behavior
-- [ ] Validate mouse, keyboard, and touch behaviors
-- [ ] Verify tooltip meets 200ms interaction feedback expectation
+- [x] Identify the exact entity/value UI elements to use as tooltip triggers in Patient 360
+- [x] Wrap trigger elements with `Tooltip` and render rationale + source text content
+- [x] Ensure no network calls occur during hover/focus (preloaded data only)
+- [x] Implement missing rationale fallback and long-text truncation/scroll behavior
+- [x] Validate mouse, keyboard, and touch behaviors
+- [x] Verify tooltip meets 200ms interaction feedback expectation
 
 ---
 

@@ -86,9 +86,6 @@ export default function DashboardPage(): JSX.Element {
           <Button variant="secondary" onClick={() => navigate('/documents')}>
             View document list
           </Button>
-          <Button variant="secondary" onClick={() => navigate('/patients/demo')}>
-            Open Patient 360 (demo)
-          </Button>
           <Button variant="secondary" onClick={() => navigate('/export')}>
             Export
           </Button>

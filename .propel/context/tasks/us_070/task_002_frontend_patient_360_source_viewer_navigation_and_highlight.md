@@ -73,11 +73,11 @@ This task focuses on:
 - [Performance] Confirm repeated citation clicks do not leak memory (Blob URLs revoked) and the page remains responsive.
 
 ## Implementation Checklist
-- [ ] Select and add a PDF rendering approach/library compatible with the app
-- [ ] Implement `documentsApi` for fetching document content as a Blob
-- [ ] Build `SourceDocumentViewer` with page navigation and highlight overlay support
-- [ ] Wire `Patient360Page` to pass selected citation into viewer
-- [ ] Implement fallback behavior for missing coordinates and missing documents
+- [x] Select and add a PDF rendering approach/library compatible with the app
+- [x] Implement `documentsApi` for fetching document content as a Blob
+- [x] Build `SourceDocumentViewer` with page navigation and highlight overlay support
+- [x] Wire `Patient360Page` to pass selected citation into viewer
+- [x] Implement fallback behavior for missing coordinates and missing documents
 
 ---
 

@@ -76,8 +76,8 @@ This task focuses on defining the Pydantic models and a lightweight version regi
 - Validate that required fields and nested structures match the JSON contract expectations.
 
 ## Implementation Checklist
-- [ ] Implement Pydantic v1 models matching `contracts/entities/v1/entity.schema.json`
-- [ ] Implement schema registry that resolves validators by `schema_version`
-- [ ] Ensure unknown schema versions fail deterministically
-- [ ] Update `worker/requirements.txt` to include Pydantic
-- [ ] Confirm schema versioning strategy supports backward compatibility for future versions
+- [x] Implement Pydantic v1 models matching `contracts/entities/v1/entity.schema.json`
+- [x] Implement schema registry that resolves validators by `schema_version`
+- [x] Ensure unknown schema versions fail deterministically
+- [x] Update `worker/requirements.txt` to include Pydantic
+- [x] Confirm schema versioning strategy supports backward compatibility for future versions

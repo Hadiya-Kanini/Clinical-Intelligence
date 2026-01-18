@@ -76,8 +76,8 @@ Implement worker-side grounding enforcement so that entity extraction results ar
 - [Regression] `schema_version: 1.0` validation behavior remains unchanged.
 
 ## Implementation Checklist
-- [ ] Update worker schema loader to accept `schema_version: 1.1`
-- [ ] Implement `validate_grounding(payload)` enforcing per-entity citation requirements
-- [ ] Integrate grounding validator after schema validation
-- [ ] Add tests for grounded success and ungrounded failure scenarios
-- [ ] Confirm error messages are PHI-safe (no raw text/value inclusion)
+- [x] Update worker schema loader to accept `schema_version: 1.1`
+- [x] Implement `validate_grounding(payload)` enforcing per-entity citation requirements
+- [x] Integrate grounding validator after schema validation
+- [x] Add tests for grounded success and ungrounded failure scenarios
+- [x] Confirm error messages are PHI-safe (no raw text/value inclusion)

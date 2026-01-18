@@ -2,6 +2,7 @@ using ClinicalIntelligence.Api.Contracts;
 using ClinicalIntelligence.Api.Data;
 using ClinicalIntelligence.Api.Domain.Models;
 using ClinicalIntelligence.Api.Services.Security;
+using ClinicalIntelligence.Api.Services.Queue;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 
@@ -15,13 +16,13 @@ public interface IDocumentService
 {
     Task<UploadAcknowledgmentResponse> ValidateAndAcknowledgeAsync(
         IFormFile file,
-        Guid patientId,
+        Guid? patientId,
         Guid uploadedByUserId,
         CancellationToken cancellationToken = default);
 
     Task<UploadAcknowledgmentResponse> ValidateAndAcknowledgeAsync(
         IFormFile file,
-        Guid patientId,
+        Guid? patientId,
         Guid uploadedByUserId,
         Guid? batchId,
         CancellationToken cancellationToken = default);
@@ -35,6 +36,7 @@ public class DocumentService : IDocumentService
     private readonly IMalwareScanner? _malwareScanner;
     private readonly IAuditLogWriter? _auditLogWriter;
     private readonly IDocumentStorageService? _storageService;
+    private readonly IMessagePublisher? _messagePublisher;
 
     private const long MaxFileSizeBytes = 50 * 1024 * 1024; // 50MB = 52,428,800 bytes
     
@@ -64,7 +66,8 @@ public class DocumentService : IDocumentService
 
     public DocumentService(
         ApplicationDbContext dbContext, 
-        ILogger<DocumentService> logger, 
+        ILogger<DocumentService> logger,
+        IMessagePublisher messagePublisher,
         IDocumentIntegrityValidator? integrityValidator = null,
         IMalwareScanner? malwareScanner = null,
         IAuditLogWriter? auditLogWriter = null,
@@ -72,15 +75,19 @@ public class DocumentService : IDocumentService
     {
         _dbContext = dbContext;
         _logger = logger;
+        _messagePublisher = messagePublisher;
         _integrityValidator = integrityValidator;
         _malwareScanner = malwareScanner;
         _auditLogWriter = auditLogWriter;
         _storageService = storageService;
+        
+        Console.WriteLine($"[DOCSERVICE CTOR] _messagePublisher injected: {_messagePublisher?.GetType().Name ?? "NULL"}");
+        Console.Out.Flush();
     }
 
     public Task<UploadAcknowledgmentResponse> ValidateAndAcknowledgeAsync(
         IFormFile file,
-        Guid patientId,
+        Guid? patientId,
         Guid uploadedByUserId,
         CancellationToken cancellationToken = default)
     {
@@ -89,7 +96,7 @@ public class DocumentService : IDocumentService
 
     public async Task<UploadAcknowledgmentResponse> ValidateAndAcknowledgeAsync(
         IFormFile file,
-        Guid patientId,
+        Guid? patientId,
         Guid uploadedByUserId,
         Guid? batchId,
         CancellationToken cancellationToken = default)
@@ -264,6 +271,56 @@ public class DocumentService : IDocumentService
 
                 _dbContext.Documents.Add(document);
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                
+                // Publish job to RabbitMQ for processing
+                _logger.LogWarning("🔔 RABBITMQ PUBLISH START - DocumentId={DocumentId}, Publisher={Publisher}, HashCode={HashCode}, IsConnected={IsConnected}", 
+                    documentId, _messagePublisher?.GetType().Name ?? "NULL", _messagePublisher?.GetHashCode() ?? 0, _messagePublisher?.IsConnected ?? false);
+                
+                if (_messagePublisher != null)
+                {
+                    var job = new DocumentProcessingJob
+                    {
+                        JobId = Guid.NewGuid(),
+                        DocumentId = documentId,
+                        PatientId = patientId,
+                        UploadedByUserId = uploadedByUserId,
+                        OriginalName = fileName,
+                        MimeType = contentType,
+                        StoragePath = storagePath,
+                        SizeBytes = fileSize,
+                        CreatedAt = DateTime.UtcNow,
+                        RetryCount = 0
+                    };
+                    
+                    _logger.LogWarning("🔔 Calling PublishDocumentJobAsync for JobId={JobId}, CancellationRequested={CancellationRequested}", 
+                        job.JobId, cancellationToken.IsCancellationRequested);
+                    
+                    try
+                    {
+                        // Don't pass cancellation token to avoid premature cancellation
+                        var published = await _messagePublisher.PublishDocumentJobAsync(job, CancellationToken.None);
+                        
+                        if (published)
+                        {
+                            _logger.LogWarning("✅ PUBLISHED SUCCESSFULLY - DocumentId={DocumentId}, JobId={JobId}", documentId, job.JobId);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("❌ PUBLISH FAILED - DocumentId={DocumentId}, JobId={JobId}", documentId, job.JobId);
+                        }
+                    }
+                    catch (Exception pubEx)
+                    {
+                        _logger.LogError(pubEx, "❌ EXCEPTION in PublishDocumentJobAsync for DocumentId={DocumentId}", documentId);
+                        throw;
+                    }
+                }
+                else
+                {
+                    _logger.LogError("❌ Message publisher is NULL for document {DocumentId}", documentId);
+                }
+                
+                _logger.LogWarning("🔔 RABBITMQ PUBLISH END - DocumentId={DocumentId}", documentId);
             }
         }
 

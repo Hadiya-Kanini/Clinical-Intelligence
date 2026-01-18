@@ -67,9 +67,9 @@ Define and version the integration contract(s) required to support patient-level
 - Validate merged-text schema can represent document provenance (document_id + location metadata) in a way that downstream chunking can map to `DocumentChunk` metadata.
 
 ## Implementation Checklist
-- [ ] Update `contracts/jobs/v1/job.schema.json` with optional patient merge fields
-- [ ] Update `contracts/jobs/v1/README.md` to document the new optional fields and semantics
-- [ ] Append a new version entry to `contracts/migrations/jobs_v1.md`
-- [ ] Create `contracts/text_merge/v1/merged_text.schema.json` for merged text output
-- [ ] Create `contracts/migrations/text_merge_v1.md` for the new contract
-- [ ] Ensure no changes require out-of-contract direct integrations between Backend API and AI Worker
+- [x] Update `contracts/jobs/v1/job.schema.json` with optional patient merge fields
+- [x] Update `contracts/jobs/v1/README.md` to document the new optional fields and semantics
+- [x] Append a new version entry to `contracts/migrations/jobs_v1.md`
+- [x] Create `contracts/text_merge/v1/merged_text.schema.json` for merged text output
+- [x] Create `contracts/migrations/text_merge_v1.md` for the new contract
+- [x] Ensure no changes require out-of-contract direct integrations between Backend API and AI Worker

@@ -71,7 +71,7 @@ Define the canonical, versioned contract for embedding generation output produce
 - Validate the contract supports US_062 storage requirements without requiring out-of-contract coupling.
 
 ## Implementation Checklist
-- [ ] Create `contracts/embeddings/v1/embedding_result.schema.json` for embedding output (768-d)
-- [ ] Create `contracts/embeddings/v1/README.md` with required fields, examples, and normalization guidance
-- [ ] Create `contracts/migrations/embeddings_v1.md` documenting initial release and consumer impact
-- [ ] Confirm the contract contains all fields required to associate embeddings with chunk metadata for US_062 storage
+- [X] Create `contracts/embeddings/v1/embedding_result.schema.json` for embedding output (768-d)
+- [X] Create `contracts/embeddings/v1/README.md` with required fields, examples, and normalization guidance
+- [X] Create `contracts/migrations/embeddings_v1.md` documenting initial release and consumer impact
+- [X] Confirm the contract contains all fields required to associate embeddings with chunk metadata for US_062 storage

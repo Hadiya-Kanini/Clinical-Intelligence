@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExtractedText",
+  "description": "Schema for extracted text segments with positional metadata from document processing.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "description": "The version of this extracted text schema.",
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "document_id": {
+      "description": "Identifier for the source document.",
+      "type": "string"
+    },
+    "extraction_timestamp": {
+      "description": "ISO 8601 timestamp when extraction was performed.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "segments": {
+      "description": "Array of extracted text segments with positional metadata.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "description": "The extracted text content.",
+            "type": "string"
+          },
+          "document_location": {
+            "description": "Positional metadata for the segment within the source document.",
+            "type": "object",
+            "properties": {
+              "page": {
+                "description": "Page number (1-indexed) where the text appears.",
+                "type": "integer",
+                "minimum": 1
+              },
+              "section": {
+                "description": "Section identifier or heading name.",
+                "type": "string"
+              },
+              "coordinates": {
+                "description": "Bounding box coordinates for the text (JSON-serialized bbox).",
+                "type": "object",
+                "properties": {
+                  "x0": {
+                    "description": "Left x-coordinate.",
+                    "type": "number"
+                  },
+                  "y0": {
+                    "description": "Top y-coordinate.",
+                    "type": "number"
+                  },
+                  "x1": {
+                    "description": "Right x-coordinate.",
+                    "type": "number"
+                  },
+                  "y1": {
+                    "description": "Bottom y-coordinate.",
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "segment_index": {
+            "description": "Zero-based index of this segment in extraction order.",
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["text"]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "document_id",
+    "segments"
+  ]
+}

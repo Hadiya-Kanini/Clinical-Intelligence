@@ -65,8 +65,8 @@ Update the entity extraction output contract to support deterministic enforcemen
 - [Contract] Validate that a `schema_version: 1.0` payload continues to validate as before (no breaking schema enforcement).
 
 ## Implementation Checklist
-- [ ] Add `schema_version: 1.1` and draft-07 `if/then` enforcement for citation fields
-- [ ] Require `source_text` with `minLength: 1` for grounded payloads
-- [ ] Require `document_location.page`, `section`, and `coordinates` for grounded payloads
-- [ ] Update `contracts/entities/v1/README.md` with grounding rules and rollout notes
-- [ ] Add contract migration note documenting the new grounded requirements and consumer actions
+- [x] Add `schema_version: 1.1` and draft-07 `if/then` enforcement for citation fields
+- [x] Require `source_text` with `minLength: 1` for grounded payloads
+- [x] Require `document_location.page`, `section`, and `coordinates` for grounded payloads
+- [x] Update `contracts/entities/v1/README.md` with grounding rules and rollout notes
+- [x] Add contract migration note documenting the new grounded requirements and consumer actions

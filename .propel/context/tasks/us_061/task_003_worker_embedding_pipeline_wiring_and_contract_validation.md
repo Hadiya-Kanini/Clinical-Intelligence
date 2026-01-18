@@ -66,8 +66,8 @@ Wire the embedding generation step into the AI Worker processing flow so chunk o
 - Validate deterministic ordering and partial-failure handling via mocked embedding client tests.
 
 ## Implementation Checklist
-- [ ] Add embeddings schema loader helper for contract validation
-- [ ] Wire embedding generation into `worker/main.py` and validate contract output
-- [ ] Add unit tests for schema compliance and metadata association
-- [ ] Add unit tests covering partial failures and single-chunk batches
-- [ ] Confirm no PHI is logged by default when validating/serializing embedding outputs
+- [X] Add embeddings schema loader helper for contract validation
+- [X] Wire embedding generation into `worker/main.py` and validate contract output
+- [X] Add unit tests for schema compliance and metadata association
+- [X] Add unit tests covering partial failures and single-chunk batches
+- [X] Confirm no PHI is logged by default when validating/serializing embedding outputs

@@ -80,8 +80,8 @@ This task does not implement entity citations persistence (the `EntityCitation` 
 - [Unit/DB] Empty `extracted_entities` results in zero inserted rows.
 
 ## Implementation Checklist
-- [ ] Define `IExtractedEntityWriter` interface and minimal DTO for extracted entities
-- [ ] Implement `DbExtractedEntityWriter` using `ApplicationDbContext`
-- [ ] Register writer in DI
-- [ ] Add tests validating mapping and empty-list behavior
-- [ ] Confirm DB constraints (max lengths) are respected; fail deterministically on overflow
+- [x] Define `IExtractedEntityWriter` interface and minimal DTO for extracted entities
+- [x] Implement `DbExtractedEntityWriter` using `ApplicationDbContext`
+- [x] Register writer in DI
+- [x] Add tests validating mapping and empty-list behavior
+- [x] Confirm DB constraints (max lengths) are respected; fail deterministically on overflow

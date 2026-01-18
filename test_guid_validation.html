@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient ID GUID Validation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-case { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .valid { background-color: #d4edda; }
+        .invalid { background-color: #f8d7da; }
+        input { padding: 5px; margin: 5px 0; }
+        .error { color: #721c24; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>Patient ID GUID Validation Test</h1>
+    <p>This page tests the GUID validation that should match the backend requirements.</p>
+    
+    <div>
+        <label for="patientId">Enter Patient ID:</label><br>
+        <input type="text" id="patientId" placeholder="123e4567-e89b-12d3-a456-426614174000" style="width: 300px;">
+        <div id="error" class="error"></div>
+        <button onclick="testValidation()">Test</button>
+    </div>
+
+    <h3>Test Cases:</h3>
+    <div id="test-cases"></div>
+
+    <script>
+        function validatePatientId(patientId) {
+            const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            return guidRegex.test(patientId);
+        }
+
+        function testValidation() {
+            const patientId = document.getElementById('patientId').value;
+            const errorDiv = document.getElementById('error');
+            
+            if (patientId === '') {
+                errorDiv.textContent = '';
+                return;
+            }
+            
+            if (!validatePatientId(patientId)) {
+                errorDiv.textContent = 'Patient ID must be a valid GUID format (e.g., 123e4567-e89b-12d3-a456-426614174000)';
+            } else {
+                errorDiv.textContent = '✓ Valid GUID format';
+                errorDiv.style.color = 'green';
+            }
+        }
+
+        const testCases = [
+            { input: '123e4567-e89b-12d3-a456-426614174000', valid: true, description: 'Valid GUID' },
+            { input: '123E4567-E89B-12D3-A456-426614174000', valid: true, description: 'Valid GUID (uppercase)' },
+            { input: 'patient123', valid: false, description: 'Invalid - plain text' },
+            { input: '123-456-789', valid: false, description: 'Invalid - too short' },
+            { input: '', valid: false, description: 'Empty string' },
+            { input: '00000000-0000-0000-0000-000000000000', valid: true, description: 'Valid GUID (all zeros)' },
+            { input: '123e4567e89b12d3a456426614174000', valid: false, description: 'Invalid - missing hyphens' }
+        ];
+
+        function displayTestCases() {
+            const container = document.getElementById('test-cases');
+            
+            testCases.forEach(testCase => {
+                const div = document.createElement('div');
+                div.className = `test-case ${testCase.valid ? 'valid' : 'invalid'}`;
+                div.innerHTML = `
+                    <strong>${testCase.input || '(empty)'}</strong> - ${testCase.description}<br>
+                    Result: ${validatePatientId(testCase.input) ? '✓ Valid' : '✗ Invalid'}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Add input event listener for real-time validation
+        document.getElementById('patientId').addEventListener('input', testValidation);
+        
+        // Display test cases on page load
+        displayTestCases();
+    </script>
+</body>
+</html>

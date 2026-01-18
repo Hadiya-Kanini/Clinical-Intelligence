@@ -62,7 +62,7 @@ This task focuses on automated tests only (no feature work):
 - [E2E] Confirm citation click updates viewer panel state deterministically.
 
 ## Implementation Checklist
-- [ ] Add component-level tests for citation metadata rendering
-- [ ] Add component-level test for citation click emitting navigation intent
-- [ ] Add Playwright test for citation click driving viewer update/highlight indicator
-- [ ] Ensure tests run reliably in CI (no timing flakiness)
+- [x] Add component-level tests for citation metadata rendering
+- [x] Add component-level test for citation click emitting navigation intent
+- [x] Add Playwright test for citation click driving viewer update/highlight indicator
+- [x] Ensure tests run reliably in CI (no timing flakiness)

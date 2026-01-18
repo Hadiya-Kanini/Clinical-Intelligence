@@ -7,7 +7,7 @@
     "schema_version": {
       "description": "The version of this job schema.",
       "type": "string",
-      "enum": ["1.0"]
+      "enum": ["1.0", "1.1"]
     },
     "job_id": {
       "description": "Unique identifier for the job (UUID).",
@@ -25,7 +25,48 @@
     },
     "payload": {
       "description": "Arbitrary data for the worker to use.",
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "storage_path": {
+          "description": "Path to the document in storage for extraction.",
+          "type": "string"
+        },
+        "mime_type": {
+          "description": "MIME type of the document (e.g., application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document).",
+          "type": "string"
+        },
+        "patient_id": {
+          "description": "UUID of the patient for multi-document merge operations.",
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "document_ids": {
+          "description": "Array of document IDs for multi-document processing (patient merge).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "patient_identifiers": {
+          "description": "Patient identity matching inputs when patient_id is not supplied.",
+          "type": "object",
+          "properties": {
+            "mrn": {
+              "description": "Medical Record Number for patient matching.",
+              "type": "string"
+            },
+            "name": {
+              "description": "Patient name for matching (used with dob).",
+              "type": "string"
+            },
+            "dob": {
+              "description": "Patient date of birth (ISO 8601 date format) for matching.",
+              "type": "string",
+              "format": "date"
+            }
+          }
+        }
+      }
     }
   },
   "required": [

@@ -77,13 +77,13 @@ This task focuses on the UI layer only:
 - [Edge Case] When an item transitions to “modified” (via inline edit), confirm the indicator updates immediately.
 
 ## Implementation Checklist
-- [ ] Define `DataStatus` type and mapping to existing badge variants (success/warning/info)
-- [ ] Create `DataStatusBadge` component with accessible label text
-- [ ] Align Patient 360 response typing to include data status flag
-- [ ] Render `DataStatusBadge` in Patient 360 extracted data section(s)
-- [ ] Implement precedence rules for multi-flag situations (modified > unverified > verified)
-- [ ] Validate color, spacing, and typography align to design tokens
-- [ ] Manually verify keyboard/screen reader semantics
+- [x] Define `DataStatus` type and mapping to existing badge variants (success/warning/info)
+- [x] Create `DataStatusBadge` component with accessible label text
+- [x] Align Patient 360 response typing to include data status flag
+- [x] Render `DataStatusBadge` in Patient 360 extracted data section(s)
+- [x] Implement precedence rules for multi-flag situations (modified > unverified > verified)
+- [x] Validate color, spacing, and typography align to design tokens
+- [x] Manually verify keyboard/screen reader semantics
 
 ---
 

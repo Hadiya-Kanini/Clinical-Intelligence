@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { api } from '../../lib/apiClient'
+import { api, storeToken, clearToken } from '../../lib/apiClient'
 
 interface User {
   id: string
@@ -25,7 +25,7 @@ const initialState: AuthState = {
 export const loginAsync = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
-    const result = await api.post<{ user: User }>('/api/v1/auth/login', credentials)
+    const result = await api.post<{ access_token: string; user: User }>('/api/v1/auth/login', credentials)
     
     if (!result.success) {
       // Return structured error for specific handling (e.g., account_inactive)
@@ -35,6 +35,9 @@ export const loginAsync = createAsyncThunk(
         status: result.status
       })
     }
+    
+    // Store JWT token in localStorage
+    storeToken(result.data.access_token)
     
     // Clear any legacy localStorage keys
     localStorage.removeItem('ci_auth')
@@ -49,6 +52,9 @@ export const logoutAsync = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     const result = await api.post('/api/v1/auth/logout')
+    
+    // Clear JWT token from localStorage
+    clearToken()
     
     // Clear any legacy localStorage keys regardless of result
     localStorage.removeItem('ci_auth')

@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "categories": [
+    {
+      "category_id": "patient_demographics",
+      "display_name": "Patient Demographics",
+      "description": "Patient identifying information including name, DOB, address, contact, and MRN.",
+      "status": "active",
+      "aliases": ["demographics", "patient_info"],
+      "recommended_entity_names": ["name", "dob", "address", "contact", "mrn", "gender"]
+    },
+    {
+      "category_id": "allergies",
+      "display_name": "Allergies",
+      "description": "Known allergies, reactions, and severity information.",
+      "status": "active",
+      "aliases": ["allergy"],
+      "recommended_entity_names": ["allergen", "reaction", "severity"]
+    },
+    {
+      "category_id": "medications",
+      "display_name": "Medications",
+      "description": "Current and past medications with dosage, frequency, and route.",
+      "status": "active",
+      "aliases": ["meds", "medication"],
+      "recommended_entity_names": ["medication_name", "dosage", "frequency", "route", "start_date", "end_date"]
+    },
+    {
+      "category_id": "diagnoses",
+      "display_name": "Diagnoses",
+      "description": "Medical conditions, ICD codes, onset dates, and status.",
+      "status": "active",
+      "aliases": ["diagnosis", "conditions"],
+      "recommended_entity_names": ["condition", "date", "icd_code", "status"]
+    },
+    {
+      "category_id": "procedures",
+      "display_name": "Procedures",
+      "description": "Surgical and medical procedures with CPT codes and dates.",
+      "status": "active",
+      "aliases": ["procedure"],
+      "recommended_entity_names": ["procedure_name", "date", "cpt_code", "provider"]
+    },
+    {
+      "category_id": "lab_results",
+      "display_name": "Lab Results",
+      "description": "Laboratory test results with values, units, and reference ranges.",
+      "status": "active",
+      "aliases": ["labs", "laboratory"],
+      "recommended_entity_names": ["test_name", "value", "unit", "reference_range", "date"]
+    },
+    {
+      "category_id": "vital_signs",
+      "display_name": "Vital Signs",
+      "description": "Blood pressure, heart rate, temperature, SpO2, weight, height, BMI.",
+      "status": "active",
+      "aliases": ["vitals"],
+      "recommended_entity_names": ["bp", "hr", "temp", "spo2", "weight", "height", "bmi"]
+    },
+    {
+      "category_id": "social_history",
+      "display_name": "Social History",
+      "description": "Smoking, alcohol, occupation, and living situation.",
+      "status": "active",
+      "aliases": ["social"],
+      "recommended_entity_names": ["smoking", "alcohol", "occupation", "living_situation"]
+    },
+    {
+      "category_id": "clinical_notes",
+      "display_name": "Clinical Notes",
+      "description": "Provider notes, assessment, plan, and recommendations.",
+      "status": "active",
+      "aliases": ["notes", "clinical"],
+      "recommended_entity_names": ["provider_notes", "assessment", "plan", "recommendations"]
+    },
+    {
+      "category_id": "document_metadata",
+      "display_name": "Document Metadata",
+      "description": "Document type, date, author/provider, and facility.",
+      "status": "active",
+      "aliases": ["metadata", "doc_metadata"],
+      "recommended_entity_names": ["type", "date", "provider", "facility"]
+    }
+  ]
+}

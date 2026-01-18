@@ -70,9 +70,9 @@ Implement robust parsing and validation of the single-call Gemini extraction res
 - Validate conflict payloads are accepted when they follow the contract.
 
 ## Implementation Checklist
-- [ ] Implement JSON extraction/parsing from Gemini output (reject non-JSON deterministically)
-- [ ] Validate parsed payload against `contracts/entities/v1/entity.schema.json`
-- [ ] Ensure conflict payloads are supported and validated
-- [ ] Ensure malformed/incomplete outputs raise clear, PHI-safe errors
-- [ ] Add unit tests for valid payloads, malformed outputs, missing required fields, and conflict payloads
-- [ ] Wire parsing + validation into the worker execution path after extraction
+- [x] Implement JSON extraction/parsing from Gemini output (reject non-JSON deterministically)
+- [x] Validate parsed payload against `contracts/entities/v1/entity.schema.json`
+- [x] Ensure conflict payloads are supported and validated
+- [x] Ensure malformed/incomplete outputs raise clear, PHI-safe errors
+- [x] Add unit tests for valid payloads, malformed outputs, missing required fields, and conflict payloads
+- [x] Wire parsing + validation into the worker execution path after extraction

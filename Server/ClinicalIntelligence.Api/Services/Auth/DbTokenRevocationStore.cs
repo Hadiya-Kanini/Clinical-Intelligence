@@ -22,7 +22,7 @@ public sealed class DbTokenRevocationStore : ITokenRevocationStore
     /// <inheritdoc />
     public async Task<bool> IsSessionRevokedAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("IsSessionRevokedAsync: Checking session {SessionId}", sessionId);
+        _logger.LogDebug("IsSessionRevokedAsync: Checking session {SessionId}", sessionId);
         
         var session = await _dbContext.Sessions
             .AsNoTracking()
@@ -32,27 +32,23 @@ public sealed class DbTokenRevocationStore : ITokenRevocationStore
 
         if (session == null)
         {
-            _logger.LogWarning("IsSessionRevokedAsync: Session not found: {SessionId}", sessionId);
+            _logger.LogDebug("IsSessionRevokedAsync: Session not found: {SessionId}", sessionId);
             return true; // Treat missing session as revoked
         }
 
-        _logger.LogInformation("IsSessionRevokedAsync: Session {SessionId} - IsRevoked={IsRevoked}, ExpiresAt={ExpiresAt}, UtcNow={UtcNow}", 
-            sessionId, session.IsRevoked, session.ExpiresAt, DateTime.UtcNow);
-
         if (session.IsRevoked)
         {
-            _logger.LogInformation("IsSessionRevokedAsync: Session is revoked: {SessionId}", sessionId);
+            _logger.LogDebug("IsSessionRevokedAsync: Session is revoked: {SessionId}", sessionId);
             return true;
         }
 
         if (session.ExpiresAt.ToUniversalTime() <= DateTime.UtcNow)
         {
-            _logger.LogInformation("IsSessionRevokedAsync: Session has expired: {SessionId}, ExpiresAt={ExpiresAt}, ExpiresAtUtc={ExpiresAtUtc}, UtcNow={UtcNow}", 
-                sessionId, session.ExpiresAt, session.ExpiresAt.ToUniversalTime(), DateTime.UtcNow);
+            _logger.LogDebug("IsSessionRevokedAsync: Session has expired: {SessionId}", sessionId);
             return true;
         }
 
-        _logger.LogInformation("IsSessionRevokedAsync: Session is valid: {SessionId}", sessionId);
+        _logger.LogDebug("IsSessionRevokedAsync: Session is valid: {SessionId}", sessionId);
         return false;
     }
 

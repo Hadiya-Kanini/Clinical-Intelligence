@@ -67,11 +67,11 @@ This task focuses on the UI layer behavior and wiring:
 - [Accessibility] Confirm citation links are reachable via Tab and triggerable via Enter/Space.
 
 ## Implementation Checklist
-- [ ] Create `patient360Api` wrapper for `GET /api/v1/patients/{patientId}/360` with typed response
-- [ ] Replace stubbed `conflicts` / `codes` state with API-backed data and loading/error handling
-- [ ] Render citation metadata (document name, page number, section) for critical entities
-- [ ] Make citation references clickable and emit `activeCitation` state for the viewer
-- [ ] Handle missing citation fields gracefully (no section/coordinates)
+- [x] Create `patient360Api` wrapper for `GET /api/v1/patients/{patientId}/360` with typed response
+- [x] Replace stubbed `conflicts` / `codes` state with API-backed data and loading/error handling
+- [x] Render citation metadata (document name, page number, section) for critical entities
+- [x] Make citation references clickable and emit `activeCitation` state for the viewer
+- [x] Handle missing citation fields gracefully (no section/coordinates)
 
 ---
 
