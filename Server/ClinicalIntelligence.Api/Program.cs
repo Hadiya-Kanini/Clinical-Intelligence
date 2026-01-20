@@ -345,6 +345,9 @@ builder.Services.AddScoped<ClinicalIntelligence.Api.Services.Rag.IDocumentChunkR
 builder.Services.AddScoped<ClinicalIntelligence.Api.Services.ExtractedEntities.IExtractedEntityDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 builder.Services.AddScoped<ClinicalIntelligence.Api.Services.ExtractedEntities.IExtractedEntityWriter, ClinicalIntelligence.Api.Services.ExtractedEntities.DbExtractedEntityWriter>();
 
+// Register flexible entity reader for schema-agnostic extraction
+builder.Services.AddScoped<ClinicalIntelligence.Api.Services.Entities.IFlexibleEntityReader, ClinicalIntelligence.Api.Services.Entities.FlexibleEntityReader>();
+
 // Register patient matching services (US_068 TASK_001)
 builder.Services.AddScoped<ClinicalIntelligence.Api.Services.PatientMatching.IPatientMatcher, ClinicalIntelligence.Api.Services.PatientMatching.PatientMatcher>();
 
@@ -2444,7 +2447,9 @@ v1.MapPost("/documents/{documentId:guid}/entities", async (
             EntityGroupName = e.EntityGroupName,
             EntityName = e.EntityName,
             EntityValue = e.EntityValue,
-            DisplayCategory = e.MappedCategory // Use mapped category for frontend display
+            DisplayCategory = e.MappedCategory, // Use mapped category for frontend display
+            DocumentLocation = ConvertDocumentLocationToDictionary(e.DocumentLocation),
+            SourceText = e.SourceText
         }).ToList();
         
         var storedCount = await entityWriter.WriteEntitiesAsync(
@@ -2700,6 +2705,35 @@ v1.MapPost("/rabbitmq/publish-test", async (ClinicalIntelligence.Api.Services.Qu
 })
     .WithName("TestRabbitMQPublish")
     .WithOpenApi();
+
+// Helper method to convert DocumentLocationDto to Dictionary
+static Dictionary<string, object>? ConvertDocumentLocationToDictionary(DocumentLocationDto? location)
+{
+    if (location == null)
+        return null;
+    
+    var dict = new Dictionary<string, object>();
+    
+    if (location.Page.HasValue)
+        dict["page"] = location.Page.Value;
+    
+    if (!string.IsNullOrEmpty(location.Section))
+        dict["section"] = location.Section;
+    
+    if (location.Coordinates != null)
+    {
+        var coordsDict = new Dictionary<string, object>
+        {
+            ["x"] = location.Coordinates.X,
+            ["y"] = location.Coordinates.Y,
+            ["width"] = location.Coordinates.Width,
+            ["height"] = location.Coordinates.Height
+        };
+        dict["coordinates"] = coordsDict;
+    }
+    
+    return dict.Count > 0 ? dict : null;
+}
 
 app.Run();
 

@@ -36,8 +36,7 @@ export interface ExtractedEntity {
   confidenceScore: number | null
   isVerified: boolean
   effectiveAt: string | null
-  rationale: string | null
-  dataStatus: DataStatus
+  rationale: string | null // Note: Always null from backend
   citations: EntityCitation[]
 }
 

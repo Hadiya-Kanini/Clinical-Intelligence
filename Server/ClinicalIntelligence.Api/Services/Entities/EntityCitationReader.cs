@@ -100,6 +100,7 @@ public sealed class EntityCitationReader : IEntityCitationReader
             ConfidenceScore = e.ConfidenceScore,
             IsVerified = e.IsVerified,
             EffectiveAt = e.EffectiveAt,
+            Rationale = null, // Rationale field not implemented in database schema
             Citations = e.EntityCitations.Select(c => new EntityCitationDto
             {
                 Id = c.Id,
@@ -138,6 +139,7 @@ public sealed class EntityCitationReader : IEntityCitationReader
             ConfidenceScore = e.ConfidenceScore,
             IsVerified = e.IsVerified,
             EffectiveAt = e.EffectiveAt,
+            Rationale = null, // Rationale field not implemented in database schema
             Citations = e.EntityCitations.Select(c => new EntityCitationDto
             {
                 Id = c.Id,
@@ -178,6 +180,7 @@ public sealed class EntityCitationReader : IEntityCitationReader
             ConfidenceScore = e.ConfidenceScore,
             IsVerified = e.IsVerified,
             EffectiveAt = e.EffectiveAt,
+            Rationale = null, // Rationale field not implemented in database schema
             Citations = e.EntityCitations.Select(c => new EntityCitationDto
             {
                 Id = c.Id,

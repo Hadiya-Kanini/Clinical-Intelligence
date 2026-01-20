@@ -20,10 +20,11 @@
     {
       "category_id": "medications",
       "display_name": "Medications",
-      "description": "Current and past medications with dosage, frequency, and route.",
+      "description": "Current and past medications with dosage, frequency, route, pharmacy, refill status, and indication. Extract from both structured lists and narrative text.",
       "status": "active",
       "aliases": ["meds", "medication"],
-      "recommended_entity_names": ["medication_name", "dosage", "frequency", "route", "start_date", "end_date"]
+      "recommended_entity_names": ["medication_name", "dosage", "frequency", "route", "start_date", "end_date", "pharmacy", "refill_status", "indication", "status"],
+      "extraction_notes": "Extract from medication lists, refill requests, and pharmacy narratives. Include all available context."
     },
     {
       "category_id": "diagnoses",
@@ -44,10 +45,11 @@
     {
       "category_id": "lab_results",
       "display_name": "Lab Results",
-      "description": "Laboratory test results with values, units, and reference ranges.",
+      "description": "Laboratory test results with values, units, reference ranges, abnormal flags, and panel groupings. Extract ALL rows from lab tables.",
       "status": "active",
       "aliases": ["labs", "laboratory"],
-      "recommended_entity_names": ["test_name", "value", "unit", "reference_range", "date"]
+      "recommended_entity_names": ["test_name", "value", "unit", "reference_range", "abnormal_flag", "panel", "date"],
+      "extraction_notes": "Create ONE entity per test result. Include abnormal flags (H, L, A) and panel names (Lipid Panel, BMP, LFT, CBC). Extract complete multi-row tables."
     },
     {
       "category_id": "vital_signs",
@@ -60,10 +62,20 @@
     {
       "category_id": "social_history",
       "display_name": "Social History",
-      "description": "Smoking, alcohol, occupation, and living situation.",
+      "description": "Tobacco use, alcohol use, occupation, living situation, and social determinants of health (SDOH) screenings including financial strain, food security, transportation, housing, and mental health screenings.",
       "status": "active",
       "aliases": ["social"],
-      "recommended_entity_names": ["smoking", "alcohol", "occupation", "living_situation"]
+      "recommended_entity_names": [
+        "category",
+        "smoking_status", "years_smoked", "packs_per_day", "quit_date",
+        "drinking_status", "frequency", "amount",
+        "occupation", "employment_status",
+        "living_situation", "housing_stability",
+        "financial_strain", "food_insecurity", "transportation_access",
+        "intimate_partner_violence",
+        "screening_type", "score"
+      ],
+      "extraction_notes": "Extract ALL questionnaire-style screening data. Group by category: tobacco_use, alcohol_use, sdoh_screening, mental_health_screening. Include PHQ-9 and other mental health scores."
     },
     {
       "category_id": "clinical_notes",
@@ -80,6 +92,22 @@
       "status": "active",
       "aliases": ["metadata", "doc_metadata"],
       "recommended_entity_names": ["type", "date", "provider", "facility"]
+    },
+    {
+      "category_id": "encounters",
+      "display_name": "Encounters",
+      "description": "Patient visits, appointments, and encounters including office visits, telemedicine, departments, providers, addresses, and dates.",
+      "status": "active",
+      "aliases": ["visits", "appointments", "encounters_visits"],
+      "recommended_entity_names": ["visit_type", "date", "department", "provider", "location", "address", "visit_reason"]
+    },
+    {
+      "category_id": "care_teams",
+      "display_name": "Care Teams",
+      "description": "Healthcare providers involved in patient care including PCP, specialists, nurses, and their roles.",
+      "status": "active",
+      "aliases": ["providers", "care_team", "healthcare_team"],
+      "recommended_entity_names": ["provider_name", "role", "specialty", "contact", "facility"]
     }
   ]
 }

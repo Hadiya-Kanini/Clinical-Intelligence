@@ -28,6 +28,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<ProcessingJob> ProcessingJobs => Set<ProcessingJob>();
     public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
     public DbSet<ExtractedEntity> ExtractedEntities => Set<ExtractedEntity>();
+    public DbSet<ExtractedEntityV2> ExtractedEntitiesV2 => Set<ExtractedEntityV2>();
     public DbSet<EntityCitation> EntityCitations => Set<EntityCitation>();
     public DbSet<ErdConflict> ErdConflicts => Set<ErdConflict>();
     public DbSet<ConflictResolution> ConflictResolutions => Set<ConflictResolution>();
@@ -69,6 +70,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
         ConfigureProcessingJob(modelBuilder);
         ConfigureDocumentChunk(modelBuilder);
         ConfigureExtractedEntity(modelBuilder);
+        ConfigureExtractedEntityV2(modelBuilder);
         ConfigureEntityCitation(modelBuilder);
         ConfigureErdConflict(modelBuilder);
         ConfigureConflictResolution(modelBuilder);
@@ -605,6 +607,53 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
                 .WithMany(u => u.VerifiedEntities)
                 .HasForeignKey(e => e.VerifiedByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+
+    private static void ConfigureExtractedEntityV2(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ExtractedEntityV2>(entity =>
+        {
+            entity.ToTable("extracted_entities_v2");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.PatientId)
+                .HasDatabaseName("ix_extracted_entities_v2_patient_id");
+
+            entity.HasIndex(e => e.DocumentId)
+                .HasDatabaseName("ix_extracted_entities_v2_document_id");
+
+            entity.HasIndex(e => e.SectionName)
+                .HasDatabaseName("ix_extracted_entities_v2_section_name");
+
+            entity.HasIndex(e => e.ExtractedAt)
+                .HasDatabaseName("ix_extracted_entities_v2_extracted_at");
+
+            entity.HasIndex(e => new { e.PatientId, e.SectionName })
+                .HasDatabaseName("ix_extracted_entities_v2_patient_section");
+
+            entity.Property(e => e.SectionName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.EntityData).IsRequired().HasColumnType("jsonb");
+            entity.Property(e => e.ExtractedAt).IsRequired();
+            entity.Property(e => e.IsVerified).HasDefaultValue(false);
+
+            entity.HasOne(e => e.Patient)
+                .WithMany()
+                .HasForeignKey(e => e.PatientId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_extracted_entities_v2_patients_patient_id");
+
+            entity.HasOne(e => e.Document)
+                .WithMany()
+                .HasForeignKey(e => e.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_extracted_entities_v2_documents_document_id");
+
+            entity.HasOne(e => e.VerifiedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.VerifiedByUserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_extracted_entities_v2_users_verified_by_user_id");
         });
     }
 

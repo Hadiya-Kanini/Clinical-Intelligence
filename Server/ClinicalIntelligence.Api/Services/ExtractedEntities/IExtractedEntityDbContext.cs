@@ -11,5 +11,7 @@ namespace ClinicalIntelligence.Api.Services.ExtractedEntities;
 public interface IExtractedEntityDbContext
 {
     DbSet<ExtractedEntity> ExtractedEntities { get; }
+    DbSet<EntityCitation> EntityCitations { get; }
+    DbSet<DocumentChunk> DocumentChunks { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

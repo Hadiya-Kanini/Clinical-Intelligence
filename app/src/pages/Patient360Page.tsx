@@ -207,7 +207,7 @@ export default function Patient360Page(): JSX.Element {
                 </Card>
 
                 {/* Clinical Content Sections - Using our new Patient360View component */}
-                <Patient360View patientId={patientId} />
+                <Patient360View patientId={patientId!} />
 
                 {/* Conflicts Section */}
                 <Card title="Conflicts">

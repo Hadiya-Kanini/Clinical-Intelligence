@@ -4,100 +4,56 @@ import Badge from '../components/ui/Badge';
 import Tooltip from '../components/ui/Tooltip';
 import DataStatusBadge from '../components/ui/DataStatusBadge';
 import { Loader2, User, FileText, ExternalLink, Info } from 'lucide-react';
-import type { EntityCitation, DataStatus } from '../lib/patientApi';
-
-interface Entity {
-  id: string;
-  category: string;
-  name: string;
-  value: string;
-  displayCategory: string;
-  confidence?: number;
-  units?: string;
-  verified: boolean;
-  effectiveAt?: string;
-  patientName: string;
-  patientMrn: string;
-  documentName: string;
-  documentDate: string;
-  rationale?: string;
-  dataStatus?: DataStatus;
-  citations?: EntityCitation[];
-}
+import { getPatient360, type Patient360Response, type ExtractedEntity, type EntityCitation } from '../lib/patientApi';
 
 interface GroupedEntities {
-  [category: string]: Entity[];
+  [category: string]: ExtractedEntity[];
 }
 
 interface Patient360ViewProps {
-  documentId?: string;
-  patientId?: string;
+  patientId: string;
   onCitationClick?: (citation: EntityCitation) => void;
 }
 
-export default function Patient360View({ documentId, patientId, onCitationClick }: Patient360ViewProps) {
+export default function Patient360View({ patientId, onCitationClick }: Patient360ViewProps) {
   const [entities, setEntities] = useState<GroupedEntities>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [patientInfo, setPatientInfo] = useState<{
-    name: string;
-    mrn: string;
-    documentName: string;
-    documentDate: string;
-  } | null>(null);
+  const [patientData, setPatientData] = useState<Patient360Response | null>(null);
 
   useEffect(() => {
-    fetchEntities();
-  }, [documentId, patientId]);
+    fetchPatientData();
+  }, [patientId]);
 
-  const fetchEntities = async () => {
+  const fetchPatientData = async () => {
+    if (!patientId) {
+      setError('Patient ID is required');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       
-      // Build query parameters
-      const params = new URLSearchParams();
-      if (documentId) params.append('documentId', documentId);
-      if (patientId) params.append('patientId', patientId);
+      const result = await getPatient360(patientId);
       
-      const response = await fetch(`/api/v1/entities/360-view?${params}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch entities');
-      }
-      
-      const data = await response.json();
-      
-      if (data.entities && data.entities.length > 0) {
+      if (result.success) {
+        const data = result.data;
+        setPatientData(data);
+        
         // Group entities by category
         const grouped: GroupedEntities = {};
-        data.entities.forEach((entity: any) => {
-          // Transform API response to match Entity interface
-          const transformedEntity: Entity = {
-            ...entity,
-            confidence: entity.confidence || entity.confidenceScore, // Handle both field names
-            dataStatus: entity.dataStatus || (entity.verified ? 'verified' : 'unverified')
-          };
-          
+        data.entities.forEach((entity) => {
           if (!grouped[entity.category]) {
             grouped[entity.category] = [];
           }
-          grouped[entity.category].push(transformedEntity);
+          grouped[entity.category].push(entity);
         });
         
         setEntities(grouped);
-        
-        // Set patient info from first entity
-        const firstEntity = data.entities[0];
-        setPatientInfo({
-          name: firstEntity.patientName,
-          mrn: firstEntity.patientMrn,
-          documentName: firstEntity.documentName,
-          documentDate: firstEntity.documentDate,
-        });
       } else {
-        setEntities({});
-        setPatientInfo(null);
+        setError(result.error.message);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -121,7 +77,7 @@ export default function Patient360View({ documentId, patientId, onCitationClick 
         <div style={{ padding: '1.5rem', textAlign: 'center', color: '#dc2626' }}>
           <p>Error loading 360° view: {error}</p>
           <button 
-            onClick={fetchEntities}
+            onClick={fetchPatientData}
             style={{
               marginTop: '0.5rem',
               padding: '0.5rem 1rem',
@@ -148,25 +104,25 @@ export default function Patient360View({ documentId, patientId, onCitationClick 
           <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>Patient 360° View</h2>
         </div>
         <div style={{ padding: '1rem 0 0 0' }}>
-          {patientInfo ? (
+          {patientData ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
               <div>
                 <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.25rem 0' }}>Patient Name</p>
-                <p style={{ margin: 0, fontWeight: 'medium' }}>{patientInfo.name}</p>
+                <p style={{ margin: 0, fontWeight: 'medium' }}>{patientData.name || 'N/A'}</p>
               </div>
               <div>
                 <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.25rem 0' }}>MRN</p>
-                <p style={{ margin: 0, fontWeight: 'medium' }}>{patientInfo.mrn}</p>
+                <p style={{ margin: 0, fontWeight: 'medium' }}>{patientData.mrn || 'N/A'}</p>
               </div>
               <div>
-                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.25rem 0' }}>Document</p>
-                <p style={{ margin: 0, fontWeight: 'medium' }}>{patientInfo.documentName}</p>
-              </div>
-              <div>
-                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.25rem 0' }}>Date</p>
+                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.25rem 0' }}>Date of Birth</p>
                 <p style={{ margin: 0, fontWeight: 'medium' }}>
-                  {new Date(patientInfo.documentDate).toLocaleDateString()}
+                  {patientData.dob ? new Date(patientData.dob).toLocaleDateString() : 'N/A'}
                 </p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.25rem 0' }}>Documents</p>
+                <p style={{ margin: 0, fontWeight: 'medium' }}>{patientData.documents.length}</p>
               </div>
             </div>
           ) : (
@@ -207,7 +163,7 @@ export default function Patient360View({ documentId, patientId, onCitationClick 
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                         <span style={{ fontWeight: 'medium' }}>{entity.name}</span>
-                        <DataStatusBadge status={entity.dataStatus || (entity.verified ? 'verified' : 'unverified')} />
+                        <DataStatusBadge status={entity.isVerified ? 'verified' : 'unverified'} />
                         {entity.rationale && (
                           <Tooltip content={entity.rationale} position="top">
                             <button
@@ -229,8 +185,8 @@ export default function Patient360View({ documentId, patientId, onCitationClick 
                       </div>
                       <p style={{ color: '#6b7280', margin: '0 0 0.25rem 0' }}>{entity.value}</p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: '#6b7280' }}>
-                        {entity.confidence && (
-                          <span>Confidence: {Math.round(entity.confidence * 100)}%</span>
+                        {entity.confidenceScore && (
+                          <span>Confidence: {Math.round(entity.confidenceScore * 100)}%</span>
                         )}
                         {entity.units && <span>Units: {entity.units}</span>}
                         {entity.effectiveAt && (

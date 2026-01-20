@@ -30,6 +30,16 @@ public sealed record ExtractedEntityDto
     /// Display category formatted for frontend (e.g., "Allergies", "Medications").
     /// </summary>
     public string? DisplayCategory { get; init; }
+
+    /// <summary>
+    /// Document location information for citation creation.
+    /// </summary>
+    public Dictionary<string, object>? DocumentLocation { get; init; }
+
+    /// <summary>
+    /// Source text from which the entity was extracted.
+    /// </summary>
+    public string? SourceText { get; init; }
 }
 
 /// <summary>
